@@ -1,0 +1,20 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        # Instalación limpia basada en el package-lock.json
+        - npm ci
+    build:
+      commands:
+        # Comando de compilación estándar de Vite
+        - npm run build
+  artifacts:
+    # Vite genera por defecto la carpeta 'dist'
+    baseDirectory: dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      # Cachear los módulos para que los siguientes despliegues sean más rápidos
+      - node_modules/**/*
