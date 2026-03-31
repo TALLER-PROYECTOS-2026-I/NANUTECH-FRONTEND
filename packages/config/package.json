@@ -1,0 +1,8 @@
+{
+  "name": "@nanutech/config",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "@originjs/vite-plugin-federation": "^1.4.1"
+  }
+}
