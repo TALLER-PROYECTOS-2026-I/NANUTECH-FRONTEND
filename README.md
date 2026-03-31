@@ -160,8 +160,6 @@ Código reutilizable compartido:
 * ❌ No instalar librerías en la raíz
 * ✅ Instalar dentro del workspace correspondiente
 
-Ejemplo:
-
 ```bash
 cd apps/mfe-flota
 npm install axios
@@ -203,8 +201,6 @@ Este repositorio usa:
 npm install
 ```
 
-Instala todas las dependencias y enlaza los workspaces.
-
 ---
 
 ### ▶️ Levantar el ecosistema Web
@@ -212,8 +208,6 @@ Instala todas las dependencias y enlaza los workspaces.
 ```bash
 npm run dev
 ```
-
-Ejecuta el Shell App junto con todos los Microfrontends.
 
 ---
 
@@ -224,18 +218,18 @@ cd apps/mobile-chofer
 npm start
 ```
 
-* Presiona `w` → ver en navegador
-* Escanea el QR → usar Expo Go en tu celular
+* Presiona `w` → navegador
+* Escanea QR → Expo Go
 
 ---
 
-### 🧪 Ejecutar pruebas automatizadas
+### 🧪 Ejecutar pruebas
 
 ```bash
 npm run test:all
 ```
 
-⚠️ Obligatorio antes de hacer `git push`.
+⚠️ Obligatorio antes de `git push`.
 
 ---
 
@@ -243,16 +237,54 @@ npm run test:all
 
 * Mantén módulos desacoplados
 * Reutiliza código desde `packages`
-* Respeta la arquitectura definida
+* Respeta la arquitectura
 * Prueba tu código antes de subirlo
-* Usa commits claros y descriptivos
+* Usa commits claros
 
 ---
 
-## 📌 Mantenimiento
+## 📝 Reglas Estrictas para Commits (Conventional Commits)
 
-Documento mantenido por **Abraham Huamán Carlos (Líder Frontend)**.
-Para dudas sobre la arquitectura, consultar antes de implementar nuevas funcionalidades.
+Este proyecto está protegido por **Commitlint**. No se permiten mensajes genéricos como *"subiendo cambios"*.
+
+Formato obligatorio:
+
+```
+tipo: descripción breve y en minúsculas
+```
+
+---
+
+### ✅ Tipos permitidos
+
+* 🌟 **feat:** nueva funcionalidad
+  `git commit -m "feat: agrega formulario de nueva jornada"`
+
+* 🐛 **fix:** corrección de errores
+  `git commit -m "fix: corrige calculo de horas en dashboard"`
+
+* 🛠️ **chore:** mantenimiento o configuración
+  `git commit -m "chore: actualiza dependencias de expo"`
+
+* 📚 **docs:** documentación
+  `git commit -m "docs: actualiza reglas de commit"`
+
+* 💅 **ui:** cambios visuales
+  `git commit -m "ui: mejora estilos del boton principal"`
+
+---
+
+### ❌ Incorrecto
+
+```
+git commit -m "arreglando el login"
+```
+
+### ✅ Correcto
+
+```
+git commit -m "fix: repara validacion de contraseñas en login"
+```
 
 ---
 
