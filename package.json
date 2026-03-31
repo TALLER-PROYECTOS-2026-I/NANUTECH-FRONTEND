@@ -2,6 +2,7 @@
   "name": "nanutech-frontend-workspace",
   "private": true,
   "version": "1.0.0",
+  "type": "module",
   "description": "Monorepo para el sistema de gestión de flota NANU TECH",
   "workspaces": [
     "apps/*",
