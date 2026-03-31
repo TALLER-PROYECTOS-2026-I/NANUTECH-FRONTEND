@@ -157,12 +157,11 @@ Código reutilizable compartido:
 
 ### 1. 🔒 Aislamiento de dependencias
 
-* ❌ No instalar librerías en la raíz
-* ✅ Instalar dentro del workspace correspondiente
+* ❌ No instalar librerías globalmente si son para un solo módulo.
+* ✅ Instalar desde la raíz indicando el workspace (paquete) destino:
 
 ```bash
-cd apps/mfe-flota
-npm install axios
+npm install axios -w apps/mfe-flota
 ```
 
 ---
