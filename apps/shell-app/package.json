@@ -11,8 +11,11 @@
   },
   "dependencies": {
     "@nanutech/ui-components": "^1.0.0",
+    "@nanutech/api-client": "*",
+    "@nanutech/utils": "*",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^6.22.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

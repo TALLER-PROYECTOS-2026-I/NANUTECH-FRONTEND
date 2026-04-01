@@ -205,7 +205,7 @@ npm install
 ### ▶️ Levantar el ecosistema Web
 
 ```bash
-npm run dev
+npm run start:ecosystem
 ```
 
 ---
