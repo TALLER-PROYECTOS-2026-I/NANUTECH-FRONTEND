@@ -1,0 +1,77 @@
+name: Frontend CI - Quality & Testing
+
+on:
+  pull_request:
+    branches:
+      - develop
+    # Solo se dispara si hay cambios en estas carpetas
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'package-lock.json'
+
+jobs:
+  quality-gate:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Check Formatting (Prettier/Lint)
+        run: npm run lint
+        # Basado en tu regla: "No podrás hacer push si hay errores de lint"
+
+      - name: Type Check (TypeScript)
+        # Verifica que los cambios en packages/types no rompan las apps
+        run: npm run type-check --if-present
+
+  testing:
+    name: Vitest - Unit & Integration
+    runs-on: ubuntu-latest
+    needs: quality-gate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run All Tests
+        # Según tu README: npm run test:all
+        run: npm run test:all
+
+  build-validation:
+    name: Production Build Check
+    runs-on: ubuntu-latest
+    needs: testing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Shell and MFEs
+        # Validamos que el empaquetado de Vite no falle
+        run: |
+          npm run build -w apps/shell-app
+          npm run build -w apps/mfe-flota
+          
+      - name: Build Mobile (Dry Run)
+        # Solo verificamos que el código de React Native compile
+        working-directory: apps/mobile-chofer
+        run: npx expo export --platform web # O una validación rápida de expo
