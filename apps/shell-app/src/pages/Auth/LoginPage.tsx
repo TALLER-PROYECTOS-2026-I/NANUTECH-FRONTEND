@@ -61,6 +61,7 @@ export default function LoginPage() {
               <label className="block text-sm font-semibold text-gray-700 mb-1">Correo Electrónico</label>
               <input 
                 type="email" 
+                autoComplete="username"
                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
                 placeholder="usuario@nanutech.com"
                 value={correo}
@@ -72,6 +73,7 @@ export default function LoginPage() {
               <label className="block text-sm font-semibold text-gray-700 mb-1">Contraseña</label>
               <input 
                 type="password" 
+                autoComplete="current-password"
                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
                 placeholder="••••••••"
                 value={password}
