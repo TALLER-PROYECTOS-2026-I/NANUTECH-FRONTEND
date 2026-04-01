@@ -8,7 +8,7 @@ Este proyecto implementa una arquitectura empresarial basada en **Monorepo con n
 ## 🧩 Tecnologías principales
 
 * ⚛️ React 19 + Vite (Microfrontends)
-* 📱 React Native + Expo
+* 📱 React Native + Exp0
 * 🎨 Tailwind CSS + Shadcn (UI Web)
 * 🔐 AWS Cognito (Autenticación)
 * 🌐 Axios / Fetch (API Client)
