@@ -28,7 +28,11 @@ export const apiClient = axios.create({
   },
 });
 
+// Ejemplo de funciones para consumir la API (puedes expandir esto según tus necesidades)
 export const getCamiones = () => apiClient.get('/camiones');
 export const getUsuarios = () => apiClient.get('/items');
+
+// Exportamos todo lo que hay en los servicios para que sea fácil de importar desde otros módulos
+export * from './src/services/auth.service';
 
 export default apiClient;
