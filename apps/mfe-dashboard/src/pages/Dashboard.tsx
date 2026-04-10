@@ -11,7 +11,7 @@ import {
   Legend,
 } from "recharts";
 
-import { getCamiones } from "../api/camiones";
+import { getCamiones } from "../../../../packages/api-client/src/services/camiones";
 import "./Dashboard.css";
 
 /* MOCK DATA (igual lo dejamos) */
