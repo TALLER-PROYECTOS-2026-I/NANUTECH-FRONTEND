@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "jsx": "react-jsx",
+
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+
+    "composite": true //Necesario para que cada subproyecto funcione como módulo independiente
+    
+  },
+  "include": [],
+  "references": [
+    { "path": "./apps/shell-app" },
+    { "path": "./apps/mfe-dashboard" },
+    { "path": "./apps/mfe-flota" },
+    { "path": "./apps/mfe-contratos" },
+    { "path": "./packages/api-client" },
+    { "path": "./packages/types" },
+    { "path": "./packages/ui-components" },
+    { "path": "./packages/utils" }
+  ]
+}
