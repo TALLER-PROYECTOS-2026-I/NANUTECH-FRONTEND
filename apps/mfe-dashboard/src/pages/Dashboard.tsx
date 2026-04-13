@@ -16,7 +16,7 @@ import "./Dashboard.css";
 
 /* MOCK DATA (igual lo dejamos) */
 const kmData = [
-  { name: "Camión 1", km: 210 },
+  { name: "Camión 11", km: 210 },
   { name: "Camión 2", km: 195 },
   { name: "Camión 3", km: 240 },
   { name: "Camión 4", km: 185 },
