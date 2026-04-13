@@ -57,7 +57,7 @@ function RegistroJornada() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const handleChange = (e) => {
+ const handleChange = (e: any) => {
     setForm({
       ...form,
       [e.target.name]: e.target.value,

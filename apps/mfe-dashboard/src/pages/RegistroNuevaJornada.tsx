@@ -28,9 +28,6 @@ function RegistroNuevaJornada() {
       try {
         const res = await getJornadas();
 
-        console.log("API RESPONSE:", res);
-
-        // ✅ FIX IMPORTANTE: asegura array aunque API cambie estructura
         const data = Array.isArray(res)
           ? res
           : res?.data
@@ -52,7 +49,7 @@ function RegistroNuevaJornada() {
   }, []);
 
   const [filtroEstado, setFiltroEstado] = useState("todas");
-  const [filtroObs, setFiltroObs] = useState("todas");
+  const [filtroObs] = useState("todas"); // 👈 FIX: ya no usamos setter
 
   const total = jornadas.length;
   const activas = jornadas.filter(j => j.estado === "Activa").length;
@@ -78,7 +75,6 @@ function RegistroNuevaJornada() {
 
   return (
     <div className="dashboard-layout">
-      {/* SIDEBAR */}
       <aside className="sidebar">
         <div className="sidebar-header">
           <h2 className="sidebar-title">NANU TECH</h2>
@@ -103,7 +99,6 @@ function RegistroNuevaJornada() {
         </button>
       </aside>
 
-      {/* MAIN */}
       <main className="dashboard-main">
         <div className="header-row">
           <div>
