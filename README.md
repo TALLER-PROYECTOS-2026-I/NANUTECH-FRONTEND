@@ -287,4 +287,3 @@ git commit -m "fix: repara validacion de contraseñas en login"
 
 ---
 
-🚀 *Happy coding!*
