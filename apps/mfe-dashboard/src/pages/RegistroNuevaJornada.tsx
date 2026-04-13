@@ -21,7 +21,7 @@ function RegistroNuevaJornada() {
   });
 
   const [jornadas, setJornadas] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
