@@ -98,6 +98,7 @@ function RegistroJornada() {
       observaciones: form.observaciones || "",
       estado: "Activa",
       observacionesFlag: form.observaciones ? true : false,
+       horario: `${form.horaInicio} - ${form.horaFin}`,
     };
 
     await createJornada(payload);

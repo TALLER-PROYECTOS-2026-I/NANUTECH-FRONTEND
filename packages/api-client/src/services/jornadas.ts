@@ -1,39 +1,66 @@
-const BASE_URL =
-  "https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage";
+type Jornada = {
+  id: string;
+  fecha: string;
+  conductor: string;
+  camion: string;
+  contrato: string;
+  horario: string;
+  km: number;
+  estado: string;
+  observaciones?: string;
+};
+
+// 🔥 DATA LOCAL (SIMULA BACKEND)
+let jornadasMock: Jornada[] = [
+  {
+    id: "JRN-001",
+    fecha: "2026-04-10",
+    conductor: "Carlos Gomez",
+    camion: "ABC-123",
+    contrato: "CTR-001",
+    horario: "08:00 - 16:00",
+    km: 120,
+    estado: "Activa",
+    observaciones: "",
+  },
+  {
+    id: "JRN-002",
+    fecha: "2026-04-11",
+    conductor: "Luis Martinez",
+    camion: "XYZ-987",
+    contrato: "CTR-002",
+    horario: "09:00 - 17:00",
+    km: 200,
+    estado: "Completada",
+    observaciones: "Sin incidencias",
+  },
+];
 
 /**
- * Obtener unidades disponibles (ANTES: getJornadas)
+ * GET JORNADAS (LOCAL)
  */
 export const getJornadas = async () => {
-  const res = await fetch(`${BASE_URL}/unidades/disponibles`);
-
-  if (!res.ok) {
-    const errorText = await res.text();
-    console.error("Error API:", errorText);
-    throw new Error("Error al obtener unidades disponibles");
-  }
-
-  return await res.json();
+  return new Promise<Jornada[]>((resolve) => {
+    setTimeout(() => {
+      resolve([...jornadasMock]);
+    }, 300); // simula delay API
+  });
 };
 
 /**
- * Crear jornada (si tu backend aún lo soporta)
- * OJO: si esta API no existe, esto dará error 404/500
+ * CREATE JORNADA (LOCAL)
  */
-export const createJornada = async (data: any) => {
-  const res = await fetch(`${BASE_URL}/jornadas`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
+export const createJornada = async (data: Jornada) => {
+  return new Promise<Jornada>((resolve) => {
+    setTimeout(() => {
+      const nueva: Jornada = {
+        ...data,
+        id: `JRN-${Math.floor(Math.random() * 9999)}`,
+      };
+
+      jornadasMock.unshift(nueva);
+
+      resolve(nueva);
+    }, 300);
   });
-
-  if (!res.ok) {
-    const errorText = await res.text();
-    console.error("Error API:", errorText);
-    throw new Error("Error al crear jornada");
-  }
-
-  return await res.json();
 };

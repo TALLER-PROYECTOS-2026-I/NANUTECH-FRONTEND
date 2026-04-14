@@ -22,21 +22,28 @@ function RegistroNuevaJornada() {
 
   const [jornadas, setJornadas] = useState<any[]>([]);
   const [, setLoading] = useState(true);
+  const [busqueda, setBusqueda] = useState("");
 
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await getJornadas();
+        const localData = localStorage.getItem("jornadas");
 
-        const data = Array.isArray(res)
-          ? res
-          : res?.data
-          ? res.data
-          : res?.items
-          ? res.items
-          : [];
+        if (localData) {
+          setJornadas(JSON.parse(localData));
+        } else {
+          const res = await getJornadas();
 
-        setJornadas(data);
+          const data = Array.isArray(res)
+            ? res
+            : res?.data
+            ? res.data
+            : res?.items
+            ? res.items
+            : [];
+
+          setJornadas(data);
+        }
       } catch (err) {
         console.error("Error cargando jornadas:", err);
         setJornadas([]);
@@ -49,14 +56,14 @@ function RegistroNuevaJornada() {
   }, []);
 
   const [filtroEstado, setFiltroEstado] = useState("todas");
-  const [filtroObs] = useState("todas"); // 👈 FIX: ya no usamos setter
+  const [filtroObs] = useState("todas");
 
   const total = jornadas.length;
   const activas = jornadas.filter(j => j.estado === "Activa").length;
   const completadas = jornadas.filter(j => j.estado === "Completada").length;
   const conObs = jornadas.filter(j => j.observaciones).length;
 
-  const jornadasFiltradas = jornadas.filter(j => {
+  const jornadasFiltradas = jornadas.filter((j) => {
     const estadoOk =
       filtroEstado === "todas" ||
       (j.estado || "").toLowerCase() === filtroEstado;
@@ -66,7 +73,18 @@ function RegistroNuevaJornada() {
       (filtroObs === "con" && j.observaciones) ||
       (filtroObs === "sin" && !j.observaciones);
 
-    return estadoOk && obsOk;
+    const texto = busqueda.toLowerCase();
+
+    const busquedaOk =
+      texto === "" ||
+      j.id?.toString().toLowerCase().includes(texto) ||
+      j.fecha?.toLowerCase().includes(texto) ||
+      j.conductor?.toLowerCase().includes(texto) ||
+      j.camion?.toLowerCase().includes(texto) ||
+      j.contrato?.toLowerCase().includes(texto) ||
+      j.estado?.toLowerCase().includes(texto);
+
+    return estadoOk && obsOk && busquedaOk;
   });
 
   const handleLogout = () => {
@@ -75,6 +93,7 @@ function RegistroNuevaJornada() {
 
   return (
     <div className="dashboard-layout">
+      {/* SIDEBAR */}
       <aside className="sidebar">
         <div className="sidebar-header">
           <h2 className="sidebar-title">NANU TECH</h2>
@@ -99,7 +118,10 @@ function RegistroNuevaJornada() {
         </button>
       </aside>
 
+      {/* MAIN */}
       <main className="dashboard-main">
+
+        {/* HEADER */}
         <div className="header-row">
           <div>
             <h1 className="dashboard-title">Registro de Jornadas</h1>
@@ -115,32 +137,51 @@ function RegistroNuevaJornada() {
         </div>
 
         <div className="kpi-row-4">
-          <div className="kpi-card">
-            <span className="kpi-label">Total Jornadas</span>
-            <div className="kpi-value">{total}</div>
-          </div>
+  <div className="kpi-card-pro">
+    <div className="kpi-icon blue">📅</div>
+    <div>
+      <span>Total Jornadas</span>
+      <h3>{total}</h3>
+    </div>
+  </div>
 
-          <div className="kpi-card">
-            <span className="kpi-label">Jornadas Activas</span>
-            <div className="kpi-value">{activas}</div>
-          </div>
+  <div className="kpi-card-pro">
+    <div className="kpi-icon blue">🕒</div>
+    <div>
+      <span>Jornadas Activas</span>
+      <h3>{activas}</h3>
+    </div>
+  </div>
 
-          <div className="kpi-card">
-            <span className="kpi-label">Completadas</span>
-            <div className="kpi-value">{completadas}</div>
-          </div>
+  <div className="kpi-card-pro">
+    <div className="kpi-icon green">✅</div>
+    <div>
+      <span>Completadas</span>
+      <h3>{completadas}</h3>
+    </div>
+  </div>
 
-          <div className="kpi-card">
-            <span className="kpi-label">Con Observaciones</span>
-            <div className="kpi-value">{conObs}</div>
-          </div>
-        </div>
+  <div className="kpi-card-pro">
+    <div className="kpi-icon purple">📍</div>
+    <div>
+      <span>Total KM</span>
+      <h3>10,815</h3>
+    </div>
+  </div>
+</div>
+        {/* TABLE */}
+        <div className="table-card modern-card">
 
-        <div className="table-card">
-          <div className="table-header">
-            <input className="search-input" placeholder="Buscar..." />
+          {/* HEADER FILTROS */}
+          <div className="table-header modern-header">
+            <input
+              className="search-input modern-input"
+              placeholder="🔍 Buscar por conductor, camión, contrato..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
 
-            <div className="filters">
+            <div className="filters modern-filters">
               <button
                 className={filtroEstado === "todas" ? "active" : ""}
                 onClick={() => setFiltroEstado("todas")}
@@ -164,25 +205,26 @@ function RegistroNuevaJornada() {
             </div>
           </div>
 
-          <table className="table">
+          {/* TABLA */}
+          <table className="table modern-table">
             <thead>
               <tr>
-                <th>ID Jornada</th>
+                <th>ID</th>
                 <th>Fecha</th>
                 <th>Conductor</th>
                 <th>Camión</th>
                 <th>Contrato</th>
                 <th>Horario</th>
-                <th>Kilómetros</th>
+                <th>KM</th>
                 <th>Estado</th>
-                <th>Observ.</th>
+                <th>Obs</th>
               </tr>
             </thead>
 
             <tbody>
               {jornadasFiltradas.map((j, i) => (
                 <tr key={j.id || i}>
-                  <td>{j.id}</td>
+                  <td><strong>{j.id}</strong></td>
                   <td>{j.fecha}</td>
                   <td>{j.conductor}</td>
                   <td>{j.camion}</td>
@@ -192,8 +234,8 @@ function RegistroNuevaJornada() {
 
                   <td>
                     <span
-                      className={`badge ${
-                        j.estado === "Activa" ? "active" : "done"
+                      className={`badge modern-badge ${
+                        j.estado === "Activa" ? "blue" : "green"
                       }`}
                     >
                       {j.estado}
@@ -209,6 +251,7 @@ function RegistroNuevaJornada() {
               ))}
             </tbody>
           </table>
+
         </div>
       </main>
     </div>
