@@ -74,7 +74,8 @@ function Dashboard() {
   });
 
   const handleLogout = () => {
-    navigate("/");
+    localStorage.removeItem("nanutech_token");
+    navigate("/login");
   };
 
   return (
