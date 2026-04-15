@@ -24,7 +24,7 @@ describe('Dashboard Microfrontend', () => {
     render(<App />);
     
     //Buscamos el título
-    const titulo = screen.getByText('📊 Dashboard Ejecutivo (Mock API)');
+    const titulo = screen.getByText('Dashboard Ejecutivo')
     
     //Afirmamos que existe
     expect(titulo).toBeInTheDocument();

@@ -10,9 +10,29 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
 
-    "types": ["vite/client", "@testing-library/jest-dom/vitest"],
+    "types": [
+      "vite/client",
+      "@testing-library/jest-dom/vitest"
+    ],
+
+    "skipLibCheck": true,
+
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+
+  "include": [
+    "src",
+    "../../packages/api-client/src/services/camiones.ts",
+    "../../packages/api-client/src/services/jornadas.ts"
+  ]
 }
