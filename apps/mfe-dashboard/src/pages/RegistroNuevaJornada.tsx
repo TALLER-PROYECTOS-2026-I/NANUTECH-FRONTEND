@@ -53,7 +53,7 @@ setJornadas(res);
   const total = jornadas.length;
   const activas = jornadas.filter(j => j.estado === "Activa").length;
   const completadas = jornadas.filter(j => j.estado === "Completada").length;
-  const conObs = jornadas.filter(j => j.observaciones).length;
+
 
   const jornadasFiltradas = jornadas.filter((j) => {
     const estadoOk =
