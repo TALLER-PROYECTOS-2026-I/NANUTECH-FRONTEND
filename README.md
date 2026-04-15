@@ -232,6 +232,50 @@ npm run test:all
 
 ---
 
+## 🔐 Procedimiento de Autenticación y Recuperación de Contraseña
+
+### Endpoints utilizados
+
+- **Login:** `POST /auth/login`
+- **Obtener usuario actual:** `GET /auth/me`
+- **Recuperar contraseña:** `POST /auth/forgot-password`
+- **Confirmar recuperación:** `POST /auth/forgot-password/confirm`
+
+### Flujo sugerido
+
+1. **Login**
+   - El usuario ingresa email y contraseña.
+   - Se llama a `login(payload)`.
+   - Si es exitoso, se almacena el token y se obtiene el usuario con `getMe()`.
+
+2. **Recuperar contraseña**
+   - El usuario solicita recuperación con su email.
+   - Se llama a `forgotPassword(payload)`.
+   - Recibe un código por email.
+   - Ingresa el código y la nueva contraseña.
+   - Se llama a `forgotPasswordConfirm(payload)`.
+   - Si es exitoso, puede iniciar sesión normalmente.
+
+### Ejemplo de uso en el cliente
+
+```ts
+import { login, forgotPassword, forgotPasswordConfirm, getMe } from '@nanutech/api-client/src/services/auth.service';
+
+// Login
+await login({ email: 'user@mail.com', password: '1234' });
+
+// Recuperar contraseña
+await forgotPassword({ email: 'user@mail.com' });
+
+// Confirmar recuperación
+await forgotPasswordConfirm({ email: 'user@mail.com', code: '123456', newPassword: 'nuevaClave' });
+
+// Obtener usuario actual
+await getMe();
+```
+
+---
+
 ## 🤝 Buenas prácticas
 
 * Mantén módulos desacoplados
@@ -284,6 +328,4 @@ git commit -m "arreglando el login"
 ```
 git commit -m "fix: repara validacion de contraseñas en login"
 ```
-
----
 

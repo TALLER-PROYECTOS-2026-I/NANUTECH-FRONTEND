@@ -8,6 +8,7 @@ import { getUsuarios } from '@nanutech/api-client';
 // Importamos las páginas de Autenticación
 import LoginPage from './pages/Auth/LoginPage';
 import RecoverPage from './pages/Auth/RecoverPage';
+import ForgotPasswordConfirmPage from './pages/Auth/ForgotPasswordConfirmPage';
 
 // Importamos el Microfrontend de forma ASÍNCRONA
 const RemoteDashboard = lazy(() => import('dashboardApp/Dashboard'));
@@ -32,6 +33,16 @@ const DashboardLayout = () => {
     } catch (error: any) {
       console.error('❌ Error de conexión:', error);
       alert('Hubo un error. Revisa la consola roja (F12).');
+    }
+  };
+
+  // Ejemplo de uso de getMe
+  const handleGetMe = async () => {
+    try {
+      const user = await getMe();
+      alert('Usuario autenticado: ' + JSON.stringify(user));
+    } catch (error: any) {
+      alert('Error al obtener usuario: ' + error.message);
     }
   };
 
@@ -61,6 +72,13 @@ const DashboardLayout = () => {
           >
             Cerrar Sesión
           </button>
+
+          <button 
+            onClick={handleGetMe}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-md text-sm font-bold transition-colors shadow-lg shadow-blue-900/50"
+          >
+            Ver usuario actual
+          </button>
         </div>
       </div>
 
@@ -85,7 +103,8 @@ function App() {
     <Routes>
       {/* Rutas Públicas */}
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/recuperar" element={<RecoverPage />} />
+      <Route path="/forgot-password/confirm" element={<ForgotPasswordConfirmPage />} />
+      <Route path="/forgot-password" element={<RecoverPage />} />
 
       {/* Rutas Privadas (Donde viven los Microfrontends) */}
       <Route path="/dashboard" element={<DashboardLayout />} />

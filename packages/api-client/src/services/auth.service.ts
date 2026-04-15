@@ -1,6 +1,6 @@
 // packages/api-client/src/services/auth.service.ts
-import { apiClient } from '../../index';
-import type { AuthResponse, LoginRequest, ForgotPasswordRequest } from '@nanutech/types';
+import { apiClient } from '../index';
+import type { AuthResponse, LoginRequest, ForgotPasswordRequest, ForgotPasswordConfirmRequest } from '@nanutech/types';
 
 const AUTH_ERROR_MESSAGES: Record<number, string> = {
   400: 'Email o contraseña inválidos.',
@@ -35,4 +35,15 @@ export const forgotPassword = async (payload: ForgotPasswordRequest): Promise<st
 export const getMe = async (): Promise<AuthResponse> => {
   const { data } = await apiClient.get<AuthResponse>('/auth/me');
   return data;
+};
+
+export const forgotPasswordConfirm = async (payload: ForgotPasswordConfirmRequest): Promise<string> => {
+  try {
+    const { data } = await apiClient.post<{ message: string }>('/auth/forgot-password/confirm', payload);
+    return data.message ?? 'Contraseña restablecida correctamente.';
+  } catch (error: any) {
+    const status: number = error?.response?.status;
+    if (status === 400) throw new Error('Código inválido o expirado.');
+    throw new Error('No pudimos restablecer tu contraseña. Inténtalo de nuevo.');
+  }
 };
