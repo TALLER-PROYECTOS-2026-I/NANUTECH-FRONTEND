@@ -4,19 +4,19 @@ import axios from 'axios';
 // Esto hace que TypeScript NO lo valide y por lo tanto NO lance errores
 const getBaseUrl = (): string => {
   try {
-    // Intentamos obtener de Vite (import.meta.env)
     const viteEnv = (import.meta as any)['env'];
+    // Si se define VITE_API_URL explícitamente (producción), la usamos
     if (viteEnv && viteEnv['VITE_API_URL']) return viteEnv['VITE_API_URL'];
 
-    // Intentamos obtener de Node (process.env)
     const nodeEnv = (globalThis as any)['process']?.['env'];
     if (nodeEnv && nodeEnv['VITE_API_URL']) return nodeEnv['VITE_API_URL'];
   } catch (e) {
     // Si algo falla, no rompemos la app
   }
 
-  // URL de respaldo (Hardcoded para que siempre funcione en tus pruebas)
-  return 'https://wbda73ufn9.execute-api.us-east-2.amazonaws.com/dev';
+  // Por defecto usamos el proxy de Vite (/api → AWS) para evitar CORS en desarrollo
+  // En producción, configurar VITE_API_URL en las variables de entorno
+  return '/api';
 };
 
 const BASE_URL = getBaseUrl();
@@ -28,11 +28,24 @@ export const apiClient = axios.create({
   },
 });
 
-// Ejemplo de funciones para consumir la API (puedes expandir esto según tus necesidades)
+// Interceptor: adjunta el token automáticamente en cada request
+apiClient.interceptors.request.use((config) => {
+  try {
+    const token = (globalThis as any)['localStorage']?.getItem('nanutech_token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+  } catch {
+    // localStorage no disponible (SSR/tests), se omite
+  }
+  return config;
+});
+
+// Funciones de prueba / utilitarias
 export const getCamiones = () => apiClient.get('/camiones');
 export const getUsuarios = () => apiClient.get('/items');
 
-// Exportamos todo lo que hay en los servicios para que sea fácil de importar desde otros módulos
+// Servicios
 export * from './src/services/auth.service';
 
 export default apiClient;
