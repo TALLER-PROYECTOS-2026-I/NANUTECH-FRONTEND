@@ -11,7 +11,7 @@ type Jornada = {
 };
 
 // 🔥 DATA LOCAL (SIMULA BACKEND)
-let jornadasMock: Jornada[] = [
+const jornadasMock: Jornada[] = [
   {
     id: "JRN-001",
     fecha: "2026-04-10",
