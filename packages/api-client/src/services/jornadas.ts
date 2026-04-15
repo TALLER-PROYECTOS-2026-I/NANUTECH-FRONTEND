@@ -1,4 +1,4 @@
-type Jornada = {
+export type Jornada = {
   id: string;
   fecha: string;
   conductor: string;
@@ -9,6 +9,9 @@ type Jornada = {
   estado: string;
   observaciones?: string;
 };
+
+// 👉 INPUT PARA CREAR (SIN ID)
+export type JornadaInput = Omit<Jornada, "id">;
 
 // 🔥 DATA LOCAL (SIMULA BACKEND)
 const jornadasMock: Jornada[] = [
@@ -39,19 +42,21 @@ const jornadasMock: Jornada[] = [
 /**
  * GET JORNADAS (LOCAL)
  */
-export const getJornadas = async () => {
-  return new Promise<Jornada[]>((resolve) => {
+export const getJornadas = async (): Promise<Jornada[]> => {
+  return new Promise((resolve) => {
     setTimeout(() => {
       resolve([...jornadasMock]);
-    }, 300); // simula delay API
+    }, 300);
   });
 };
 
 /**
  * CREATE JORNADA (LOCAL)
  */
-export const createJornada = async (data: Jornada) => {
-  return new Promise<Jornada>((resolve) => {
+export const createJornada = async (
+  data: JornadaInput
+): Promise<Jornada> => {
+  return new Promise((resolve) => {
     setTimeout(() => {
       const nueva: Jornada = {
         ...data,
