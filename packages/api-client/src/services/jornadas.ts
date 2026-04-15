@@ -49,7 +49,6 @@ export const getJornadas = async (): Promise<Jornada[]> => {
     }, 300);
   });
 };
-
 /**
  * CREATE JORNADA (LOCAL)
  */

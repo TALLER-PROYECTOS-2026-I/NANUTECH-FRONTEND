@@ -34,15 +34,7 @@ function RegistroNuevaJornada() {
         } else {
           const res = await getJornadas();
 
-          const data = Array.isArray(res)
-            ? res
-            : res?.data
-            ? res.data
-            : res?.items
-            ? res.items
-            : [];
-
-          setJornadas(data);
+setJornadas(res);
         }
       } catch (err) {
         console.error("Error cargando jornadas:", err);
