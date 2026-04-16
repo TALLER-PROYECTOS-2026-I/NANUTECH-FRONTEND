@@ -10,8 +10,8 @@ frontend:
         # Comando de compilación estándar de Vite
         - npm run build
   artifacts:
-    # Vite genera por defecto la carpeta 'dist'
-    baseDirectory: dist
+    # Apuntamos a la carpeta dist de la aplicación principal
+    baseDirectory: apps/shell-app/dist
     files:
       - '**/*'
   cache:
