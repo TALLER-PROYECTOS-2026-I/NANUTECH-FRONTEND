@@ -33,27 +33,9 @@ export const getCamiones = () => apiClient.get('/camiones');
 export const getUsuarios = () => apiClient.get('/items');
 
 // Exportamos todo lo que hay en los servicios para que sea fácil de importar desde otros módulos
-export * from './src/services/jornadas';
-
-// Mock functions para autenticación
-export const mockLogin = async (correo: string, password: string) => {
-  // Simula una solicitud de login
-  return {
-    success: true,
-    data: {
-      token: 'mock-token-' + Date.now(),
-      usuario: { correo, id: 'user-1', rol: 'CHOFER' },
-    },
-  };
-};
-
-export const mockRecuperarPassword = async (correo: string) => {
-  // Simula una solicitud de recuperación de contraseña
-  return {
-    success: true,
-    mensaje: 'Se ha enviado un correo de recuperación a ' + correo,
-  };
-};
+export * from './src/services/auth.service';
+export * from "./src/services/jornadas";
+export * from "./src/services/camiones";
 
 
 export default apiClient;
