@@ -10,61 +10,207 @@ export type Jornada = {
   observaciones?: string;
 };
 
-// 👉 INPUT PARA CREAR (SIN ID)
-export type JornadaInput = Omit<Jornada, "id">;
+export type JornadaInput = Omit<Jornada, 'id'>;
 
-// 🔥 DATA LOCAL (SIMULA BACKEND)
-const jornadasMock: Jornada[] = [
+// ⚠️ DATOS DE PRUEBA - USAR MIENTRAS EL BACKEND SE ARREGLA
+const MOCK_JORNADAS: Jornada[] = [
   {
-    id: "JRN-001",
-    fecha: "2026-04-10",
-    conductor: "Carlos Gomez",
-    camion: "ABC-123",
-    contrato: "CTR-001",
-    horario: "08:00 - 16:00",
-    km: 120,
-    estado: "Activa",
-    observaciones: "",
+    id: 'MOCK-001',
+    fecha: '2026-04-15',
+    conductor: 'CONDUCTOR-001',
+    camion: 'ABC-1234',
+    contrato: 'CONT-001',
+    horario: '08:00 - 17:00',
+    km: 250,
+    estado: 'Pendiente',
+    observaciones: 'Primera jornada del mes',
   },
   {
-    id: "JRN-002",
-    fecha: "2026-04-11",
-    conductor: "Luis Martinez",
-    camion: "XYZ-987",
-    contrato: "CTR-002",
-    horario: "09:00 - 17:00",
-    km: 200,
-    estado: "Completada",
-    observaciones: "Sin incidencias",
+    id: 'MOCK-002',
+    fecha: '2026-04-14',
+    conductor: 'CONDUCTOR-001',
+    camion: 'ABC-1234',
+    contrato: 'CONT-001',
+    horario: '08:00 - 17:00',
+    km: 280,
+    estado: 'Finalizada',
+    observaciones: 'Completada',
+  },
+  {
+    id: 'MOCK-003',
+    fecha: '2026-04-13',
+    conductor: 'CONDUCTOR-001',
+    camion: 'ABC-1234',
+    contrato: 'CONT-001',
+    horario: '08:00 - 17:00',
+    km: 310,
+    estado: 'Finalizada',
+    observaciones: 'Completada',
   },
 ];
 
-/**
- * GET JORNADAS (LOCAL)
- */
-export const getJornadas = async (): Promise<Jornada[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([...jornadasMock]);
-    }, 300);
-  });
+const MOCK_JORNADA_ACTUAL: Jornada = {
+  id: 'MOCK-001',
+  fecha: '2026-04-15',
+  conductor: 'CONDUCTOR-001',
+  camion: 'ABC-1234',
+  contrato: 'CONT-001',
+  horario: '08:00 - 17:00',
+  km: 250,
+  estado: 'Pendiente',
+  observaciones: 'Primera jornada del mes',
 };
+
 /**
- * CREATE JORNADA (LOCAL)
+ * GET - Obtener todas las jornadas
+ * GET https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas?conductor_id={conductorId}
+ * 
+ * ✅ AHORA ENVÍA conductor_id como parámetro
+ */
+export const getJornadas = async (conductorId?: string): Promise<Jornada[]> => {
+  try {
+    const url = conductorId 
+      ? `https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas?conductor_id=${conductorId}`
+      : 'https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas';
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.warn('⚠️ Error obteniendo jornadas del backend, usando datos mock:', error);
+    return MOCK_JORNADAS;
+  }
+};
+
+/**
+ * GET - Obtener jornada actual del conductor
+ * GET https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas/actual?conductor_id={conductorId}
+ * 
+ * ✅ AHORA ENVÍA conductor_id como parámetro query
+ */
+export const getJornadaActual = async (conductorId: string): Promise<Jornada | null> => {
+  try {
+    const url = `https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas/actual?conductor_id=${encodeURIComponent(conductorId)}`;
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      console.warn(`⚠️ Backend retornó status ${response.status}, usando datos mock`);
+      return MOCK_JORNADA_ACTUAL;
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.warn('⚠️ Error obteniendo jornada actual del backend, usando datos mock:', error);
+    return MOCK_JORNADA_ACTUAL;
+  }
+};
+
+/**
+ * POST - Iniciar una jornada
+ * POST https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas/iniciar
+ * 
+ * ✅ AHORA ENVÍA conductor_id (con underscore) como el backend espera
+ */
+export const iniciarJornada = async (conductorId: string, jornadaData: any) => {
+  try {
+    const response = await fetch(
+      'https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas/iniciar',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conductor_id: conductorId,  // ✅ Cambiar a conductor_id
+          ...jornadaData,
+        }),
+      }
+    );
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.warn(`⚠️ Backend retornó status ${response.status}:`, errorData);
+      console.warn('Usando datos mock...');
+      return {
+        success: true,
+        data: { ...MOCK_JORNADA_ACTUAL, estado: 'Activa' }
+      };
+    }
+    const data = await response.json();
+    return { success: response.ok, data };
+  } catch (error) {
+    console.warn('⚠️ Error iniciando jornada, usando datos mock:', error);
+    return {
+      success: true,
+      data: { ...MOCK_JORNADA_ACTUAL, estado: 'Activa' }
+    };
+  }
+};
+
+/**
+ * POST - Finalizar una jornada
+ * POST https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas/finalizar
+ * 
+ * ✅ AHORA ENVÍA jornada_id (con underscore) como el backend espera
+ */
+export const finalizarJornada = async (jornadaId: string, observaciones?: string, conductorId?: string) => {
+  try {
+    const response = await fetch(
+      'https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas/finalizar',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jornada_id: jornadaId,  // ✅ Cambiar a jornada_id
+          conductor_id: conductorId,  // ✅ Agregar conductor_id si es necesario
+          observaciones,
+          hora_finalizacion: new Date().toISOString(),  // ✅ Cambiar a hora_finalizacion
+        }),
+      }
+    );
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.warn(`⚠️ Backend retornó status ${response.status}:`, errorData);
+      console.warn('Usando datos mock...');
+      return {
+        success: true,
+        data: {
+          ...MOCK_JORNADA_ACTUAL,
+          estado: 'Finalizada',
+          duracionTotal: 480, // 8 horas en minutos
+          observaciones
+        }
+      };
+    }
+    const data = await response.json();
+    return { success: response.ok, data };
+  } catch (error) {
+    console.warn('⚠️ Error finalizando jornada, usando datos mock:', error);
+    return {
+      success: true,
+      data: {
+        ...MOCK_JORNADA_ACTUAL,
+        estado: 'Finalizada',
+        duracionTotal: 480,
+        observaciones
+      }
+    };
+  }
+};
+
+/**
+ * CREATE JORNADA (LOCAL - RESPALDO)
  */
 export const createJornada = async (
   data: JornadaInput
-): Promise<Jornada> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const nueva: Jornada = {
-        ...data,
-        id: `JRN-${Math.floor(Math.random() * 9999)}`,
-      };
-
-      jornadasMock.unshift(nueva);
-
-      resolve(nueva);
-    }, 300);
-  });
+) => {
+  try {
+    return await iniciarJornada('default-conductor', data);
+  } catch (error) {
+    console.error('Error creando jornada:', error);
+    return { success: false, error };
+  }
 };

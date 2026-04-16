@@ -2,29 +2,52 @@ import { useEffect, useState } from 'react';
 import { turnoChoferService } from '../services/turnoChofer.service';
 import { TurnoChofer } from '../types/turnoChofer.types';
 
-const CONDUCTOR_ID = 1;
-
 export const useTurnoChofer = () => {
   const [turno, setTurno] = useState<TurnoChofer | null>(null);
 
   const loadTurno = async () => {
-    const data = await turnoChoferService.getCurrentShift(CONDUCTOR_ID);
-    setTurno(data);
+    const response = await turnoChoferService.obtenerTurnoActual();
+    if (response.success && response.data) {
+      setTurno(response.data);
+    } else {
+      setTurno(null);
+    }
   };
 
   const iniciarTurno = async () => {
-    const data = await turnoChoferService.startShift();
-    setTurno(data);
+    const response = await turnoChoferService.iniciarTurno();
+    if (response.success && response.data) {
+      setTurno(response.data);
+    }
   };
 
-  const finalizarTurno = async () => {
-    await turnoChoferService.endShift();
-    loadTurno();
+  const finalizarTurno = async (observaciones?: string) => {
+    if (turno?.id) {
+      await turnoChoferService.finalizarTurno({
+        idTurno: turno.id,
+        observaciones,
+      });
+      loadTurno();
+    }
   };
 
   useEffect(() => {
-    loadTurno();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let isMounted = true;
+
+    const cargarTurnoInicial = async () => {
+      const response = await turnoChoferService.obtenerTurnoActual();
+      if (isMounted && response.success && response.data) {
+        setTurno(response.data);
+      } else if (isMounted) {
+        setTurno(null);
+      }
+    };
+
+    cargarTurnoInicial();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return {
@@ -33,5 +56,3 @@ export const useTurnoChofer = () => {
     finalizarTurno
   };
 };
-
-
