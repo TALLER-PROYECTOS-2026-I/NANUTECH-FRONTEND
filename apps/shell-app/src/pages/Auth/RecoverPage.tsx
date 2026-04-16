@@ -22,7 +22,7 @@ export default function RecoverPage() {
     try {
       const respuesta = await mockRecuperarPassword(correo);
       setEstado('success');
-      setMensaje(respuesta);
+      setMensaje(respuesta.mensaje);
     } catch (err: any) {
       setEstado('error');
       setMensaje(err.message);
