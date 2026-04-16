@@ -10,47 +10,51 @@ export type Jornada = {
   observaciones?: string;
 };
 
-// 👉 INPUT PARA CREAR (SIN ID)
+// 👉 PARA CREAR (sin id)
 export type JornadaInput = Omit<Jornada, "id">;
 
-// 🔥 DATA LOCAL (SIMULA BACKEND)
-const jornadasMock: Jornada[] = [
-  {
-    id: "JRN-001",
-    fecha: "2026-04-10",
-    conductor: "Carlos Gomez",
-    camion: "ABC-123",
-    contrato: "CTR-001",
-    horario: "08:00 - 16:00",
-    km: 120,
-    estado: "Activa",
-    observaciones: "",
-  },
-  {
-    id: "JRN-002",
-    fecha: "2026-04-11",
-    conductor: "Luis Martinez",
-    camion: "XYZ-987",
-    contrato: "CTR-002",
-    horario: "09:00 - 17:00",
-    km: 200,
-    estado: "Completada",
-    observaciones: "Sin incidencias",
-  },
-];
+type GetJornadasResponse = {
+  success: boolean;
+  message: string;
+  data: Jornada[];
+};
+
+const API_URL =
+  "https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas";
 
 /**
- * GET JORNADAS (LOCAL)
+ * GET JORNADAS (API REAL + FALLBACK LOCAL)
  */
 export const getJornadas = async (): Promise<Jornada[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([...jornadasMock]);
-    }, 300);
-  });
+  try {
+    const res = await fetch(API_URL, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error("Error en API");
+    }
+
+    const json: GetJornadasResponse = await res.json();
+
+    // 👉 Guardamos en localStorage como respaldo
+    localStorage.setItem("jornadas", JSON.stringify(json.data));
+
+    return json.data;
+  } catch (error) {
+    console.warn("API no disponible, usando localStorage");
+
+    const local = localStorage.getItem("jornadas");
+
+    return local ? JSON.parse(local) : [];
+  }
 };
+
 /**
- * CREATE JORNADA (LOCAL)
+ * CREATE JORNADA (LOCAL POR AHORA)
  */
 export const createJornada = async (
   data: JornadaInput
@@ -62,7 +66,14 @@ export const createJornada = async (
         id: `JRN-${Math.floor(Math.random() * 9999)}`,
       };
 
-      jornadasMock.unshift(nueva);
+      // 👉 guardamos en localStorage
+      const actuales = JSON.parse(
+        localStorage.getItem("jornadas") || "[]"
+      );
+
+      const nuevas = [nueva, ...actuales];
+
+      localStorage.setItem("jornadas", JSON.stringify(nuevas));
 
       resolve(nueva);
     }, 300);
