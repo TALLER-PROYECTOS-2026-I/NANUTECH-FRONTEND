@@ -1,0 +1,9 @@
+{
+  "status": "success",
+  "data": {
+    "camionesActivos": 42,
+    "contratosPendientes": 7,
+    "ingresosMensuales": 125000,
+    "alertasMantenimiento": 3
+  }
+}

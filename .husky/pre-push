@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "====================================================="
+echo "HUSKY: Iniciando control de calidad antes del Push..."
+echo "Ejecutando todas las pruebas de Microfrontends..."
+echo "====================================================="
+
+# Ejecutamos el comando global que creaste
+npm run test:all
+
+# Capturamos si el comando anterior falló
+if [ $? -ne 0 ]; then
+  echo "====================================================="
+  echo "ERROR: Una o más pruebas han fallado."
+  echo "El 'git push' ha sido bloqueado por seguridad."
+  echo "Por favor, revisa tu código, repara las pruebas y vuelve a intentar."
+  echo "====================================================="
+  exit 1
+fi
+
+echo "Todas las pruebas pasaron con éxito."
+echo "Permitiendo la subida del código a GitHub..."
