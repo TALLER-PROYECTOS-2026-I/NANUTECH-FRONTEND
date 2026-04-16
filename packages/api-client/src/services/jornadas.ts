@@ -1,3 +1,4 @@
+
 export type Jornada = {
   id: string;
   fecha: string;
@@ -12,7 +13,15 @@ export type Jornada = {
 
 export type JornadaInput = Omit<Jornada, 'id'>;
 
-// ⚠️ DATOS DE PRUEBA - USAR MIENTRAS EL BACKEND SE ARREGLA
+type GetJornadasResponse = {
+  success: boolean;
+  message: string;
+  data: Jornada[];
+};
+
+const API_URL =
+  "https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas";
+
 const MOCK_JORNADAS: Jornada[] = [
   {
     id: 'MOCK-001',
@@ -61,12 +70,6 @@ const MOCK_JORNADA_ACTUAL: Jornada = {
   observaciones: 'Primera jornada del mes',
 };
 
-/**
- * GET - Obtener todas las jornadas
- * GET https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas?conductor_id={conductorId}
- * 
- * ✅ AHORA ENVÍA conductor_id como parámetro
- */
 export const getJornadas = async (conductorId?: string): Promise<Jornada[]> => {
   try {
     const url = conductorId 
@@ -82,12 +85,6 @@ export const getJornadas = async (conductorId?: string): Promise<Jornada[]> => {
   }
 };
 
-/**
- * GET - Obtener jornada actual del conductor
- * GET https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas/actual?conductor_id={conductorId}
- * 
- * ✅ AHORA ENVÍA conductor_id como parámetro query
- */
 export const getJornadaActual = async (conductorId: string): Promise<Jornada | null> => {
   try {
     const url = `https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas/actual?conductor_id=${encodeURIComponent(conductorId)}`;
@@ -107,12 +104,6 @@ export const getJornadaActual = async (conductorId: string): Promise<Jornada | n
   }
 };
 
-/**
- * POST - Iniciar una jornada
- * POST https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas/iniciar
- * 
- * ✅ AHORA ENVÍA conductor_id (con underscore) como el backend espera
- */
 export const iniciarJornada = async (conductorId: string, jornadaData: any) => {
   try {
     const response = await fetch(
@@ -123,7 +114,7 @@ export const iniciarJornada = async (conductorId: string, jornadaData: any) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          conductor_id: conductorId,  // ✅ Cambiar a conductor_id
+          conductor_id: conductorId,
           ...jornadaData,
         }),
       }
@@ -148,12 +139,6 @@ export const iniciarJornada = async (conductorId: string, jornadaData: any) => {
   }
 };
 
-/**
- * POST - Finalizar una jornada
- * POST https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas/finalizar
- * 
- * ✅ AHORA ENVÍA jornada_id (con underscore) como el backend espera
- */
 export const finalizarJornada = async (jornadaId: string, observaciones?: string, conductorId?: string) => {
   try {
     const response = await fetch(
@@ -164,10 +149,10 @@ export const finalizarJornada = async (jornadaId: string, observaciones?: string
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          jornada_id: jornadaId,  // ✅ Cambiar a jornada_id
-          conductor_id: conductorId,  // ✅ Agregar conductor_id si es necesario
+          jornada_id: jornadaId,
+          conductor_id: conductorId,
           observaciones,
-          hora_finalizacion: new Date().toISOString(),  // ✅ Cambiar a hora_finalizacion
+          hora_finalizacion: new Date().toISOString(),
         }),
       }
     );
@@ -180,7 +165,7 @@ export const finalizarJornada = async (jornadaId: string, observaciones?: string
         data: {
           ...MOCK_JORNADA_ACTUAL,
           estado: 'Finalizada',
-          duracionTotal: 480, // 8 horas en minutos
+          duracionTotal: 480,
           observaciones
         }
       };
@@ -201,14 +186,9 @@ export const finalizarJornada = async (jornadaId: string, observaciones?: string
   }
 };
 
-/**
- * CREATE JORNADA (LOCAL - RESPALDO)
- */
-export const createJornada = async (
-  data: JornadaInput
-) => {
+export const createJornada = async (data: JornadaInput) => {
   try {
-    return await iniciarJornada('default-conductor', data);
+    return await iniciarJornada(data.conductor, data);
   } catch (error) {
     console.error('Error creando jornada:', error);
     return { success: false, error };
