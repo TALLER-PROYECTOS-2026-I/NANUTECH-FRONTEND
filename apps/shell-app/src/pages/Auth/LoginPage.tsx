@@ -20,8 +20,7 @@ export default function LoginPage() {
 
     setCargando(true);
     try {
-      const respuesta = await mockLogin(correo, password);
-      const { token, usuario } = respuesta.data;
+      const { token, usuario } = await mockLogin(correo, password);
       localStorage.setItem('nanutech_token', token);
       
       // T05: Redirección según rol
