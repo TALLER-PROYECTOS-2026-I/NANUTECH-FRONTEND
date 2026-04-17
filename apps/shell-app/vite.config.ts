@@ -13,19 +13,14 @@ export default defineConfig({
       // Aquí le decimos dónde está el microfrontend del dashboard
       remotes: {
         dashboardApp: 'http://localhost:3001/assets/remoteEntry.js',
+        flotaApp: 'http://localhost:4173/assets/remoteEntry.js',
+        contratosApp: 'http://localhost:4174/assets/remoteEntry.js',
       },
       shared: ['react', 'react-dom', 'recharts'] // Compartimos React, ReactDOM y Recharts para evitar cargar varias versiones en la app final
     })
   ],
   server: {
     port: 3000,
-    proxy: {
-    '/api': {
-      target: 'https://wbda73ufn9.execute-api.us-east-2.amazonaws.com/dev',
-      changeOrigin: true,
-      rewrite: (path) => path.replace(/^\/api/, ''),
-    },
-  },
   },
   build: {
     modulePreload: false,

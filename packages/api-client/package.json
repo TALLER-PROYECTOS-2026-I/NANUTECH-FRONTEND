@@ -1,15 +1,17 @@
 {
   "name": "@nanutech/api-client",
   "version": "1.0.0",
-  "main": "index.ts",
+  "private": true,
+  "type": "module",
+  "main": "./index.ts",
+  "exports": {
+    ".": "./index.ts"
+  },
   "dependencies": {
     "axios": "^1.14.0"
   },
   "devDependencies": {
     "axios-mock-adapter": "^1.21.2",
     "vitest": "^4.1.2"
-  },
-  "scripts": {
-    "test": "vitest run"
   }
 }

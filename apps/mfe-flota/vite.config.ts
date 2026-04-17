@@ -11,11 +11,23 @@ export default defineConfig({
       name: 'mfe_flota',
       filename: 'remoteEntry.js',
       exposes: {
-        './App': './src/App.tsx',
+        './Dashboard': './src/App.tsx',
       },
       shared: ['react', 'react-dom']
     })
   ],
+  server: {
+    port: 4173,
+  },
+  preview: {
+    port: 4173,
+  },
+  build: {
+    modulePreload: false,
+    target: 'esnext',
+    minify: false,
+    cssCodeSplit: false,
+  },
   // Vitest configuration
   test: {
     globals: true,
