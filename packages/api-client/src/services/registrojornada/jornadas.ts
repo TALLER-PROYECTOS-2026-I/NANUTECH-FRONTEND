@@ -1,4 +1,4 @@
-import apiClient from '../../index';
+import apiClient from '../../../index';
 
 export type Jornada = {
   id: string;

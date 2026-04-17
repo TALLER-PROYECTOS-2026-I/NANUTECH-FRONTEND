@@ -23,10 +23,10 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-export * from './src/services/auth.service';
-export * from './src/services/camiones';
-export * from './src/services/conductores';
-export * from './src/services/contratos';
-export * from './src/services/jornadas';
+export * from './src/services/auth/auth.service';
+export * from './src/services/registrojornada/camiones';
+export * from './src/services/registrojornada/conductores';
+export * from './src/services/registrojornada/contratos';
+export * from './src/services/registrojornada/jornadas';
 
 export default apiClient;
