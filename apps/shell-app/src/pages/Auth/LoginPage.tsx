@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { mockLogin } from '@nanutech/api-client';
+import { login } from '@nanutech/api-client';
 import { validarFormatoCorreo } from '@nanutech/utils';
 
 export default function LoginPage() {
@@ -20,15 +20,9 @@ export default function LoginPage() {
 
     setCargando(true);
     try {
-      const { token, usuario } = await mockLogin(correo, password);
-      localStorage.setItem('nanutech_token', token);
-      
-      // T05: Redirección según rol
-      if (usuario.rol === 'ADMIN') {
-        navigate('/dashboard');
-      } else {
-        navigate('/chofer-panel'); // O la ruta que corresponda
-      }
+      const { data } = await login({ email: correo, password });
+      localStorage.setItem('nanutech_token', data.session.accessToken ?? '');
+      navigate(data.nextRoute);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -91,8 +85,7 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <a href="/recuperar" className="text-sm text-blue-600 hover:underline">¿Olvidaste tu contraseña?</a>
-          </div>
+<a href="/forgot-password" className="text-sm text-blue-600 hover:underline">¿Olvidaste tu contraseña?</a>          </div>
         </div>
       </div>
 
