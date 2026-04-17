@@ -36,7 +36,7 @@ const ChoferLayout = () => {
       <RemoteFlota />
     </Suspense>
   );
-};
+  };
 
 function App() {
   return (
