@@ -19,6 +19,13 @@ export default defineConfig({
   ],
   server: {
     port: 3000,
+    proxy: {
+    '/api': {
+      target: 'https://wbda73ufn9.execute-api.us-east-2.amazonaws.com/dev',
+      changeOrigin: true,
+      rewrite: (path) => path.replace(/^\/api/, ''),
+    },
+  },
   },
   build: {
     modulePreload: false,

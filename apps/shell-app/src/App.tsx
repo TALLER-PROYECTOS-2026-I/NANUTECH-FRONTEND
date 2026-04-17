@@ -5,6 +5,7 @@ import './App.css';
 // Importamos las páginas de Autenticación
 import LoginPage from './pages/Auth/LoginPage';
 import RecoverPage from './pages/Auth/RecoverPage';
+import ForgotPasswordConfirmPage from './pages/Auth/ForgotPasswordConfirmPage';
 
 // Importamos el Microfrontend de forma ASÍNCRONA
 const RemoteDashboard = lazy(() => import('dashboardApp/Dashboard'));
@@ -20,31 +21,21 @@ const DashboardLayout = () => {
   };
 
 
+  // Ejemplo de uso de getMe
+  const handleGetMe = async () => {
+    try {
+      const user = await getMe();
+      alert('Usuario autenticado: ' + JSON.stringify(user));
+    } catch (error: any) {
+      alert('Error al obtener usuario: ' + error.message);
+    }
+  };
+
   return (
     <div>
       {/* Contenedor del Microfrontend */}
-        <Suspense fallback={<div className="text-blue-700 animate-pulse mt-4">Cargando módulo de Dashboard...</div>}>
-          <RemoteDashboard />
-        </Suspense>
+      <Suspense fallback={<div className="text-blue-700 animate-pulse mt-4">Cargando módulo de Dashboard...</div>}>
+        <RemoteDashboard />
+      </Suspense>
     </div>
   );
-};
-
-// --- ENRUTADOR PRINCIPAL ---
-function App() {
-  return (
-    <Routes>
-      {/* Rutas Públicas */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/recuperar" element={<RecoverPage />} />
-
-      {/* Rutas Privadas (Donde viven los Microfrontends) */}
-      <Route path="/dashboard" element={<DashboardLayout />} />
-
-      {/* Si el usuario escribe una URL que no existe, lo mandamos al login por defecto */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
-  );
-}
-
-export default App;

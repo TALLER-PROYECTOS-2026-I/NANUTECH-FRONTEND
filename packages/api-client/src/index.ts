@@ -40,15 +40,3 @@ apiClient.interceptors.request.use((config) => {
   }
   return config;
 });
-
-// Funciones de prueba / utilitarias
-export const getCamiones = () => apiClient.get('/camiones');
-export const getUsuarios = () => apiClient.get('/items');
-
-// Servicios
-export * from './src/services/auth.service';
-export * from "./src/services/jornadas";
-export * from "./src/services/camiones";
-
-
-export default apiClient;

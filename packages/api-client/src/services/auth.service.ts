@@ -1,33 +1,49 @@
 // packages/api-client/src/services/auth.service.ts
+import { apiClient } from '../index';
+import type { AuthResponse, LoginRequest, ForgotPasswordRequest, ForgotPasswordConfirmRequest } from '@nanutech/types';
 
-export interface LoginResponse {
-  token: string;
-  usuario: { id: number; nombre: string; rol: string };
-}
-
-export const mockLogin = async (correo: string, password: string): Promise<LoginResponse> => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (correo === 'admin@nanutech.com' && password === '123456') {
-        resolve({
-          token: 'jwt-falso-123456789',
-          usuario: { id: 1, nombre: 'Administrador', rol: 'ADMIN' }
-        });
-      } else {
-        reject(new Error('Correo o contraseña incorrectos'));
-      }
-    }, 1500);
-  });
+const AUTH_ERROR_MESSAGES: Record<number, string> = {
+  400: 'Email o contraseña inválidos.',
+  401: 'Credenciales incorrectas.',
+  404: 'Usuario no encontrado.',
+  423: 'Tu cuenta ha sido bloqueada. Contacta al administrador.',
+  502: 'Error de conexión con el servidor de autenticación.',
 };
 
-export const mockRecuperarPassword = async (correo: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (correo.includes('@')) {
-        resolve('Te hemos enviado un enlace de recuperación a tu correo.');
-      } else {
-        reject(new Error('Por favor, ingresa un correo válido.'));
-      }
-    }, 1500);
-  });
+export const login = async (payload: LoginRequest): Promise<AuthResponse> => {
+  try {
+    const { data } = await apiClient.post<AuthResponse>('/auth/login', payload);
+    return data;
+  } catch (error: any) {
+    const status: number = error?.response?.status;
+    const message = AUTH_ERROR_MESSAGES[status] ?? 'Ocurrió un error al iniciar sesión.';
+    throw new Error(message);
+  }
+};
+
+export const forgotPassword = async (payload: ForgotPasswordRequest): Promise<string> => {
+  try {
+    const { data } = await apiClient.post<{ message: string }>('/auth/forgot-password', payload);
+    return data.message ?? 'Te hemos enviado un enlace de recuperación a tu correo.';
+  } catch (error: any) {
+    const status: number = error?.response?.status;
+    if (status === 404) throw new Error('No encontramos una cuenta con ese correo.');
+    throw new Error('No pudimos procesar tu solicitud. Inténtalo de nuevo.');
+  }
+};
+
+export const getMe = async (): Promise<AuthResponse> => {
+  const { data } = await apiClient.get<AuthResponse>('/auth/me');
+  return data;
+};
+
+export const forgotPasswordConfirm = async (payload: ForgotPasswordConfirmRequest): Promise<string> => {
+  try {
+    const { data } = await apiClient.post<{ message: string }>('/auth/forgot-password/confirm', payload);
+    return data.message ?? 'Contraseña restablecida correctamente.';
+  } catch (error: any) {
+    const status: number = error?.response?.status;
+    if (status === 400) throw new Error('Código inválido o expirado.');
+    throw new Error('No pudimos restablecer tu contraseña. Inténtalo de nuevo.');
+  }
 };

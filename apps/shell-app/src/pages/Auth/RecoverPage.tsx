@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { mockRecuperarPassword } from '@nanutech/api-client'; 
-import { validarFormatoCorreo } from '@nanutech/utils';       
+import { forgotPassword } from '@nanutech/api-client';
+import { validarFormatoCorreo } from '@nanutech/utils';
 
 export default function RecoverPage() {
   const [correo, setCorreo] = useState('');
@@ -20,7 +20,7 @@ export default function RecoverPage() {
 
     setEstado('loading');
     try {
-      const respuesta = await mockRecuperarPassword(correo);
+      const respuesta = await forgotPassword({ email: correo });
       setEstado('success');
       setMensaje(respuesta);
     } catch (err: any) {
