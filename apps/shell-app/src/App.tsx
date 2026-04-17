@@ -39,3 +39,4 @@ const DashboardLayout = () => {
       </Suspense>
     </div>
   );
+  };
