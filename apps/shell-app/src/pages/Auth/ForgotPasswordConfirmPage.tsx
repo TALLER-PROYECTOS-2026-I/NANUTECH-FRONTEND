@@ -1,4 +1,4 @@
-import { useState } from 'react';
+/* import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { forgotPasswordConfirm } from '@nanutech/api-client';
 
@@ -60,4 +60,4 @@ export default function ForgotPasswordConfirmPage() {
       </form>
     </div>
   );
-}
+} */

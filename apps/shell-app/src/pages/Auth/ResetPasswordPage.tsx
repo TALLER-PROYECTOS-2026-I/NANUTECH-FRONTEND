@@ -1,0 +1,147 @@
+import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { confirmarRecuperacionPassword } from '@nanutech/api-client';
+import { validarFormatoCorreo } from '@nanutech/utils';
+
+export default function ResetPasswordPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const [email, setEmail] = useState(location.state?.email || '');
+  const [code, setCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [estado, setEstado] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [mensaje, setMensaje] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMensaje('');
+
+    if (!validarFormatoCorreo(email)) {
+      setEstado('error');
+      return setMensaje('Ingresa un correo válido.');
+    }
+
+    if (!code.trim()) {
+      setEstado('error');
+      return setMensaje('Ingresa el código de verificación.');
+    }
+
+    if (!newPassword.trim()) {
+      setEstado('error');
+      return setMensaje('Ingresa una nueva contraseña.');
+    }
+
+    setEstado('loading');
+
+    try {
+      const respuesta = await confirmarRecuperacionPassword(
+        email,
+        code,
+        newPassword
+      );
+
+      setEstado('success');
+      setMensaje(respuesta.message || 'Contraseña actualizada correctamente.');
+
+      setTimeout(() => {
+        navigate('/login');
+      }, 1800);
+    } catch (err: any) {
+      setEstado('error');
+      setMensaje(
+        err?.response?.data?.message ||
+          err?.response?.data?.mensaje ||
+          err?.message ||
+          'No se pudo actualizar la contraseña'
+      );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
+      <div className="text-center mb-8">
+        <div className="w-16 h-16 bg-blue-600 rounded-xl mx-auto flex items-center justify-center mb-4 shadow-blue-200 shadow-lg">
+          <span className="text-white text-2xl font-bold">NT</span>
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900">NANU TECH</h2>
+        <p className="text-sm text-gray-500">Restablecer Contraseña</p>
+      </div>
+
+      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8 border border-gray-100">
+        <h3 className="text-xl font-bold mb-2">Nueva Contraseña</h3>
+        <p className="text-sm text-gray-500 mb-6">
+          Ingresa tu correo, el código recibido y tu nueva contraseña.
+        </p>
+
+        {mensaje && (
+          <div
+            className={`mb-6 p-3 rounded-md text-sm border ${
+              estado === 'success'
+                ? 'bg-green-50 text-green-700 border-green-200'
+                : 'bg-red-50 text-red-600 border-red-200'
+            }`}
+          >
+            {mensaje}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Correo Electrónico
+            </label>
+            <input
+              type="email"
+              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="usuario@nanutech.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Código de Verificación
+            </label>
+            <input
+              type="text"
+              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="Ej: 123456"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+            />
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Nueva Contraseña
+            </label>
+            <input
+              type="password"
+              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="NuevaPassword123!"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={estado === 'loading'}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 mb-4"
+          >
+            {estado === 'loading' ? 'Actualizando...' : 'Actualizar Contraseña'}
+          </button>
+        </form>
+
+        <button
+          onClick={() => navigate('/login')}
+          className="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2"
+        >
+          <span>←</span> Volver al Login
+        </button>
+      </div>
+    </div>
+  );
+}

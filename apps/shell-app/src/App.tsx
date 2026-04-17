@@ -1,42 +1,71 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 
-// Importamos las páginas de Autenticación
 import LoginPage from './pages/Auth/LoginPage';
 import RecoverPage from './pages/Auth/RecoverPage';
-import ForgotPasswordConfirmPage from './pages/Auth/ForgotPasswordConfirmPage';
-
-// Importamos el Microfrontend de forma ASÍNCRONA
+import ResetPasswordPage from './pages/Auth/ResetPasswordPage';
+import ProtectedRoute from './components/ProtectedRoute';
+  
 const RemoteDashboard = lazy(() => import('dashboardApp/Dashboard'));
+const RemoteFlota = lazy(() => import('flotaApp/Dashboard'));
 
-// --- COMPONENTE DEL LAYOUT PRIVADO ---
-// Este es el "caparazón" que envuelve a tu microfrontend
 const DashboardLayout = () => {
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    localStorage.removeItem('nanutech_token'); // Borramos el token falso
-    navigate('/login'); // Lo regresamos al login
-  };
-
-
-  // Ejemplo de uso de getMe
-  const handleGetMe = async () => {
-    try {
-      const user = await getMe();
-      alert('Usuario autenticado: ' + JSON.stringify(user));
-    } catch (error: any) {
-      alert('Error al obtener usuario: ' + error.message);
-    }
-  };
-
   return (
-    <div>
-      {/* Contenedor del Microfrontend */}
-      <Suspense fallback={<div className="text-blue-700 animate-pulse mt-4">Cargando módulo de Dashboard...</div>}>
-        <RemoteDashboard />
-      </Suspense>
-    </div>
+    <Suspense
+      fallback={
+        <div className="text-blue-700 animate-pulse mt-4">
+          Cargando módulo de Dashboard...
+        </div>
+      }
+    >
+      <RemoteDashboard />
+    </Suspense>
+  );
+};
+
+const ChoferLayout = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="text-blue-700 animate-pulse mt-4">
+          Cargando módulo de Flota...
+        </div>
+      }
+    >
+      <RemoteFlota />
+    </Suspense>
   );
   };
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/recuperar" element={<RecoverPage />} />
+      <Route path="/recuperar/confirmar" element={<ResetPasswordPage />} />
+
+      <Route
+        path="/dashboard/admin"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/dashboard/chofer"
+        element={
+          <ProtectedRoute>
+            <ChoferLayout />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
+}
+
+export default App;

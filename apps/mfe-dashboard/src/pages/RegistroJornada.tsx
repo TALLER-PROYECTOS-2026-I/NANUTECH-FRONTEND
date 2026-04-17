@@ -1,7 +1,7 @@
 import { useNavigate, NavLink } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "./Dashboard.css";
-import { createJornada } from "../../../../packages/api-client/src/services/jornadas";
+import { createJornada } from "../../../../packages/api-client/src/services/registrojornada/jornadas";
 
 const menuItems = [
   { label: "Dashboard", path: "/dashboard", icon: "📊" },

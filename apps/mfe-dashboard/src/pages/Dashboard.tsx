@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import {
   BarChart,
   Bar,
@@ -11,7 +11,7 @@ import {
   Legend,
 } from "recharts";
 
-import { getCamiones } from "../../../../packages/api-client/src/services/camiones";
+import { getCamiones } from "@nanutech/api-client";
 import "./Dashboard.css";
 
 /* MOCK DATA (igual lo dejamos) */
@@ -40,7 +40,7 @@ const menuItems = [
 ];
 
 function Dashboard() {
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
 
   const [camiones, setCamiones] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,14 +48,19 @@ function Dashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await getCamiones();
+        // const res = await getCamiones();
 
-        console.log("API RESPONSE:", res);
+        const camiones = await getCamiones();
+        setCamiones(camiones);
+
+        console.log("API RESPONSE:", camiones);
 
         // 🔥 compatibilidad total con cualquier formato de API
-        const data = res?.data || res?.unidades || res || [];
+        // const data = res?.data || res?.unidades || res || [];
 
-        setCamiones(Array.isArray(data) ? data : []);
+        // setCamiones(Array.isArray(data) ? data : []);
+
+
       } catch (err) {
         console.error("Error cargando unidades:", err);
         setCamiones([]); // evita pantalla en blanco
@@ -74,8 +79,8 @@ function Dashboard() {
   });
 
   const handleLogout = () => {
-    localStorage.removeItem("nanutech_token");
-    navigate("/login");
+    localStorage.clear();
+    window.location.href = "/login";
   };
 
   return (

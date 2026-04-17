@@ -11,10 +11,14 @@ on:
       - 'package.json'
       - 'package-lock.json'
 
+env:
+      VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
 jobs:
   quality-gate:
     name: Lint & Type Check
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -70,6 +74,8 @@ jobs:
         run: |
           npm run build -w apps/shell-app
           npm run build -w apps/mfe-flota
+          npm run build -w apps/mfe-dashboard
+          npm run build -w apps/mfe-contratos
           
       - name: Build Mobile (Dry Run)
         # Solo verificamos que el código de React Native compile
