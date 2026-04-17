@@ -48,7 +48,7 @@ function App() {
       <Route
         path="/dashboard/admin"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute>-
             <DashboardLayout />
           </ProtectedRoute>
         }
