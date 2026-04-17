@@ -1,4 +1,6 @@
-import { defineConfig } from 'vite'
+/// <reference types="vitest" />
+
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import federation from '@originjs/vite-plugin-federation'
 
@@ -12,7 +14,7 @@ export default defineConfig({
       remotes: {
         dashboardApp: 'http://localhost:3001/assets/remoteEntry.js',
       },
-      shared: ['react', 'react-dom']
+      shared: ['react', 'react-dom', 'recharts'] // Compartimos React, ReactDOM y Recharts para evitar cargar varias versiones en la app final
     })
   ],
   server: {
@@ -30,5 +32,10 @@ export default defineConfig({
     target: 'esnext',
     minify: false,
     cssCodeSplit: false,
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './vitest.setup.ts',
   }
 })

@@ -14,7 +14,7 @@ export default defineConfig({
       exposes: {
         './Dashboard': './src/App.tsx',
       },
-      shared: ['react', 'react-dom']
+      shared: ['react', 'react-dom', 'recharts'] // Compartimos React, ReactDOM y Recharts para evitar cargar varias versiones en la app final
     })
   ],
   server: {

@@ -47,5 +47,8 @@ export const getUsuarios = () => apiClient.get('/items');
 
 // Servicios
 export * from './src/services/auth.service';
+export * from "./src/services/jornadas";
+export * from "./src/services/camiones";
+
 
 export default apiClient;
