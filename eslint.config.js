@@ -10,11 +10,48 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/node_modules/**', 'apps/mobile-chofer/.expo/**', '**/*.d.ts'],
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      'apps/mobile-chofer/.expo/**',
+      '**/*.d.ts',
+    ],
   },
-  // Configuración para mfe-flota
+
+  // Archivos de configuración: sin type-aware linting
   {
-    files: ['apps/mfe-flota/**/*.{ts,tsx}'],
+    files: [
+      '**/vite.config.ts',
+      '**/vitest.setup.ts',
+      'packages/ui-components/index.ts',
+      'packages/utils/index.ts',
+      'packages/types/src/index.ts',
+    ],
+    extends: [
+      js.configs.recommended,
+      ...tseslint.configs.recommended,
+    ],
+    languageOptions: {
+      parser: tseslint.parser,
+      ecmaVersion: 2020,
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+      },
+      parserOptions: {
+        project: false,
+        tsconfigRootDir: __dirname,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': 'warn',
+    },
+  },
+
+  // mfe-flota: solo código fuente
+  {
+    files: ['apps/mfe-flota/src/**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
       ...tseslint.configs.recommended,
@@ -43,9 +80,10 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': 'warn',
     },
   },
-  // Configuración para shell-app
+
+  // shell-app: solo código fuente
   {
-    files: ['apps/shell-app/**/*.{ts,tsx}'],
+    files: ['apps/shell-app/src/**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
       ...tseslint.configs.recommended,
@@ -74,9 +112,10 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': 'warn',
     },
   },
-  // Configuración para mfe-dashboard
+
+  // mfe-dashboard: solo código fuente
   {
-    files: ['apps/mfe-dashboard/**/*.{ts,tsx}'],
+    files: ['apps/mfe-dashboard/src/**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
       ...tseslint.configs.recommended,
@@ -105,9 +144,10 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': 'warn',
     },
   },
-  // Configuración para mfe-contratos
+
+  // mfe-contratos: solo código fuente
   {
-    files: ['apps/mfe-contratos/**/*.{ts,tsx}'],
+    files: ['apps/mfe-contratos/src/**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
       ...tseslint.configs.recommended,
@@ -136,9 +176,10 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': 'warn',
     },
   },
-  // Configuración para packages
+
+  // packages/api-client: solo src real
   {
-    files: ['packages/**/*.{ts,tsx}'],
+    files: ['packages/api-client/src/**/*.{ts,tsx}', 'packages/api-client/index.ts'],
     extends: [
       js.configs.recommended,
       ...tseslint.configs.recommended,
@@ -155,7 +196,7 @@ export default tseslint.config(
         ...globals.node,
       },
       parserOptions: {
-        project: ['./packages/*/tsconfig.json'],
+        project: ['./packages/api-client/tsconfig.json'],
         tsconfigRootDir: __dirname,
         ecmaFeatures: {
           jsx: true,

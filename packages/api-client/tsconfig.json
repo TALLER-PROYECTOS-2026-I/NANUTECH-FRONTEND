@@ -5,5 +5,5 @@
     "rootDir": ".",
     "composite": true
   },
-  "include": ["src", "index.ts"]
+  "include": ["src", "index.ts", "vite-env.d.ts"],
 }

@@ -1,3 +1,4 @@
+import apiClient from '../../index';
 
 export type Jornada = {
   id: string;
@@ -13,14 +14,11 @@ export type Jornada = {
 
 export type JornadaInput = Omit<Jornada, 'id'>;
 
-type GetJornadasResponse = {
+type ApiResponse<T> = {
   success: boolean;
   message: string;
-  data: Jornada[];
+  data: T;
 };
-
-const API_URL =
-  "https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas";
 
 const MOCK_JORNADAS: Jornada[] = [
   {
@@ -72,13 +70,21 @@ const MOCK_JORNADA_ACTUAL: Jornada = {
 
 export const getJornadas = async (conductorId?: string): Promise<Jornada[]> => {
   try {
-    const url = conductorId 
-      ? `https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas?conductor_id=${conductorId}`
-      : 'https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas';
-    
-    const response = await fetch(url);
-    const data = await response.json();
-    return Array.isArray(data) ? data : [];
+    const response = await apiClient.get<Jornada[] | ApiResponse<Jornada[]>>('/jornadas', {
+      params: conductorId ? { conductor_id: conductorId } : {},
+    });
+
+    const payload = response.data;
+
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+
+    if (payload && Array.isArray(payload.data)) {
+      return payload.data;
+    }
+
+    return [];
   } catch (error) {
     console.warn('⚠️ Error obteniendo jornadas del backend, usando datos mock:', error);
     return MOCK_JORNADAS;
@@ -87,18 +93,18 @@ export const getJornadas = async (conductorId?: string): Promise<Jornada[]> => {
 
 export const getJornadaActual = async (conductorId: string): Promise<Jornada | null> => {
   try {
-    const url = `https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas/actual?conductor_id=${encodeURIComponent(conductorId)}`;
-    
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      console.warn(`⚠️ Backend retornó status ${response.status}, usando datos mock`);
-      return MOCK_JORNADA_ACTUAL;
+    const response = await apiClient.get<Jornada | ApiResponse<Jornada>>('/jornadas/actual', {
+      params: { conductor_id: conductorId },
+    });
+
+    const payload = response.data as any;
+
+    if (payload?.data) {
+      return payload.data;
     }
-    
-    const data = await response.json();
-    return data;
-  } catch (error) {
+
+    return payload ?? null;
+  } catch (error: any) {
     console.warn('⚠️ Error obteniendo jornada actual del backend, usando datos mock:', error);
     return MOCK_JORNADA_ACTUAL;
   }
@@ -106,82 +112,53 @@ export const getJornadaActual = async (conductorId: string): Promise<Jornada | n
 
 export const iniciarJornada = async (conductorId: string, jornadaData: any) => {
   try {
-    const response = await fetch(
-      'https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas/iniciar',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          conductor_id: conductorId,
-          ...jornadaData,
-        }),
-      }
-    );
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.warn(`⚠️ Backend retornó status ${response.status}:`, errorData);
-      console.warn('Usando datos mock...');
-      return {
-        success: true,
-        data: { ...MOCK_JORNADA_ACTUAL, estado: 'Activa' }
-      };
-    }
-    const data = await response.json();
-    return { success: response.ok, data };
-  } catch (error) {
-    console.warn('⚠️ Error iniciando jornada, usando datos mock:', error);
+    const response = await apiClient.post('/jornadas/iniciar', {
+      conductor_id: conductorId,
+      ...jornadaData,
+    });
+
     return {
       success: true,
-      data: { ...MOCK_JORNADA_ACTUAL, estado: 'Activa' }
+      data: response.data?.data ?? response.data,
+    };
+  } catch (error: any) {
+    console.warn('⚠️ Error iniciando jornada, usando datos mock:', error);
+
+    return {
+      success: true,
+      data: { ...MOCK_JORNADA_ACTUAL, estado: 'Activa' },
     };
   }
 };
 
-export const finalizarJornada = async (jornadaId: string, observaciones?: string, conductorId?: string) => {
+export const finalizarJornada = async (
+  jornadaId: string,
+  observaciones?: string,
+  conductorId?: string
+) => {
   try {
-    const response = await fetch(
-      'https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage/jornadas/finalizar',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jornada_id: jornadaId,
-          conductor_id: conductorId,
-          observaciones,
-          hora_finalizacion: new Date().toISOString(),
-        }),
-      }
-    );
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.warn(`⚠️ Backend retornó status ${response.status}:`, errorData);
-      console.warn('Usando datos mock...');
-      return {
-        success: true,
-        data: {
-          ...MOCK_JORNADA_ACTUAL,
-          estado: 'Finalizada',
-          duracionTotal: 480,
-          observaciones
-        }
-      };
-    }
-    const data = await response.json();
-    return { success: response.ok, data };
-  } catch (error) {
+    const response = await apiClient.post('/jornadas/finalizar', {
+      jornada_id: jornadaId,
+      conductor_id: conductorId,
+      observaciones,
+      hora_finalizacion: new Date().toISOString(),
+    });
+
+    return {
+      success: true,
+      data: response.data?.data ?? response.data,
+    };
+  } catch (error: any) {
     console.warn('⚠️ Error finalizando jornada, usando datos mock:', error);
+
     return {
       success: true,
       data: {
         ...MOCK_JORNADA_ACTUAL,
         estado: 'Finalizada',
         duracionTotal: 480,
-        observaciones
-      }
+        observaciones,
+      },
     };
   }
 };
