@@ -1,4 +1,14 @@
-import { getJornadaActual, iniciarJornada, finalizarJornada } from '@nanutech/api-client';
+import {
+  getJornadaActual,
+  iniciarJornada,
+  finalizarJornada,
+  getConductores,
+  getCamiones,
+  getContratosVigentes,
+  type Conductor,
+  type Camion,
+  type Contrato,
+} from '@nanutech/api-client';
 import {
   TurnoChofer,
   FinalizarTurnoRequest,
@@ -6,21 +16,115 @@ import {
   RespuestaServidor,
 } from '../types/turnoChofer.types';
 
-// Conductor ID para las llamadas a API (esto debería venir del contexto de autenticación)
-const CONDUCTOR_ID = 'CONDUCTOR-001';
+type JornadaActualBackend = {
+  id: string;
+  conductor_id: string;
+  unidad_id: string;
+  contrato_id: string;
+  creado_por?: string;
+  fecha?: string;
+  fecha_jornada?: string;
+  hora_inicio?: string | null;
+  hora_fin?: string | null;
+  origen?: string;
+  destino?: string;
+  km_recorridos?: string | number;
+  observaciones?: string | null;
+  estado?: string;
+  created_at?: string;
+  updated_at?: string;
+  duracion_total_segundos?: number | null;
+};
 
-/**
- * Servicio de Turno del Chofer
- * Maneja toda la lógica de comunicación con el servidor para turnos
- * Utiliza el api-client compartido del monorepo
- */
+const obtenerUsuarioId = (): string | null => {
+  try {
+    const userRaw = localStorage.getItem('nanutech_user');
+    if (!userRaw) return null;
+
+    const user = JSON.parse(userRaw);
+    return user?.id || null;
+  } catch {
+    return null;
+  }
+};
+
+const mapearEstadoChofer = (estado?: string): TurnoChofer['estado'] => {
+  const estadoNormalizado = (estado || '').toUpperCase();
+
+  switch (estadoNormalizado) {
+    case 'EN_PROCESO':
+    case 'ACTIVA':
+      return 'EN_PROGRESO';
+
+    case 'COMPLETADA':
+    case 'FINALIZADA':
+      return 'FINALIZADO';
+
+    case 'REGISTRADA':
+    case 'PENDIENTE':
+    default:
+      return 'PENDIENTE';
+  }
+};
+
+const construirNombreConductor = (conductor?: Conductor): string => {
+  if (!conductor) return 'Sin conductor';
+  const nombre = `${conductor.nombres || ''} ${conductor.apellidos || ''}`.trim();
+  return nombre || conductor.correo || conductor.id;
+};
+
+const construirDescripcionUnidad = (camion?: Camion): string => {
+  if (!camion) return 'Sin placa';
+  return camion.placa || camion.id;
+};
+
+const construirCodigoContrato = (contrato?: Contrato): string => {
+  if (!contrato) return 'Sin contrato';
+  return contrato.codigo || contrato.id;
+};
+
+const mapearJornadaATurnoChofer = (
+  jornada: JornadaActualBackend,
+  conductores: Conductor[],
+  camiones: Camion[],
+  contratos: Contrato[]
+): TurnoChofer => {
+  const conductor = conductores.find((c) => c.id === jornada.conductor_id);
+  const camion = camiones.find((c) => c.id === jornada.unidad_id);
+  const contrato = contratos.find((c) => c.id === jornada.contrato_id);
+
+  return {
+    id: jornada.id,
+    datosJornada: {
+      id: jornada.id,
+      nombreConductor: construirNombreConductor(conductor),
+      placa: construirDescripcionUnidad(camion),
+      idContrato: construirCodigoContrato(contrato),
+      ruta: {
+        origen: jornada.origen ?? 'Punto de origen',
+        destino: jornada.destino ?? 'Punto de destino',
+      },
+      fecha: jornada.fecha || jornada.fecha_jornada || '',
+    },
+    estado: mapearEstadoChofer(jornada.estado),
+    horaInicio: jornada.hora_inicio || undefined,
+    tiempoTranscurrido: 0,
+  };
+};
+
 export const turnoChoferService = {
-  /**
-   * Obtiene el turno actual del chofer desde el servidor real
-   */
   async obtenerTurnoActual(): Promise<RespuestaServidor<TurnoChofer>> {
     try {
-      const jornada = await getJornadaActual(CONDUCTOR_ID);
+      const conductorId = obtenerUsuarioId();
+
+      if (!conductorId) {
+        return {
+          success: false,
+          error: 'No se pudo identificar al conductor autenticado',
+        };
+      }
+
+      const jornada = await getJornadaActual(conductorId);
 
       if (!jornada) {
         return {
@@ -30,24 +134,18 @@ export const turnoChoferService = {
         };
       }
 
-      // Mapear datos del backend al formato de TurnoChofer
-      const turno: TurnoChofer = {
-        id: jornada.id,
-        datosJornada: {
-          id: jornada.id,
-          nombreConductor: jornada.conductor,
-          placa: jornada.camion,
-          idContrato: jornada.contrato,
-          ruta: {
-            origen: 'Punto de origen',
-            destino: 'Punto de destino',
-          },
-          fecha: jornada.fecha,
-        },
-        estado: jornada.estado === 'Activa' ? 'EN_PROGRESO' : 'PENDIENTE',
-        horaInicio: jornada.horario.split(' - ')[0],
-        tiempoTranscurrido: 0,
-      };
+      const [conductores, camiones, contratos] = await Promise.all([
+        getConductores(),
+        getCamiones(),
+        getContratosVigentes(),
+      ]);
+
+      const turno = mapearJornadaATurnoChofer(
+        jornada as JornadaActualBackend,
+        conductores || [],
+        camiones || [],
+        contratos || []
+      );
 
       return {
         success: true,
@@ -63,64 +161,64 @@ export const turnoChoferService = {
     }
   },
 
-  /**
-   * Obtiene la hora actual del servidor
-   * IMPORTANTE: Usar esta hora para sincronización, no la hora local del dispositivo
-   */
   async obtenerHoraServidor(): Promise<string> {
     try {
-      // En producción, obtener hora del servidor
-      // Por ahora retornamos la hora actual como ISO
       return new Date().toISOString();
     } catch {
       return new Date().toISOString();
     }
   },
 
-  /**
-   * Inicia un nuevo turno para el chofer
-   * Llama a la API real del backend
-   */
   async iniciarTurno(): Promise<RespuestaServidor<TurnoChofer>> {
     try {
-      const horaServidor = new Date().toISOString();
+      const conductorId = obtenerUsuarioId();
 
-      // Llamar a la API para iniciar la jornada
-      const resultado = await iniciarJornada(CONDUCTOR_ID, {
-        horaInicio: horaServidor,
-        estado: 'Activa',
-      });
+      if (!conductorId) {
+        return {
+          success: false,
+          error: 'No se pudo identificar al conductor autenticado',
+        };
+      }
 
-      if (!resultado.success) {
+      const jornadaActual = await getJornadaActual(conductorId);
+
+      if (!jornadaActual?.id) {
+        return {
+          success: false,
+          error: 'No hay una jornada registrada para iniciar',
+        };
+      }
+
+      const resultado = await iniciarJornada(jornadaActual.id, conductorId);
+      const jornada = (resultado?.data ?? resultado) as JornadaActualBackend;
+
+      if (!jornada) {
         return {
           success: false,
           error: 'Error al iniciar el turno en el servidor',
         };
       }
 
-      // Mapear respuesta del servidor
-      const jornada = resultado.data;
-      const turno: TurnoChofer = {
-        id: jornada.id,
-        datosJornada: {
-          id: jornada.id,
-          nombreConductor: jornada.conductor,
-          placa: jornada.camion,
-          idContrato: jornada.contrato,
-          ruta: {
-            origen: 'Punto de origen',
-            destino: 'Punto de destino',
-          },
-          fecha: jornada.fecha,
-        },
-        estado: 'EN_PROGRESO',
-        horaInicio: horaServidor,
-        tiempoTranscurrido: 0,
-      };
+      const [conductores, camiones, contratos] = await Promise.all([
+        getConductores(),
+        getCamiones(),
+        getContratosVigentes(),
+      ]);
+
+      const turno = mapearJornadaATurnoChofer(
+        jornada,
+        conductores || [],
+        camiones || [],
+        contratos || []
+      );
 
       return {
         success: true,
-        data: turno,
+        data: {
+          ...turno,
+          estado: 'EN_PROGRESO',
+          horaInicio: jornada.hora_inicio || new Date().toISOString(),
+        },
         mensaje: '¡Turno iniciado exitosamente!',
       };
     } catch (error) {
@@ -132,23 +230,26 @@ export const turnoChoferService = {
     }
   },
 
-  /**
-   * Finaliza el turno actual del chofer
-   * Llama a la API real del backend
-   */
-  async finalizarTurno(request: FinalizarTurnoRequest): Promise<RespuestaServidor<FinalizarTurnoResponse>> {
+  async finalizarTurno(
+    request: FinalizarTurnoRequest
+  ): Promise<RespuestaServidor<FinalizarTurnoResponse>> {
     try {
-      // Llamar a la API para finalizar la jornada
-      const resultado = await finalizarJornada(request.idTurno, request.observaciones, CONDUCTOR_ID);
+      const conductorId = obtenerUsuarioId();
 
-      if (!resultado.success) {
+      if (!conductorId) {
         return {
           success: false,
-          error: 'Error al finalizar el turno en el servidor',
+          error: 'No se pudo identificar al conductor autenticado',
         };
       }
 
-      const jornada = resultado.data;
+      const resultado = await finalizarJornada(
+        request.idTurno,
+        request.observaciones,
+        conductorId
+      );
+
+      const jornada = resultado?.data ?? resultado;
       const horaFinalizacion = new Date().toISOString();
 
       return {
@@ -157,7 +258,11 @@ export const turnoChoferService = {
           idTurno: request.idTurno,
           estado: 'FINALIZADO',
           horaFinalizacion,
-          duracionTotal: jornada.duracion || 0,
+          duracionTotal:
+            jornada?.duracion_total_segundos ||
+            jornada?.duracionTotal ||
+            jornada?.duracion ||
+            0,
         },
         mensaje: '¡Turno finalizado exitosamente!',
       };
@@ -170,14 +275,6 @@ export const turnoChoferService = {
     }
   },
 
-  /**
-   * Calcula el tiempo transcurrido entre la hora de inicio y la hora actual del servidor
-   * IMPORTANTE: No usar Date.now() - usar siempre timestamps del servidor
-   *
-   * @param horaInicio - ISO timestamp del servidor cuando inició el turno
-   * @param horaActual - ISO timestamp actual del servidor
-   * @returns Duración en segundos
-   */
   calcularTiempoTranscurrido(horaInicio: string, horaActual: string): number {
     try {
       const inicio = new Date(horaInicio);
@@ -190,13 +287,6 @@ export const turnoChoferService = {
     }
   },
 
-  /**
-   * Convierte segundos a formato HH:MM:SS
-   * Soporta duraciones mayores a 24 horas
-   *
-   * @param segundos - Total de segundos
-   * @returns String en formato HH:MM:SS
-   */
   formatearTiempo(segundos: number): string {
     const horas = Math.floor(segundos / 3600);
     const minutos = Math.floor((segundos % 3600) / 60);
@@ -209,4 +299,3 @@ export const turnoChoferService = {
     return `${formatoHora}:${formatoMinuto}:${formatoSegundo}`;
   },
 };
-
