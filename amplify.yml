@@ -3,18 +3,28 @@ frontend:
   phases:
     preBuild:
       commands:
-        # Instalación limpia basada en el package-lock.json
         - npm ci
     build:
       commands:
-        # Comando de compilación estándar de Vite
-        - npm run build
+        # 1. Compilamos todo el monorepo (Shell y todos los MFEs)
+        - npm run build --workspaces --if-present
+        
+        # 2. Creamos las carpetas de destino dentro del Shell para los microfrontends
+        # Esto permite que el Shell acceda a ellos de forma relativa (ej: /mfes/dashboard)
+        - mkdir -p apps/shell-app/dist/mfes/dashboard
+        - mkdir -p apps/shell-app/dist/mfes/flota
+        - mkdir -p apps/shell-app/dist/mfes/contratos
+        
+        # 3. Movemos los archivos compilados de cada MFE al interior del Shell
+        - cp -r apps/mfe-dashboard/dist/* apps/shell-app/dist/mfes/dashboard/
+        - cp -r apps/mfe-flota/dist/* apps/shell-app/dist/mfes/flota/
+        - cp -r apps/mfe-contratos/dist/* apps/shell-app/dist/mfes/contratos/
   artifacts:
-    # Apuntamos a la carpeta dist de la aplicación principal
+    # La carpeta final que Amplify sube a la nube es la del Shell, 
+    # pero ahora ya contiene a todos sus "hijos" dentro.
     baseDirectory: apps/shell-app/dist
     files:
       - '**/*'
   cache:
     paths:
-      # Cachear los módulos para que los siguientes despliegues sean más rápidos
       - node_modules/**/*
