@@ -1,7 +1,15 @@
 import { useNavigate, NavLink } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "./Dashboard.css";
-import { createJornada } from "../../../../packages/api-client/src/services/registrojornada/jornadas";
+import {
+  createJornada,
+  getConductores,
+  getCamiones,
+  getContratosVigentes,
+  type Conductor,
+  type Camion,
+  type Contrato,
+} from "@nanutech/api-client";
 
 const menuItems = [
   { label: "Dashboard", path: "/dashboard", icon: "📊" },
@@ -20,8 +28,28 @@ function RegistroJornada() {
     day: "numeric",
   });
 
-  // 🔥 HORA DINÁMICA
   const [horaActual, setHoraActual] = useState("");
+
+  const [form, setForm] = useState({
+    conductor: "",
+    camion: "",
+    contrato: "",
+    fecha: "",
+    horaInicio: "",
+    horaFin: "",
+    km: "",
+    origen: "",
+    destino: "",
+    observaciones: "",
+  });
+
+  const [conductores, setConductores] = useState<Conductor[]>([]);
+  const [camiones, setCamiones] = useState<Camion[]>([]);
+  const [contratos, setContratos] = useState<Contrato[]>([]);
+
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loadingCatalogos, setLoadingCatalogos] = useState(true);
 
   useEffect(() => {
     const actualizarHora = () => {
@@ -40,24 +68,45 @@ function RegistroJornada() {
     return () => clearInterval(intervalo);
   }, []);
 
-  // 🔥 STATE MOCK
-  const [form, setForm] = useState({
-    conductor: "",
-    camion: "",
-    contrato: "",
-    fecha: "",
-    horaInicio: "",
-    horaFin: "",
-    km: "",
-    origen: "",
-    destino: "",
-    observaciones: "",
-  });
+  useEffect(() => {
+    const cargarCatalogos = async () => {
+      try {
+        const [conductoresRes, camionesRes, contratosRes] = await Promise.all([
+          getConductores(),
+          getCamiones(),
+          getContratosVigentes(),
+        ]);
 
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+        const conductoresActivos = (conductoresRes || []).filter(
+          (c) => (c.estado || "").toUpperCase() === "ACTIVO" || c.activo === true
+        );
 
- const handleChange = (e: any) => {
+        const contratosVigentes = (contratosRes || []).filter(
+          (c) =>
+            (c.estado || "").toUpperCase() === "VIGENTE" ||
+            (c.estado || "").toUpperCase() === "ACTIVO" ||
+            c.activo === true
+        );
+
+        setConductores(conductoresActivos);
+        setCamiones(camionesRes || []);
+        setContratos(contratosVigentes);
+      } catch (err) {
+        console.error("Error cargando catálogos:", err);
+        setConductores([]);
+        setCamiones([]);
+        setContratos([]);
+      } finally {
+        setLoadingCatalogos(false);
+      }
+    };
+
+    cargarCatalogos();
+  }, []);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     setForm({
       ...form,
       [e.target.name]: e.target.value,
@@ -74,65 +123,83 @@ function RegistroJornada() {
       !form.horaFin ||
       !form.km
     ) {
-      setError("Complete todos los campos obligatorios");
+      setError("Complete todos los campos obligatorios (*) para continuar");
       return false;
     }
-    setError("");
+
+    if (isNaN(Number(form.km))) {
+      setError("Complete todos los campos obligatorios (*) para continuar");
+      return false;
+    }
+
+    if (form.horaFin <= form.horaInicio) {
+      setError("La hora de fin debe ser mayor a la hora de inicio");
+      return false;
+    }
+
     return true;
   };
 
   const handleSubmit = async () => {
-  if (!validar()) return;
+    setError("");
+    setSuccess("");
 
-  try {
-    const payload = {
-      conductor: form.conductor,
-      camion: form.camion,
-      contrato: form.contrato,
-      fecha: form.fecha,
-      horaInicio: form.horaInicio,
-      horaFin: form.horaFin,
-      km: Number(form.km),
-      origen: form.origen,
-      destino: form.destino,
-      observaciones: form.observaciones || "",
-      estado: "Activa",
-      observacionesFlag: form.observaciones ? true : false,
-       horario: `${form.horaInicio} - ${form.horaFin}`,
-    };
+    if (!validar()) return;
 
-    await createJornada(payload);
+    const usuarioGuardado = localStorage.getItem("nanutech_user");
+    const usuario = usuarioGuardado ? JSON.parse(usuarioGuardado) : null;
 
-    setSuccess("Jornada registrada correctamente 🚀");
+    if (!usuario?.id) {
+      setError("No se pudo identificar el usuario que registra la jornada");
+      return;
+    }
 
-    console.log("GUARDADO EN API:", payload);
+    try {
+      const payload = {
+        conductor_id: form.conductor,
+        unidad_id: form.camion,
+        contrato_id: form.contrato,
+        creado_por: usuario.id,
+        fecha: form.fecha,
+        hora_inicio: form.horaInicio,
+        hora_fin: form.horaFin,
+        km_recorridos: Number(form.km),
+        origen: form.origen,
+        destino: form.destino,
+        observaciones: form.observaciones || "",
+      };
 
-    // limpiar form (NO cambia diseño)
-    setForm({
-      conductor: "",
-      camion: "",
-      contrato: "",
-      fecha: "",
-      horaInicio: "",
-      horaFin: "",
-      km: "",
-      origen: "",
-      destino: "",
-      observaciones: "",
-    });
+      console.log("PAYLOAD ENVIADO:", payload);
 
-    // ir al listado
-    navigate("/RegistroNuevaJornada");
+      await createJornada(payload);
 
-  } catch (error) {
-    console.error(error);
-    setError("Error al registrar jornada");
-  }
-};
+      setSuccess("Jornada registrada correctamente 🚀");
+
+      setForm({
+        conductor: "",
+        camion: "",
+        contrato: "",
+        fecha: "",
+        horaInicio: "",
+        horaFin: "",
+        km: "",
+        origen: "",
+        destino: "",
+        observaciones: "",
+      });
+
+      setTimeout(() => {
+        navigate("/RegistroNuevaJornada");
+      }, 800);
+    } catch (err: any) {
+      console.error("ERROR COMPLETO:", err);
+      console.error("RESPONSE DATA:", err?.response?.data);
+      setError(err?.response?.data?.message || "Error al registrar jornada");
+    }
+  };
 
   return (
     <div className="dashboard-layout registro-jornada">
-      {/* SIDEBAR */}
       <aside className="sidebar">
         <div className="sidebar-header">
           <h2 className="sidebar-title">NANU TECH</h2>
@@ -157,9 +224,7 @@ function RegistroJornada() {
         </button>
       </aside>
 
-      {/* MAIN */}
       <main className="dashboard-main">
-        {/* HEADER */}
         <div className="header-row">
           <div>
             <h2 style={{ margin: 0 }}>Registro Jornadas</h2>
@@ -167,82 +232,95 @@ function RegistroJornada() {
           </div>
 
           <div className="last-update">
-            Última actualización<br />
+            Última actualización
+            <br />
             <strong>{horaActual}</strong>
           </div>
         </div>
 
-        {/* VOLVER */}
         <div className="volver" onClick={() => navigate(-1)}>
           ← Volver
         </div>
 
-        {/* TITLE */}
-        <h1 className="dashboard-title">
-          Registrar Nueva Jornada Laboral
-        </h1>
+        <h1 className="dashboard-title">Registrar Nueva Jornada Laboral</h1>
 
         <p className="form-subtitle">
           Complete todos los campos requeridos para registrar la jornada
         </p>
 
-        {/* ALERT */}
         <div className="alert-box">
-          <strong>Los campos marcados con *</strong><br />
+          <strong>Los campos marcados con *</strong>
+          <br />
           son obligatorios. Asegúrese de completar toda la información antes de guardar la jornada.
         </div>
 
         <div className="chart-card">
-
-          {/* MENSAJES */}
           {error && <div className="error-text">{error}</div>}
-          {success && <div style={{ color: "green" }}>{success}</div>}
+          {success && <div style={{ color: "green", marginBottom: "12px" }}>{success}</div>}
 
-          {/* INFO */}
           <h3 className="chart-title">Información de la Jornada</h3>
 
           <div className="form-vertical">
             <div className="form-group">
               <label>Conductor *</label>
-              <input
+              <select
                 name="conductor"
                 value={form.conductor}
                 onChange={handleChange}
-                placeholder="Seleccione un conductor activo"
-              />
+                disabled={loadingCatalogos}
+              >
+                <option value="">Seleccione un conductor activo</option>
+                {conductores.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {`${c.nombres || ""} ${c.apellidos || ""}`.trim() || c.correo || c.id}
+                  </option>
+                ))}
+              </select>
               <small>Seleccione el conductor responsable de realizar la jornada laboral</small>
             </div>
 
             <div className="form-group">
               <label>Unidad de Transporte (Placa/Modelo) *</label>
-              <input
+              <select
                 name="camion"
                 value={form.camion}
                 onChange={handleChange}
-                placeholder="Seleccione un camión disponible"
-              />
-              <small>Solo se muestran camiones que NO están asignados a jornadas activas</small>
+                disabled={loadingCatalogos}
+              >
+                <option value="">Seleccione un camión disponible</option>
+                {camiones.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.placa ? `${c.placa} - ${c.marca || ""} ${c.modelo || ""}`.trim() : c.id}
+                  </option>
+                ))}
+              </select>
+              <small>Solo se muestran camiones disponibles</small>
             </div>
 
             <div className="form-group">
               <label>Contrato Comercial Vigente *</label>
-              <input
+              <select
                 name="contrato"
                 value={form.contrato}
                 onChange={handleChange}
-                placeholder="Seleccione un contrato activo"
-              />
+                disabled={loadingCatalogos}
+              >
+                <option value="">Seleccione un contrato activo</option>
+                {contratos.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.codigo || c.id}
+                  </option>
+                ))}
+              </select>
               <small>Seleccione el contrato comercial bajo el cual se realizará la jornada</small>
             </div>
           </div>
 
-          {/* DETALLES */}
           <h3 className="form-group mt-20">Detalles de la Jornada</h3>
 
           <div className="form-vertical">
-
             <div className="form-group">
-              <label>Fecha</label>
+              <label>Fecha *</label>
               <input
                 type="date"
                 name="fecha"
@@ -316,10 +394,8 @@ function RegistroJornada() {
               />
               <small>Incidentes, notas especiales, etc.</small>
             </div>
-
           </div>
 
-          {/* FOOTER */}
           <div className="form-footer">
             <span className="error-text">
               {error || "Complete todos los campos obligatorios (*) para continuar"}
@@ -334,7 +410,6 @@ function RegistroJornada() {
               </button>
             </div>
           </div>
-
         </div>
       </main>
     </div>

@@ -1,7 +1,7 @@
 import { useNavigate, NavLink } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "./Dashboard.css";
-import { getJornadas } from "../../../../packages/api-client/src/services/registrojornada/jornadas";
+import { getJornadas } from "@nanutech/api-client";
 
 const menuItems = [
   { label: "Dashboard", path: "/dashboard", icon: "📊" },
@@ -9,6 +9,18 @@ const menuItems = [
   { label: "Contratos", path: "/dashboard", icon: "📄" },
   { label: "GPS", path: "/dashboard", icon: "📍" },
 ];
+
+type Jornada = {
+  id: string;
+  fecha: string;
+  conductor: string;
+  camion: string;
+  contrato: string;
+  horario: string;
+  km: number;
+  estado: string;
+  observaciones?: string;
+};
 
 function RegistroNuevaJornada() {
   const navigate = useNavigate();
@@ -20,9 +32,11 @@ function RegistroNuevaJornada() {
     day: "numeric",
   });
 
-  const [jornadas, setJornadas] = useState<any[]>([]);
+  const [jornadas, setJornadas] = useState<Jornada[]>([]);
   const [, setLoading] = useState(true);
   const [busqueda, setBusqueda] = useState("");
+  const [filtroEstado, setFiltroEstado] = useState("todas");
+  const [filtroObs, setFiltroObs] = useState("todas");
 
   useEffect(() => {
     const load = async () => {
@@ -33,8 +47,7 @@ function RegistroNuevaJornada() {
           setJornadas(JSON.parse(localData));
         } else {
           const res = await getJornadas();
-
-setJornadas(res);
+          setJornadas(res as Jornada[]);
         }
       } catch (err) {
         console.error("Error cargando jornadas:", err);
@@ -47,13 +60,15 @@ setJornadas(res);
     load();
   }, []);
 
-  const [filtroEstado, setFiltroEstado] = useState("todas");
-  const [filtroObs] = useState("todas");
-
   const total = jornadas.length;
-  const activas = jornadas.filter(j => j.estado === "Activa").length;
-  const completadas = jornadas.filter(j => j.estado === "Completada").length;
+  const activas = jornadas.filter(
+    (j) => (j.estado || "").toLowerCase() === "activa"
+  ).length;
+  const completadas = jornadas.filter(
+    (j) => (j.estado || "").toLowerCase() === "completada"
+  ).length;
 
+  const totalKm = jornadas.reduce((acc, j) => acc + Number(j.km || 0), 0);
 
   const jornadasFiltradas = jornadas.filter((j) => {
     const estadoOk =
@@ -62,8 +77,8 @@ setJornadas(res);
 
     const obsOk =
       filtroObs === "todas" ||
-      (filtroObs === "con" && j.observaciones) ||
-      (filtroObs === "sin" && !j.observaciones);
+      (filtroObs === "con" && !!j.observaciones?.trim()) ||
+      (filtroObs === "sin" && !j.observaciones?.trim());
 
     const texto = busqueda.toLowerCase();
 
@@ -85,7 +100,6 @@ setJornadas(res);
 
   return (
     <div className="dashboard-layout">
-      {/* SIDEBAR */}
       <aside className="sidebar">
         <div className="sidebar-header">
           <h2 className="sidebar-title">NANU TECH</h2>
@@ -110,10 +124,7 @@ setJornadas(res);
         </button>
       </aside>
 
-      {/* MAIN */}
       <main className="dashboard-main">
-
-        {/* HEADER */}
         <div className="header-row">
           <div>
             <h1 className="dashboard-title">Registro de Jornadas</h1>
@@ -129,42 +140,40 @@ setJornadas(res);
         </div>
 
         <div className="kpi-row-4">
-  <div className="kpi-card-pro">
-    <div className="kpi-icon blue">📅</div>
-    <div>
-      <span>Total Jornadas</span>
-      <h3>{total}</h3>
-    </div>
-  </div>
+          <div className="kpi-card-pro">
+            <div className="kpi-icon blue">📅</div>
+            <div>
+              <span>Total Jornadas</span>
+              <h3>{total}</h3>
+            </div>
+          </div>
 
-  <div className="kpi-card-pro">
-    <div className="kpi-icon blue">🕒</div>
-    <div>
-      <span>Jornadas Activas</span>
-      <h3>{activas}</h3>
-    </div>
-  </div>
+          <div className="kpi-card-pro">
+            <div className="kpi-icon blue">🕒</div>
+            <div>
+              <span>Jornadas Activas</span>
+              <h3>{activas}</h3>
+            </div>
+          </div>
 
-  <div className="kpi-card-pro">
-    <div className="kpi-icon green">✅</div>
-    <div>
-      <span>Completadas</span>
-      <h3>{completadas}</h3>
-    </div>
-  </div>
+          <div className="kpi-card-pro">
+            <div className="kpi-icon green">✅</div>
+            <div>
+              <span>Completadas</span>
+              <h3>{completadas}</h3>
+            </div>
+          </div>
 
-  <div className="kpi-card-pro">
-    <div className="kpi-icon purple">📍</div>
-    <div>
-      <span>Total KM</span>
-      <h3>10,815</h3>
-    </div>
-  </div>
-</div>
-        {/* TABLE */}
+          <div className="kpi-card-pro">
+            <div className="kpi-icon purple">📍</div>
+            <div>
+              <span>Total KM</span>
+              <h3>{totalKm}</h3>
+            </div>
+          </div>
+        </div>
+
         <div className="table-card modern-card">
-
-          {/* HEADER FILTROS */}
           <div className="table-header modern-header">
             <input
               className="search-input modern-input"
@@ -197,7 +206,29 @@ setJornadas(res);
             </div>
           </div>
 
-          {/* TABLA */}
+          <div className="filters modern-filters" style={{ marginBottom: "16px" }}>
+            <button
+              className={filtroObs === "todas" ? "active" : ""}
+              onClick={() => setFiltroObs("todas")}
+            >
+              Todas las observaciones
+            </button>
+
+            <button
+              className={filtroObs === "con" ? "active" : ""}
+              onClick={() => setFiltroObs("con")}
+            >
+              Con Observaciones
+            </button>
+
+            <button
+              className={filtroObs === "sin" ? "active" : ""}
+              onClick={() => setFiltroObs("sin")}
+            >
+              Sin Observaciones
+            </button>
+          </div>
+
           <table className="table modern-table">
             <thead>
               <tr>
@@ -223,17 +254,15 @@ setJornadas(res);
                   <td>{j.contrato}</td>
                   <td>{j.horario}</td>
                   <td>{j.km} km</td>
-
                   <td>
                     <span
                       className={`badge modern-badge ${
-                        j.estado === "Activa" ? "blue" : "green"
+                        (j.estado || "").toLowerCase() === "activa" ? "blue" : "green"
                       }`}
                     >
                       {j.estado}
                     </span>
                   </td>
-
                   <td>
                     <span className={j.observaciones ? "obs-si" : "obs-no"}>
                       {j.observaciones ? "Sí" : "No"}
@@ -241,9 +270,16 @@ setJornadas(res);
                   </td>
                 </tr>
               ))}
+
+              {jornadasFiltradas.length === 0 && (
+                <tr>
+                  <td colSpan={9} style={{ textAlign: "center", padding: "16px" }}>
+                    No se encontraron jornadas con los filtros aplicados.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
-
         </div>
       </main>
     </div>

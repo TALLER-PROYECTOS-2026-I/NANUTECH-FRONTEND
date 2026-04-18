@@ -30,6 +30,8 @@ export default function LoginPage() {
       localStorage.setItem('nanutech_user', JSON.stringify(user));
       localStorage.setItem('nanutech_role', role);
       localStorage.setItem('nanutech_expires_at', session.expiresAt);
+      localStorage.setItem('nanutech_token', respuesta.data.session.accessToken);
+      localStorage.setItem('nanutech_user', JSON.stringify(respuesta.data.user));
 
       if (nextRoute) {
         navigate(nextRoute);

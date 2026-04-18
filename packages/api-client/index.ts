@@ -2,10 +2,6 @@ import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-if (!BASE_URL) {
-  throw new Error('Falta definir VITE_API_URL en el archivo .env');
-}
-
 export const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: {
