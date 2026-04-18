@@ -12,10 +12,10 @@ export default defineConfig({
       name: 'shell_app',
       // Aquí le decimos dónde está el microfrontend del dashboard
       remotes: {
-        dashboardApp: 'http://localhost:3001/assets/remoteEntry.js',
-        flotaApp: 'http://localhost:4173/assets/remoteEntry.js',
-        contratosApp: 'http://localhost:4174/assets/remoteEntry.js',
-      },
+          dashboardApp: '/mfes/dashboard/assets/remoteEntry.js',
+          flotaApp: '/mfes/flota/assets/remoteEntry.js',
+          contratosApp: '/mfes/contratos/assets/remoteEntry.js',
+        },
       shared: ['react', 'react-dom', 'recharts'] // Compartimos React, ReactDOM y Recharts para evitar cargar varias versiones en la app final
     })
   ],
