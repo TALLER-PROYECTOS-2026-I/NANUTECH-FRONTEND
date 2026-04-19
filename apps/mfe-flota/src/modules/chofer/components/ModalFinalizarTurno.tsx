@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import '../styles/ModalFinalizarTurno.css';
 
 interface ModalFinalizarTurnoProps {
   abierto: boolean;
@@ -43,13 +42,13 @@ export const ModalFinalizarTurno: React.FC<ModalFinalizarTurnoProps> = ({
 
   return (
     <>
-      <div className="modal-overlay" onClick={alCancelar}></div>
+      <div className="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-[1px]" onClick={alCancelar}></div>
 
-      <div className="modal-finalizacion">
-        <div className="modal-header">
-          <h2 className="modal-titulo">Finalizar Turno</h2>
+      <div className="fixed left-1/2 top-1/2 z-50 w-[94%] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl border border-gray-200 bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+          <h2 className="text-lg font-bold text-gray-900">Finalizar Turno</h2>
           <button
-            className="modal-cerrar"
+            className="rounded-md border border-gray-200 px-2 py-1 text-sm text-gray-600 transition-colors hover:bg-gray-50"
             onClick={alCancelar}
             disabled={cargando}
             aria-label="Cerrar modal"
@@ -58,13 +57,13 @@ export const ModalFinalizarTurno: React.FC<ModalFinalizarTurnoProps> = ({
           </button>
         </div>
 
-        <div className="modal-contenido">
-          <p className="modal-instruccion">
+        <div className="space-y-3 px-5 py-4">
+          <p className="text-sm text-gray-600">
             Agrega observaciones sobre la jornada (opcional)
           </p>
 
           <textarea
-            className="modal-textarea"
+            className="min-h-28 w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 outline-none transition-colors focus:border-blue-500"
             placeholder="Ej: Viaje sin novedades, tráfico normal, cliente conforme..."
             value={observaciones}
             onChange={(e) => {
@@ -76,17 +75,17 @@ export const ModalFinalizarTurno: React.FC<ModalFinalizarTurnoProps> = ({
             rows={6}
           />
 
-          <div className="modal-contador">
-            <span className="contador-texto">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-500">
               {observaciones.length} / 500 caracteres
             </span>
-            {error && <span className="contador-error">{error}</span>}
+            {error && <span className="font-medium text-rose-600">{error}</span>}
           </div>
         </div>
 
-        <div className="modal-acciones">
+        <div className="flex justify-end gap-2 border-t border-gray-200 px-5 py-4">
           <button
-            className="btn-cancelar"
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
             onClick={alCancelar}
             disabled={cargando}
           >
@@ -94,13 +93,13 @@ export const ModalFinalizarTurno: React.FC<ModalFinalizarTurnoProps> = ({
           </button>
 
           <button
-            className="btn-confirmar"
+            className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-70"
             onClick={manejarConfirmar}
             disabled={cargando}
           >
             {cargando ? (
               <>
-                <span className="spinner"></span>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></span>
                 Finalizando...
               </>
             ) : (

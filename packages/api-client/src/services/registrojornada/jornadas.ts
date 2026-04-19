@@ -33,45 +33,29 @@ type ApiResponse<T> = {
   data: T;
 };
 
-const MOCK_JORNADAS: Jornada[] = [
-  {
-    id: 'MOCK-001',
-    fecha: '2026-04-15',
-    conductor: 'Carlos Gomez',
-    camion: 'ABC-123 - Mercedes Benz Actros',
-    contrato: 'CONT-001',
-    horario: '08:00 - 17:00',
-    km: 250,
-    estado: 'REGISTRADA',
-    observaciones: 'Primera jornada del mes',
-  },
-  {
-    id: 'MOCK-002',
-    fecha: '2026-04-14',
-    conductor: 'Luis Martinez',
-    camion: 'DEF-456 - Volvo FH16',
-    contrato: 'CONT-002',
-    horario: '08:00 - 17:00',
-    km: 280,
-    estado: 'COMPLETADA',
-    observaciones: 'Completada',
-  },
-];
+
 
 export const getJornadas = async (): Promise<Jornada[]> => {
   try {
     const response = await apiClient.get<ApiResponse<Jornada[]>>('/jornadas');
     return response.data?.data || [];
   } catch (error) {
-    console.warn('⚠️ Error obteniendo jornadas del backend, usando datos mock:', error);
-    return MOCK_JORNADAS;
+    console.warn('⚠️ Error obteniendo jornadas del backend:', error);
+    throw new Error('Error al obtener jornadas');
   }
 };
 
 export const getJornadaActual = async (conductorId: string) => {
   try {
     const response = await apiClient.get(`/jornadas/actual/${conductorId}`);
-    return response.data?.data ?? response.data ?? null;
+
+    const payload = response.data;
+
+    if (payload?.success && payload?.data) {
+      return payload.data;
+    }
+
+    return null;
   } catch (error) {
     console.warn('⚠️ Error obteniendo jornada actual del backend:', error);
     return null;
