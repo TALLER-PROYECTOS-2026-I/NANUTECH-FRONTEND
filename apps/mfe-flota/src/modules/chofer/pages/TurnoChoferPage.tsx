@@ -8,7 +8,7 @@ import { RegeneralNanuTech } from '../components/RegeneralNanuTech';
 import { ModalFinalizarTurno } from '../components/ModalFinalizarTurno';
 import { EstadoVacio } from '../components/EstadoVacio';
 import { NotificacionExitosa } from '../components/NotificacionExitosa';
-import '../styles/TurnoChoferPage.css';
+import { HistorialJornadas } from '../components/HistorialJornadas';
 
 /**
  * Página principal del Chofer de Camión
@@ -71,6 +71,13 @@ export const TurnoChoferPage: React.FC = () => {
       color: 'morado',
     },
   ];
+
+  const fechaActual = new Date().toLocaleDateString('es-PE', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 
   // Cargar turno actual al montar el componente
   useEffect(() => {
@@ -178,121 +185,126 @@ export const TurnoChoferPage: React.FC = () => {
   // Estado de carga
   if (cargando && turno === null) {
     return (
-      <div className="pagina-turno pagina-turno--cargando">
-        <div className="spinner-contenedor">
-          <div className="spinner"></div>
-          <p>Cargando tu turno...</p>
+      <div className="flex min-h-[70vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-gray-600">
+          <div className="h-7 w-7 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600"></div>
+          <p className="text-sm">Cargando tu turno...</p>
         </div>
-      </div>
-    );
-  }
-
-  // Estado sin jornada asignada
-  if (!turno) {
-    return (
-      <div className="pagina-turno">
-        <h1 className="pagina-titulo">Dashboard del Conductor</h1>
-        <EstadoVacio
-          titulo="No tienes jornadas asignadas"
-          descripcion="No hay jornadas programadas para hoy. Contacta con tu supervisor para más información."
-        />
-        <RegeneralNanuTech reglas={reglas} />
       </div>
     );
   }
 
   return (
-    <div className="pagina-turno">
-      <h1 className="pagina-titulo">Dashboard del Conductor</h1>
+    <div className="mx-auto w-full max-w-[1200px] space-y-5">
+      <header className="flex flex-col gap-3 border-b border-gray-200 pb-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-gray-800">Mi Dashboard</p>
+          <p className="text-xs capitalize text-gray-500">{fechaActual}</p>
+          <h1 className="mt-2 text-2xl font-bold text-gray-900">Dashboard del Conductor</h1>
+          <p className="text-sm text-gray-500">Bienvenido Pedro Lopez, gestiona tu jornada y consulta tu rendimiento</p>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-right shadow-sm">
+          <p className="text-[11px] text-gray-500">Ultima actualizacion</p>
+          <p className="text-sm font-semibold text-gray-800">
+            {new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+        </div>
+      </header>
 
-      {/* Tarjeta de Estado */}
-      <TarjetaEstado
-        estado={turno.estado}
-        nombreConductor={turno.datosJornada.nombreConductor}
-        placa={turno.datosJornada.placa}
-        idContrato={turno.datosJornada.idContrato}
-        fecha={turno.datosJornada.fecha}
-        origen={turno.datosJornada.ruta.origen}
-        destino={turno.datosJornada.ruta.destino}
-        tiempoTranscurrido={tiempoFormateado}
-      >
-        {turno.estado === 'PENDIENTE' && (
-          <button
-            className="btn btn--primario btn--grande"
-            onClick={manejarIniciarTurno}
-            disabled={cargando}
+      {!turno ? (
+        <>
+          <EstadoVacio
+            titulo="No tienes jornadas asignadas"
+            descripcion="No hay jornadas programadas para hoy. Contacta con tu supervisor para mas informacion."
+          />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <HistorialJornadas />
+            <RegeneralNanuTech reglas={reglas} />
+          </div>
+        </>
+      ) : (
+        <>
+          <TarjetaEstado
+            estado={turno.estado}
+            nombreConductor={turno.datosJornada.nombreConductor}
+            placa={turno.datosJornada.placa}
+            idContrato={turno.datosJornada.idContrato}
+            fecha={turno.datosJornada.fecha}
+            origen={turno.datosJornada.ruta.origen}
+            destino={turno.datosJornada.ruta.destino}
+            tiempoTranscurrido={tiempoFormateado}
           >
-            {cargando ? (
+            {turno.estado === 'PENDIENTE' && (
+              <button
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
+                onClick={manejarIniciarTurno}
+                disabled={cargando}
+              >
+                {cargando ? (
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></span>
+                    Iniciando...
+                  </>
+                ) : (
+                  <>
+                    <span>▷</span>
+                    INICIAR TURNO
+                  </>
+                )}
+              </button>
+            )}
+
+            {turno.estado === 'EN_PROGRESO' && (
               <>
-                <span className="spinner"></span>
-                Iniciando...
-              </>
-            ) : (
-              <>
-                <span className="icono">▶</span>
-                INICIAR TURNO
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <button className="rounded-lg bg-red-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-700">
+                    SOS PANICO
+                  </button>
+                  <button className="rounded-lg bg-orange-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-orange-600">
+                    AUXILIO MECANICO
+                  </button>
+                </div>
+
+                <button className="rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700">
+                  REGISTRAR COMBUSTIBLE
+                </button>
+
+                <button
+                  className="rounded-lg border border-rose-400 bg-white px-4 py-3 text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-70"
+                  onClick={() => setModalAbierto(true)}
+                  disabled={cargandoFinalizacion}
+                >
+                  FINALIZAR TURNO
+                </button>
               </>
             )}
-          </button>
-        )}
+          </TarjetaEstado>
 
-        {turno.estado === 'EN_PROGRESO' && (
-          <>
-            <div className="acciones-emergencia">
-              <button className="btn btn--peligro btn--emergencia">
-                <span className="icono">🚨</span>
-                SOS PÁNICO
-              </button>
-              <button className="btn btn--advertencia btn--emergencia">
-                <span className="icono">🔧</span>
-                AUXILIO MECÁNICO
-              </button>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <p className="text-xs text-gray-500">Jornadas del Mes</p>
+              <p className="text-3xl font-bold text-gray-900">0</p>
+              <p className="text-xs text-gray-500">Jornadas completadas</p>
             </div>
-
-            <button className="btn btn--combustible">
-              <span className="icono">⛽</span>
-              REGISTRAR COMBUSTIBLE
-            </button>
-
-            <button
-              className="btn btn--secundario btn--grande"
-              onClick={() => setModalAbierto(true)}
-              disabled={cargandoFinalizacion}
-            >
-              <span className="icono">⏹</span>
-              FINALIZAR TURNO
-            </button>
-          </>
-        )}
-      </TarjetaEstado>
-
-      {/* Tarjeta de Estadísticas */}
-      {turno.estado !== 'EN_PROGRESO' && (
-        <div className="estadisticas">
-          <div className="estadistica-card">
-            <div className="estadistica-numero">13</div>
-            <div className="estadistica-label">Jornadas del Mes</div>
-            <div className="estadistica-detalle">completadas</div>
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <p className="text-xs text-gray-500">Horas Trabajadas</p>
+              <p className="text-3xl font-bold text-gray-900">0h</p>
+              <p className="text-xs text-gray-500">Ultimos 30 dias</p>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <p className="text-xs text-gray-500">Kilometros Recorridos</p>
+              <p className="text-3xl font-bold text-gray-900">0</p>
+              <p className="text-xs text-gray-500">km en el mes</p>
+            </div>
           </div>
 
-          <div className="estadistica-card">
-            <div className="estadistica-numero">93h</div>
-            <div className="estadistica-label">Horas Trabajadas</div>
-            <div className="estadistica-detalle">Últimos 30 días</div>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <HistorialJornadas />
+            <RegeneralNanuTech reglas={reglas} />
           </div>
-
-          <div className="estadistica-card">
-            <div className="estadistica-numero">3467</div>
-            <div className="estadistica-label">Kilómetros Recorridos</div>
-            <div className="estadistica-detalle">km en el mes</div>
-          </div>
-        </div>
+        </>
       )}
 
-      {/* Reglas Generales */}
-      <RegeneralNanuTech reglas={reglas} />
-
-      {/* Modal Finalizar Turno */}
       <ModalFinalizarTurno
         abierto={modalAbierto}
         cargando={cargandoFinalizacion}
@@ -300,7 +312,6 @@ export const TurnoChoferPage: React.FC = () => {
         alConfirmar={manejarFinalizarTurno}
       />
 
-      {/* Notificaciones */}
       <NotificacionExitosa
         visible={notificacion.visible}
         mensaje={notificacion.mensaje}

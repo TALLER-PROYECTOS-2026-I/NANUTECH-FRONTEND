@@ -1,5 +1,4 @@
 import React from 'react';
-import '../styles/EstadoVacio.css';
 
 interface EstadoVacioProps {
   titulo: string;
@@ -19,21 +18,21 @@ export const EstadoVacio: React.FC<EstadoVacioProps> = ({
   accion,
 }) => {
   return (
-    <div className="estado-vacio">
-      <div className="estado-vacio__contenido">
-        <div className="estado-vacio__icono">📅</div>
-        <h2 className="estado-vacio__titulo">{titulo}</h2>
-        <p className="estado-vacio__descripcion">{descripcion}</p>
+    <div className="mb-6 rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center shadow-sm">
+      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-xl">
+        ◌
+      </div>
+      <h2 className="mb-2 text-lg font-bold text-gray-900">{titulo}</h2>
+      <p className="mx-auto max-w-xl text-sm text-gray-600">{descripcion}</p>
 
         {accion && (
           <button
-            className="estado-vacio__accion"
+            className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
             onClick={accion.onClick}
           >
             {accion.texto}
           </button>
         )}
-      </div>
     </div>
   );
 };

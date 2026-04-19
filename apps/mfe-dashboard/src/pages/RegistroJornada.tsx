@@ -5,6 +5,7 @@ import {
   getConductores,
   getCamiones,
   getContratosVigentes,
+  getJornadas,
   type Conductor,
   type Camion,
   type Contrato,
@@ -64,7 +65,7 @@ function RegistroJornada() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loadingCatalogos, setLoadingCatalogos] = useState(true);
-
+  const [menuUsuarioAbierto, setMenuUsuarioAbierto] = useState(false);  
   useEffect(() => {
     const actualizarHora = () => {
       const ahora = new Date();
@@ -78,17 +79,35 @@ function RegistroJornada() {
   useEffect(() => {
     const cargarCatalogos = async () => {
       try {
-        const [conductoresRes, camionesRes, contratosRes] = await Promise.all([
-          getConductores(), getCamiones(), getContratosVigentes(),
+        const [conductoresRes, camionesRes, contratosRes, jornadasRes] = await Promise.all([
+          getConductores(), getCamiones(), getContratosVigentes(), getJornadas(),
         ]);
         const conductoresActivos = (conductoresRes || []).filter(
           (c) => (c.estado || "").toUpperCase() === "ACTIVO" || c.activo === true
         );
+        
         const contratosVigentes = (contratosRes || []).filter(
-          (c) => (c.estado || "").toUpperCase() === "VIGENTE" || (c.estado || "").toUpperCase() === "ACTIVO" || c.activo === true
+          (c) =>
+            (c.estado || "").toUpperCase() === "VIGENTE" ||
+            (c.estado || "").toUpperCase() === "ACTIVO" ||
+            c.activo === true
         );
+        
+        const estadosBloqueantes = ["REGISTRADA", "EN_PROCESO"];
+        
+        const unidadesBloqueadas = new Set(
+          (jornadasRes || [])
+            .filter((j) => estadosBloqueantes.includes((j.estado || "").toUpperCase()))
+            .map((j) => j.camion)
+        );
+        
+        const camionesDisponiblesReales = (camionesRes || []).filter((c) => {
+          const descripcion = `${c.placa || ""} - ${c.marca || ""} ${c.modelo || ""}`.trim();
+          return !unidadesBloqueadas.has(descripcion);
+        });
+        
         setConductores(conductoresActivos);
-        setCamiones(camionesRes || []);
+        setCamiones(camionesDisponiblesReales);
         setContratos(contratosVigentes);
       } catch (err) {
         console.error("Error cargando catálogos:", err);
@@ -120,7 +139,7 @@ function RegistroJornada() {
     return true;
   };
 
-  const handleSubmit = async () => {
+  const   handleSubmit = async () => {
     setError(""); setSuccess("");
     if (!validar()) return;
 
@@ -144,6 +163,11 @@ function RegistroJornada() {
       console.error("ERROR COMPLETO:", err);
       setError(err?.response?.data?.message || "Error al registrar jornada");
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.href = "/login";
   };
 
   return (
@@ -180,19 +204,55 @@ function RegistroJornada() {
             </NavLink>
           ))}
         </nav>
-
+        
+        {/* Sesión + usuario */}
         <div className="px-4 py-3 border-t border-slate-700">
-          <div className="flex items-center gap-2 text-slate-400 text-xs mb-1">
+          <div className="flex items-center gap-2 text-slate-400 text-xs mb-3">
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span>Sesión activa</span>
+            <span className="text-slate-400">Sesión activa</span>
           </div>
-          <p className="text-white text-xs font-semibold mb-3">1h 57m</p>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold shrink-0">C</div>
-            <div className="min-w-0">
-              <p className="text-white text-xs font-semibold truncate">Carlos Administr...</p>
-              <p className="text-slate-400 text-xs truncate">Administrador Gene...</p>
-            </div>
+          <p className="text-white text-xs font-semibold mb-3">1h 58m</p>
+ 
+          {/* User + dropdown */}
+          <div className="relative">
+            {/* Dropdown popup — aparece encima del botón */}
+            {menuUsuarioAbierto && (
+              <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <p className="text-xs text-gray-500 mb-0.5">Sesión iniciada como</p>
+                  <p className="text-sm font-bold text-gray-900">admin@nanutech.com</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm font-semibold text-red-500 hover:bg-red-50 transition-colors"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                  Cerrar Sesión
+                </button>
+              </div>
+            )}
+ 
+            {/* Botón usuario */}
+            <button
+              className="w-full flex items-center gap-2 rounded-lg hover:bg-slate-800 transition-colors p-1 -mx-1"
+              onClick={() => setMenuUsuarioAbierto((prev) => !prev)}
+            >
+              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold shrink-0">C</div>
+              <div className="min-w-0 text-left">
+                <p className="text-white text-xs font-semibold truncate">Carlos Administr...</p>
+                <p className="text-slate-400 text-xs truncate">Administrador Gene...</p>
+              </div>
+              <svg
+                className={`w-4 h-4 ml-auto text-slate-400 shrink-0 transition-transform ${menuUsuarioAbierto ? "rotate-180" : ""}`}
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              >
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
           </div>
         </div>
       </aside>
@@ -229,7 +289,7 @@ function RegistroJornada() {
 
             {/* Volver */}
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/RegistroNuevaJornada")}
               className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-5 transition-colors"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
@@ -271,6 +331,9 @@ function RegistroJornada() {
                 <label className={labelCls}>Unidad de Transporte (Placa/Modelo) *</label>
                 <select name="camion" value={form.camion} onChange={handleChange} disabled={loadingCatalogos} className={selectCls}>
                   <option value="">Seleccione un camión disponible</option>
+                  {camiones.length === 0 && (
+                    <option value="" disabled>No hay unidades disponibles</option>
+                  )}
                   {camiones.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.placa ? `${c.placa} - ${c.marca || ""} ${c.modelo || ""}`.trim() : c.id}
@@ -349,7 +412,7 @@ function RegistroJornada() {
               <p className="text-sm text-red-500">{error || "Complete todos los campos obligatorios (*) para continuar"}</p>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => navigate(-1)}
+                  onClick={() => navigate("/RegistroNuevaJornada")}
                   className="px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   Cancelar
