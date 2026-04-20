@@ -89,7 +89,7 @@ export const Sidebar: React.FC = () => {
             >
               <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold shrink-0">P</div>
               <div className="min-w-0 text-left">
-                <p className="text-white text-xs font-semibold truncate">Juan Perez</p>
+                <p className="text-white text-xs font-semibold truncate">Carlos Gomez</p>
                 <p className="text-slate-400 text-xs truncate">Coductor</p>
               </div>
               <svg

@@ -220,7 +220,7 @@ function RegistroJornada() {
               <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
                 <div className="px-4 py-3 border-b border-gray-100">
                   <p className="text-xs text-gray-500 mb-0.5">Sesión iniciada como</p>
-                  <p className="text-sm font-bold text-gray-900">admin@nanutech.com</p>
+                  <p className="text-sm font-bold text-gray-900">admin1@nanutech.com</p>
                 </div>
                 <button
                   onClick={handleLogout}
