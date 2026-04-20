@@ -7,6 +7,12 @@ export const MENSAJES = {
   TURNO_INICIADO_EXITOSO: '¡Turno iniciado exitosamente!',
   TURNO_FINALIZADO_EXITOSO: '¡Turno finalizado exitosamente!',
   NO_JORNADAS_ASIGNADAS: 'No tienes jornadas asignadas',
+  /** Sin turno (carga inicial o sin asignación). */
+  ESTADO_VACIO_SIN_TURNO:
+    'No hay jornadas programadas para hoy. Contacta con tu supervisor para más información.',
+  /** Tras finalizar turno: copy alineado al diseño de referencia. */
+  ESTADO_VACIO_TRAS_FINALIZAR:
+    'No hay jornadas programadas para ti en este momento. Contacta con tu supervisor para más información sobre futuras asignaciones.',
   ERROR_CARGAR_TURNO: 'Error al cargar el turno',
   ERROR_INICIAR_TURNO: 'Error al iniciar el turno',
   ERROR_FINALIZAR_TURNO: 'Error al finalizar el turno',
@@ -36,6 +42,13 @@ export const LIMITE_CARACTERES_OBSERVACIONES = 500;
 export const TIEMPO_AUTO_OCULTAR_NOTIFICACION = 3000; // ms
 
 export const TIEMPO_RECARGA_DESPUES_FINALIZACION = 2000; // ms
+
+/** Datos del bloque de contacto en estado vacío (sin jornada o tras finalizar). */
+export const CONTACTO_OPERACIONES = {
+  TELEFONO_ETIQUETA: '+56 9 1234 5678',
+  TELEFONO_TEL: '+56912345678',
+  SUBTITULO: 'Gerente de Operaciones disponible 24/7',
+} as const;
 
 export const REGLAS_GENERALES = [
   {
