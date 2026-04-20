@@ -9,6 +9,8 @@ import { ModalFinalizarTurno } from '../components/ModalFinalizarTurno';
 import { EstadoVacio } from '../components/EstadoVacio';
 import { NotificacionExitosa } from '../components/NotificacionExitosa';
 import { HistorialJornadas } from '../components/HistorialJornadas';
+import { BloqueContactoOperaciones } from '../components/BloqueContactoOperaciones';
+import { MENSAJES } from '../constants';
 
 /**
  * Página principal del Chofer de Camión
@@ -28,6 +30,9 @@ export const TurnoChoferPage: React.FC = () => {
     mensaje: string;
     tipo: 'exito' | 'error' | 'info';
   }>({ visible: false, mensaje: '', tipo: 'exito' });
+  /** Solo UI: texto largo del estado vacío tras finalizar turno con éxito (el contacto siempre se muestra sin turno). */
+  const [mostrarContactoTrasFinalizar, setMostrarContactoTrasFinalizar] =
+    useState(false);
 
   const { tiempoFormateado } = useTiempoTranscurrido(
     turno?.horaInicio,
@@ -102,6 +107,7 @@ export const TurnoChoferPage: React.FC = () => {
 
       if (respuesta.success && respuesta.data) {
         setTurno(respuesta.data);
+        setMostrarContactoTrasFinalizar(false);
       } else {
         // No hay turno activo, mostrar estado vacío
         setTurno(null);
@@ -151,6 +157,7 @@ export const TurnoChoferPage: React.FC = () => {
 
       if (respuesta.success && respuesta.data) {
         setModalAbierto(false);
+        setMostrarContactoTrasFinalizar(true);
         setTurno(null);
         mostrarNotificacion(
           `¡Turno finalizado! Duración: ${turnoChoferService.formatearTiempo(respuesta.data.duracionTotal)}`,
@@ -201,7 +208,7 @@ export const TurnoChoferPage: React.FC = () => {
           <p className="text-sm font-semibold text-gray-800">Mi Dashboard</p>
           <p className="text-xs capitalize text-gray-500">{fechaActual}</p>
           <h1 className="mt-2 text-2xl font-bold text-gray-900">Dashboard del Conductor</h1>
-          <p className="text-sm text-gray-500">Bienvenido Pedro Lopez, gestiona tu jornada y consulta tu rendimiento</p>
+          <p className="text-sm text-gray-500">Bienvenido Carlos Gomez, gestiona tu jornada y consulta tu rendimiento</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-right shadow-sm">
           <p className="text-[11px] text-gray-500">Ultima actualizacion</p>
@@ -214,8 +221,13 @@ export const TurnoChoferPage: React.FC = () => {
       {!turno ? (
         <>
           <EstadoVacio
-            titulo="No tienes jornadas asignadas"
-            descripcion="No hay jornadas programadas para hoy. Contacta con tu supervisor para mas informacion."
+            titulo={MENSAJES.NO_JORNADAS_ASIGNADAS}
+            descripcion={
+              mostrarContactoTrasFinalizar
+                ? MENSAJES.ESTADO_VACIO_TRAS_FINALIZAR
+                : MENSAJES.ESTADO_VACIO_SIN_TURNO
+            }
+            pie={<BloqueContactoOperaciones anidado />}
           />
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <HistorialJornadas />
