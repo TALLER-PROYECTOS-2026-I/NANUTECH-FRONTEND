@@ -11,7 +11,7 @@ import {
   Legend,
 } from "recharts";
 
-import { getCamiones } from "@nanutech/api-client";
+import { getCamiones, type Camion } from "@nanutech/api-client";
 
 /* MOCK DATA */
 const kmData = [
@@ -57,8 +57,12 @@ const menuItems = [
   )},
 ];
 
+type DashboardCamion = Camion & {
+  status?: string;
+};
+
 function Dashboard() {
-  const [camiones, setCamiones] = useState<any[]>([]);
+  const [camiones, setCamiones] = useState<DashboardCamion[]>([]);
   const [loading, setLoading] = useState(true);
   const [horaActual, setHoraActual] = useState("");
   const [fechaActual, setFechaActual] = useState("");

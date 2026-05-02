@@ -87,7 +87,6 @@ export const TurnoChoferPage: React.FC = () => {
   // Cargar turno actual al montar el componente
   useEffect(() => {
     cargarTurnoActual();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-ocultar notificación después de 3 segundos

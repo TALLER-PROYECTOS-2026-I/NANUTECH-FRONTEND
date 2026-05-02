@@ -33,12 +33,16 @@ export default function RecoverPage() {
       setTimeout(() => {
         navigate('/recuperar/confirmar', { state: { email: correo } });
       }, 1500);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as {
+        response?: { data?: { message?: string; mensaje?: string } };
+        message?: string;
+      };
       setEstado('error');
       setMensaje(
-        err?.response?.data?.message ||
-          err?.response?.data?.mensaje ||
-          err?.message ||
+        error.response?.data?.message ||
+          error.response?.data?.mensaje ||
+          error.message ||
           'No se pudo procesar la solicitud'
       );
     }

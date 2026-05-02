@@ -1,9 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // PAGES
-import Dashboard from "./pages/Dashboard";
-import RegistroJornada from "./pages/RegistroJornada";
-import RegistroNuevaJornada from "./pages/RegistroNuevaJornada";
+import Dashboard from "./modules/dashboard-admin/pages/Dashboard";
+import RegistroJornada from "./modules/registro-jornada/pages/RegistroJornada";
+import RegistroNuevaJornada from "./modules/registro-jornada/pages/RegistroNuevaJornada";
 
 function AppRoutes() {
   return (

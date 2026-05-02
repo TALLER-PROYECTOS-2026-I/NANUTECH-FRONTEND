@@ -63,7 +63,6 @@ function RegistroJornada() {
   const [contratos, setContratos] = useState<Contrato[]>([]);
 
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [loadingCatalogos, setLoadingCatalogos] = useState(true);
   const [menuUsuarioAbierto, setMenuUsuarioAbierto] = useState(false);  
   useEffect(() => {
@@ -140,7 +139,7 @@ function RegistroJornada() {
   };
 
   const   handleSubmit = async () => {
-    setError(""); setSuccess("");
+    setError("");
     if (!validar()) return;
 
     const usuarioGuardado = localStorage.getItem("nanutech_user");
@@ -156,12 +155,13 @@ function RegistroJornada() {
       };
       console.log("PAYLOAD ENVIADO:", payload);
       await createJornada(payload);
-      setSuccess("Jornada registrada correctamente 🚀");
+      const successMessage = "Jornada registrada correctamente";
       setForm({ conductor: "", camion: "", contrato: "", fecha: "", horaInicio: "", horaFin: "", km: "", origen: "", destino: "", observaciones: "" });
-      setTimeout(() => navigate("/RegistroNuevaJornada"), 800);
-    } catch (err: any) {
+      navigate("/RegistroNuevaJornada", { state: { successMessage } });
+    } catch (err: unknown) {
       console.error("ERROR COMPLETO:", err);
-      setError(err?.response?.data?.message || "Error al registrar jornada");
+      const error = err as { response?: { data?: { message?: string } } };
+      setError(error.response?.data?.message || "Error al registrar jornada");
     }
   };
 
@@ -308,8 +308,6 @@ function RegistroJornada() {
             </div>
 
             {error && <div className="mb-4 text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">{error}</div>}
-            {success && <div className="mb-4 text-sm text-green-600 bg-green-50 p-3 rounded-lg border border-green-200">{success}</div>}
-
             {/* Sección 1 */}
             <h3 className="text-base font-bold text-gray-800 mb-4">Información de la Jornada</h3>
             <div className="flex flex-col gap-4 mb-6">
