@@ -1,4 +1,4 @@
-import { useNavigate, NavLink } from "react-router-dom";
+import { useNavigate, NavLink, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { getJornadas } from "@nanutech/api-client";
 
@@ -59,6 +59,7 @@ type Jornada = {
 
 function RegistroNuevaJornada() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const fechaActual = new Date().toLocaleDateString("es-PE", {
     weekday: "long",
@@ -74,6 +75,7 @@ function RegistroNuevaJornada() {
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("todas");
   const [filtroObs, setFiltroObs] = useState("todas");
+  const [successMessage, setSuccessMessage] = useState("");
   const [menuUsuarioAbierto, setMenuUsuarioAbierto] = useState(false);  
 
   useEffect(() => {
@@ -84,6 +86,15 @@ function RegistroNuevaJornada() {
     const iv = setInterval(actualizar, 1000);
     return () => clearInterval(iv);
   }, []);
+
+  useEffect(() => {
+    const message = (location.state as { successMessage?: string } | null)?.successMessage;
+    if (!message) return;
+
+    setSuccessMessage(message);
+    const timeout = setTimeout(() => setSuccessMessage(""), 9000);
+    return () => clearTimeout(timeout);
+  }, [location.state]);
 
   useEffect(() => {
   const load = async () => {
@@ -269,6 +280,16 @@ function RegistroNuevaJornada() {
               Nueva Jornada
             </button>
           </div>
+
+          {successMessage && (
+            <div className="mb-6 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
+              <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+              {successMessage}
+            </div>
+          )}
 
           {/* KPI cards */}
           <div className="grid grid-cols-4 gap-4 mb-6">

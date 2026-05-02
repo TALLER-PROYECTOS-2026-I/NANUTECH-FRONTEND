@@ -16,7 +16,7 @@ describe('Dashboard Microfrontend', () => {
           ]
         })
       })
-    ) as any;
+    ) as unknown as typeof fetch;
   });
   
   it('debería renderizar el título principal correctamente', async () => {

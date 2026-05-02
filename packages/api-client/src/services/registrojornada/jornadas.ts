@@ -88,7 +88,7 @@ export const finalizarJornada = async (
 
 export const createJornada = async (data: CrearJornadaPayload) => {
   try {
-    const response = await apiClient.post<ApiResponse<any>>('/jornadas', data);
+    const response = await apiClient.post<ApiResponse<unknown>>('/jornadas', data);
 
     return {
       success: true,
