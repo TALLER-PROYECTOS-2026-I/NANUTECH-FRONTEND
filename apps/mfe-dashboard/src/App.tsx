@@ -2,36 +2,29 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // PAGES
 import Dashboard from "./modules/dashboard-admin/pages/Dashboard";
-import RegistroJornada from "./modules/registro-jornada/pages/RegistroJornada";
+import GpsIntegrationPage from "./modules/gps-integration/pages/GpsIntegrationPage";
 import RegistroNuevaJornada from "./modules/registro-jornada/pages/RegistroNuevaJornada";
 
 function AppRoutes() {
   return (
-    <Routes>
-
-      {/* 🔥 ENTRADA DIRECTA AL DASHBOARD */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
-      {/* DASHBOARD */}
-      <Route path="/dashboard" element={<Dashboard />} />
-
-      {/* JORNADAS */}
-      <Route path="/RegistroJornada" element={<RegistroJornada />} />
-      <Route path="/RegistroNuevaJornada" element={<RegistroNuevaJornada />} />
-
-      {/* 🔥 CUALQUIER RUTA INVALIDA TAMBIÉN VA AL DASHBOARD */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-
-    </Routes>
-  );
-}
-
-function App() {
-  return (
     <BrowserRouter>
-      <AppRoutes />
+      <Routes>
+
+        {/* Dashboard */}
+        <Route path="/dashboard" element={<Dashboard />} />
+
+        {/* 🔥 AQUÍ ESTÁ LA CLAVE */}
+        <Route path="/dashboard/gps" element={<GpsIntegrationPage />} />
+
+        {/* Otros */}
+        <Route path="/RegistroNuevaJornada" element={<RegistroNuevaJornada />} />
+
+        {/* Redirect */}
+        <Route path="*" element={<Navigate to="/dashboard" />} />
+
+      </Routes>
     </BrowserRouter>
   );
 }
 
-export default App;
+export default AppRoutes;
