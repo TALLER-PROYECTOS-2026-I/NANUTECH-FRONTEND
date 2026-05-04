@@ -31,7 +31,7 @@ const normalize = (v: unknown): string => (v ? String(v).trim() : "");
 
 function GpsIntegrationPage() {
   const [provider, setProvider] = useState<string>("");
-  const [file, setFile] = useState<File | null>(null);
+  const [, setFile] = useState<File | null>(null);
   const [isValid, setIsValid] = useState<boolean>(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [imported, setImported] = useState<GpsRow[]>([]);
