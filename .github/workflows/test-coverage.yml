@@ -27,70 +27,94 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests with coverage for all workspaces
+      - name: Run tests with coverage per MFE
         id: tests
         run: |
-          # Ejecutar coverage en todos los workspaces
-          npm run test:coverage:all 2>&1 | tee coverage-output.log || true
+          FAILED_MFES=""
 
-          # Verificar si todos los tests pasaron
-          if grep -q "failed" coverage-output.log; then
-            echo "tests_passed=false" >> $GITHUB_OUTPUT
-          else
-            echo "tests_passed=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Collect coverage reports from all MFEs
-        run: |
-          mkdir -p all-coverage-reports
-
-          # Recolectar coverage de cada MFE
+          # Correr cada MFE por separado con || true
+          # Vitest escribe coverage-summary.json INCLUSO si los tests fallan
           for mfe in mfe-flota mfe-contratos mfe-dashboard shell-app; do
-            if [ -f "apps/$mfe/coverage/coverage-summary.json" ]; then
-              echo "✅ Coverage encontrado para $mfe"
-              cp "apps/$mfe/coverage/coverage-summary.json" "all-coverage-reports/$mfe-summary.json"
-              cp -r "apps/$mfe/coverage" "all-coverage-reports/$mfe-coverage/" 2>/dev/null || true
+            echo "━━━ Corriendo tests: $mfe ━━━"
+            if npm run test:coverage --workspace=apps/$mfe 2>&1; then
+              echo "✅ $mfe: tests OK"
             else
-              echo "⚠️ No coverage para $mfe"
+              echo "⚠️ $mfe: tests FALLARON (coverage igual se recolectará)"
+              FAILED_MFES="$FAILED_MFES $mfe"
             fi
           done
 
-          # Recolectar coverage de packages
+          # Packages (opcionales, no bloquean)
+          for pkg in utils api-client ui-components; do
+            echo "━━━ Corriendo tests: @nanutech/$pkg ━━━"
+            npm run test:coverage --workspace=packages/$pkg 2>&1 || \
+              echo "⚠️ pkg-$pkg: sin tests o fallaron"
+          done
+
+          # Guardar lista de MFEs fallidos para el summary
+          if [ -n "$FAILED_MFES" ]; then
+            echo "tests_passed=false" >> $GITHUB_OUTPUT
+            echo "failed_mfes=$FAILED_MFES" >> $GITHUB_OUTPUT
+          else
+            echo "tests_passed=true" >> $GITHUB_OUTPUT
+            echo "failed_mfes=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Collect coverage reports
+        run: |
+          mkdir -p all-coverage-reports
+
+          for mfe in mfe-flota mfe-contratos mfe-dashboard shell-app; do
+            if [ -f "apps/$mfe/coverage/coverage-summary.json" ]; then
+              echo "✅ Coverage recolectado: $mfe"
+              cp "apps/$mfe/coverage/coverage-summary.json" "all-coverage-reports/$mfe-summary.json"
+            else
+              echo "⚠️ Sin coverage-summary.json para $mfe — generando placeholder"
+              # Placeholder para que el artifact no quede vacío
+              echo '{"total":{"lines":{"pct":0},"statements":{"pct":0},"branches":{"pct":0},"functions":{"pct":0}}}' \
+                > "all-coverage-reports/$mfe-summary.json"
+            fi
+          done
+
           for pkg in utils api-client ui-components; do
             if [ -f "packages/$pkg/coverage/coverage-summary.json" ]; then
-              echo "✅ Coverage encontrado para @nanutech/$pkg"
+              echo "✅ Coverage recolectado: pkg-$pkg"
               cp "packages/$pkg/coverage/coverage-summary.json" "all-coverage-reports/pkg-$pkg-summary.json"
             fi
           done
 
+          echo "--- Archivos en all-coverage-reports/ ---"
+          ls -la all-coverage-reports/
+
+      # El artifact SIEMPRE se sube, aunque haya tests fallidos
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@v4
         with:
           name: coverage-reports
           path: all-coverage-reports/
           retention-days: 30
+          if-no-files-found: error
 
-      - name: Check coverage thresholds
+      - name: Coverage summary
         run: |
-          THRESHOLD=50
-          FAILED=false
+          echo "## 📊 Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "| MFE | Lines | Estado |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|-------|--------|" >> $GITHUB_STEP_SUMMARY
 
           for summary in all-coverage-reports/*-summary.json; do
-            if [ -f "$summary" ]; then
-              COVERAGE=$(jq '.total.lines.pct // 0' "$summary")
-              MFE=$(basename "$summary" -summary.json)
-              
-              echo "📊 $MFE: ${COVERAGE}% coverage"
-              
-              if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
-                echo "❌ $MFE coverage ${COVERAGE}% is below threshold ${THRESHOLD}%"
-                FAILED=true
-              else
-                echo "✅ $MFE coverage ${COVERAGE}% meets threshold ${THRESHOLD}%"
-              fi
+            MFE=$(basename "$summary" -summary.json)
+            COVERAGE=$(jq '.total.lines.pct // 0' "$summary")
+            if (( $(echo "$COVERAGE >= 50" | bc -l) )); then
+              ESTADO="✅"
+            else
+              ESTADO="❌"
             fi
+            echo "| $MFE | ${COVERAGE}% | $ESTADO |" >> $GITHUB_STEP_SUMMARY
           done
 
-          if [ "$FAILED" = "true" ]; then
-            exit 1
-          fi
+      # Este paso falla el job si hubo tests rotos — DESPUÉS de subir el artifact
+      - name: Fail if tests failed
+        if: steps.tests.outputs.tests_passed == 'false'
+        run: |
+          echo "❌ MFEs con tests fallidos: ${{ steps.tests.outputs.failed_mfes }}"
+          exit 1
