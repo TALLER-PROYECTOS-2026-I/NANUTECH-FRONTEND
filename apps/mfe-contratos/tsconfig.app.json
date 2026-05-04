@@ -14,5 +14,5 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src"]
+  "include": ["src", "../mfe-flota/src/modules/seguimiento-jornadas/pages", "../mfe-flota/src/modules/seguimiento-jornadas/SeguimientoJornadas.tsx", "../mfe-flota/src/modules/seguimiento-jornadas/services"]
 }
