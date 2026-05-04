@@ -13,10 +13,6 @@ const REQUIRED_COLUMNS = [
   "distancia_total",
 ];
 
-const mockDb = new Set<string>();
-
-const normalize = (v: any) => (v || "").trim();
-
 type GpsRow = {
   fecha: string;
   hora: string;
@@ -28,6 +24,10 @@ type GpsRow = {
   distancia_total: number;
   proveedor: string;
 };
+
+const mockDb = new Set<string>();
+
+const normalize = (v: unknown): string => (v ? String(v).trim() : "");
 
 function GpsIntegrationPage() {
   const [provider, setProvider] = useState<string>("");
@@ -113,7 +113,6 @@ function GpsIntegrationPage() {
     });
 
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement("a");
     a.href = url;
     a.download = `gps_template_${provider || "nanutech"}.csv`;
@@ -135,41 +134,22 @@ function GpsIntegrationPage() {
       </div>
 
       <div className="kpi-grid">
-        <div className="kpi purple">
-          <span>Total</span>
-          <h2>{kpis.total}</h2>
-        </div>
-        <div className="kpi blue">
-          <span>Movimiento</span>
-          <h2>{kpis.moving}</h2>
-        </div>
-        <div className="kpi purple">
-          <span>Detenidos</span>
-          <h2>{kpis.stopped}</h2>
-        </div>
-        <div className="kpi blue">
-          <span>Vel Prom</span>
-          <h2>{kpis.avgSpeed} km/h</h2>
-        </div>
+        <div className="kpi purple"><span>Total</span><h2>{kpis.total}</h2></div>
+        <div className="kpi blue"><span>Movimiento</span><h2>{kpis.moving}</h2></div>
+        <div className="kpi purple"><span>Detenidos</span><h2>{kpis.stopped}</h2></div>
+        <div className="kpi blue"><span>Vel Prom</span><h2>{kpis.avgSpeed} km/h</h2></div>
       </div>
 
       <div className="panel">
         <h3>Carga Masiva GPS</h3>
 
-        <select
-          className="input"
-          onChange={(e) => setProvider(normalize(e.target.value))}
-        >
+        <select className="input" onChange={(e) => setProvider(normalize(e.target.value))}>
           <option value="">Seleccionar proveedor</option>
           <option value="GPSControl.pe">GPSControl.pe</option>
           <option value="GlobalGPSPeru.com">GlobalGPSPeru.com</option>
         </select>
 
-        <button
-          disabled={!provider}
-          onClick={downloadTemplate}
-          className="btn blue"
-        >
+        <button disabled={!provider} onClick={downloadTemplate} className="btn blue">
           Descargar Plantilla
         </button>
 
@@ -210,25 +190,14 @@ function GpsIntegrationPage() {
 
         <div className="grid">
           {filteredData.map((d, i) => (
-            <div
-              key={i}
-              className={`card ${d.velocidad > 80 ? "danger" : ""}`}
-            >
+            <div key={i} className={`card ${d.velocidad > 80 ? "danger" : ""}`}>
               <h4>{d.placa}</h4>
               <p>{d.proveedor}</p>
-              <p>
-                {d.fecha} {d.hora}
-              </p>
-              <p>
-                {d.latitud}, {d.longitud}
-              </p>
+              <p>{d.fecha} {d.hora}</p>
+              <p>{d.latitud}, {d.longitud}</p>
               <p>{d.velocidad} km/h</p>
 
-              <span
-                className={`badge ${
-                  d.velocidad > 80 ? "red" : "green"
-                }`}
-              >
+              <span className={`badge ${d.velocidad > 80 ? "red" : "green"}`}>
                 {d.velocidad > 80 ? "Exceso Velocidad" : "Normal"}
               </span>
             </div>
@@ -236,12 +205,106 @@ function GpsIntegrationPage() {
         </div>
       </div>
 
+      {/* 👇 CSS CORRECTAMENTE UBICADO */}
       <style>{`
         body{
           background:#f5f7fb;
           color:#111827;
         }
+
+        .gps-header{margin-bottom:20px;}
+        .gps-header p{color:#6b7280;}
+
+        .kpi-grid{
+          display:grid;
+          grid-template-columns:repeat(4,1fr);
+          gap:16px;
+          margin-bottom:20px;
+        }
+
+        .kpi{
+          background:#ffffff;
+          border-radius:14px;
+          padding:16px;
+          box-shadow:0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .kpi h2{margin:5px 0;color:#111827}
+        .kpi span{color:#6b7280;font-size:12px}
+
+        .purple{border-left:4px solid #7c3aed}
+        .blue{border-left:4px solid #2563eb}
+
+        .panel{
+          background:#ffffff;
+          border-radius:14px;
+          padding:16px;
+          margin-bottom:20px;
+          box-shadow:0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .input{
+          width:100%;
+          padding:10px;
+          border-radius:10px;
+          border:1px solid #e5e7eb;
+          margin-top:10px;
+        }
+
+        .btn{
+          padding:10px 14px;
+          border-radius:10px;
+          border:none;
+          cursor:pointer;
+          margin-top:10px;
+        }
+
+        .disabled{background:#e5e7eb;color:#9ca3af;cursor:not-allowed}
+
+        .error{
+          background:#fee2e2;
+          color:#991b1b;
+          padding:10px;
+          border-radius:10px;
+          margin-top:10px;
+        }
+
+        .filters{
+          display:flex;
+          gap:10px;
+          margin-top:10px;
+        }
+
+        .grid{
+          display:grid;
+          grid-template-columns:repeat(3,1fr);
+          gap:12px;
+          margin-top:15px;
+        }
+
+        .card{
+          background:#ffffff;
+          border:1px solid #e5e7eb;
+          padding:12px;
+          border-radius:12px;
+        }
+
+        .card.danger{
+          border:1px solid #ef4444;
+        }
+
+        .badge{
+          display:inline-block;
+          margin-top:8px;
+          padding:4px 8px;
+          border-radius:8px;
+          font-size:12px;
+        }
+
+        .red{background:#ef4444;color:white}
+        .green{background:#22c55e;color:white}
       `}</style>
+
     </DashboardLayout>
   );
 }
