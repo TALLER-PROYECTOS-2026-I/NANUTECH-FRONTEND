@@ -36,5 +36,11 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: "./vitest.setup.ts",
+    coverage: {                          // ← agrega esto
+      provider: "v8",
+      reporter: ["text", "json-summary", "json"],
+      reportsDirectory: "./coverage",
+      reportOnFailure: true,
+    },
   },
 });
