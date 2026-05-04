@@ -6,3 +6,8 @@ dist-ssr
 .DS_Store
 .vscode
 apps/*/.env
+coverage/
+*.lcov
+*.lcov.info
+apps/*/coverage/
+packages/*/coverage/
