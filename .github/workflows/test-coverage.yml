@@ -32,8 +32,6 @@ jobs:
         run: |
           FAILED_MFES=""
 
-          # Correr cada MFE por separado con || true
-          # Vitest escribe coverage-summary.json INCLUSO si los tests fallan
           for mfe in mfe-flota mfe-contratos mfe-dashboard shell-app; do
             echo "━━━ Corriendo tests: $mfe ━━━"
             if npm run test:coverage --workspace=apps/$mfe 2>&1; then
@@ -44,14 +42,12 @@ jobs:
             fi
           done
 
-          # Packages (opcionales, no bloquean)
           for pkg in utils api-client ui-components; do
             echo "━━━ Corriendo tests: @nanutech/$pkg ━━━"
             npm run test:coverage --workspace=packages/$pkg 2>&1 || \
               echo "⚠️ pkg-$pkg: sin tests o fallaron"
           done
 
-          # Guardar lista de MFEs fallidos para el summary
           if [ -n "$FAILED_MFES" ]; then
             echo "tests_passed=false" >> $GITHUB_OUTPUT
             echo "failed_mfes=$FAILED_MFES" >> $GITHUB_OUTPUT
@@ -70,7 +66,6 @@ jobs:
               cp "apps/$mfe/coverage/coverage-summary.json" "all-coverage-reports/$mfe-summary.json"
             else
               echo "⚠️ Sin coverage-summary.json para $mfe — generando placeholder"
-              # Placeholder para que el artifact no quede vacío
               echo '{"total":{"lines":{"pct":0},"statements":{"pct":0},"branches":{"pct":0},"functions":{"pct":0}}}' \
                 > "all-coverage-reports/$mfe-summary.json"
             fi
@@ -86,7 +81,6 @@ jobs:
           echo "--- Archivos en all-coverage-reports/ ---"
           ls -la all-coverage-reports/
 
-      # El artifact SIEMPRE se sube, aunque haya tests fallidos
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -112,7 +106,6 @@ jobs:
             echo "| $MFE | ${COVERAGE}% | $ESTADO |" >> $GITHUB_STEP_SUMMARY
           done
 
-      # Este paso falla el job si hubo tests rotos — DESPUÉS de subir el artifact
       - name: Fail if tests failed
         if: steps.tests.outputs.tests_passed == 'false'
         run: |
