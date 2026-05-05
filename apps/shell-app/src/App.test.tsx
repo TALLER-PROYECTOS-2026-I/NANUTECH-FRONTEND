@@ -3,7 +3,6 @@ import { render } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 
-// Mock de localStorage
 vi.stubGlobal('localStorage', {
   getItem: vi.fn(),
   setItem: vi.fn(),
@@ -12,12 +11,17 @@ vi.stubGlobal('localStorage', {
 });
 
 describe('Shell App', () => {
-  it('debería renderizar el componente principal sin errores', () => {
+  it('deberia renderizar el componente principal sin errores', () => {
     const { container } = render(
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <App />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
+
     expect(container).toBeTruthy();
+  });
+
+  it('crea el arbol de rutas de la aplicacion', () => {
+    expect(App()).toBeTruthy();
   });
 });

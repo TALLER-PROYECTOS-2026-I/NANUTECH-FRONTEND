@@ -21,8 +21,10 @@
     "noUncheckedSideEffectImports": true
   },
   "include": [
+    "__tests__",
     "src",
     "../../packages/api-client/index.ts",
     "../../packages/api-client/src",
-    "../../packages/api-client/vite-env.d.ts"]
+    "../../packages/api-client/vite-env.d.ts"
+  ]
 }

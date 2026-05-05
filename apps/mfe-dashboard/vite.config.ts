@@ -41,6 +41,11 @@ export default defineConfig({
       reporter: ["text", "json-summary", "json"],
       reportsDirectory: "./coverage",
       reportOnFailure: true,
+      include: [
+        "src/App.tsx",
+        "src/modules/dashboard-admin/**/*.{ts,tsx}",
+      ],
+      exclude: ["src/main.tsx", "src/**/*.d.ts", "src/**/index.ts"],
     },
   },
 });
