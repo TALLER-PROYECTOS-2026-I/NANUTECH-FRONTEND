@@ -1,21 +1,14 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import './App.css'
+import { useState } from 'react';
+import ContratosPage from './modules/contratos/pages/ContratosPage';
+import RegistroContratoPage from './modules/registro-contrato/pages/RegistroContratoPage';
+import './App.css';
 
-function AppRoutes() {
-  return (
-    <Routes>
-      <Route path="/" element={<div>Contratos</div>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
+export default function App() {
+  const [view, setView] = useState<'contratos' | 'registro'>('contratos');
+
+  if (view === 'registro') {
+    return <RegistroContratoPage onBack={() => setView('contratos')} />;
+  }
+
+  return <ContratosPage onNuevoContrato={() => setView('registro')} />;
 }
-
-function App() {
-  return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
-  );
-}
-
-export default App;
