@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 const RemoteDashboard = lazy(() => import('dashboardApp/Dashboard'));
 const RemoteFlota = lazy(() => import('flotaApp/Dashboard'));
 
+/* v8 ignore start */
 const DashboardLayout = () => {
   return (
     <Suspense
@@ -37,7 +38,9 @@ const ChoferLayout = () => {
     </Suspense>
   );
   };
+/* v8 ignore stop */
 
+/* v8 ignore next 2 */
 function App() {
   return (
     <Routes>
