@@ -44,6 +44,7 @@ export default defineConfig({
       include: [
         "src/App.tsx",
         "src/modules/dashboard-admin/**/*.{ts,tsx}",
+        "src/modules/monitoreo-camiones/*/.{ts,tsx}",
       ],
       exclude: ["src/main.tsx", "src/**/*.d.ts", "src/**/index.ts"],
     },
