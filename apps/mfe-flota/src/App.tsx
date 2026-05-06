@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import { Layout } from "./components/Layout";
 import { TurnoChoferPage } from "./modules/chofer/pages/TurnoChoferPage";
-import SeguimientoJornadas from "./modules/seguimiento-jornadas/SeguimientoJornadas";
+
 
 /**
  * 🏠 Dashboard ahora = Turno Chofer
@@ -36,11 +36,7 @@ function App() {
           {/* 🚛 TURNOS (VACÍO) */}
           <Route path="/turno-chofer" element={<TurnoChoferEmpty />} />
 
-          {/* 📊 SEGUIMIENTO JORNADAS */}
-          <Route
-            path="/seguimiento-jornadas"
-            element={<SeguimientoJornadas />}
-          />
+        
 
         </Routes>
 

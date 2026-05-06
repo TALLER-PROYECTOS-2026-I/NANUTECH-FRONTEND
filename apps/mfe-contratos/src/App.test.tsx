@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import App from './App';
+import SeguimientoJornadas from "./modules/seguimiento-jornadas/SeguimientoJornadas";
 
 describe('Microfrontend Base', () => {
   it('debería renderizar el componente principal sin errores', () => {
