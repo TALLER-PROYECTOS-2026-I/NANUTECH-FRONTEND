@@ -24,5 +24,6 @@ export * from './src/services/registrojornada/camiones';
 export * from './src/services/registrojornada/conductores';
 export * from './src/services/registrojornada/contratos';
 export * from './src/services/registrojornada/jornadas';
+export * from './src/services/monitoreoCamiones/camionesHu11';
 
 export default apiClient;
