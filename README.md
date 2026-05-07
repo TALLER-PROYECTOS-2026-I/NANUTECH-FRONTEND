@@ -85,7 +85,7 @@ Luego abrir el **Pull Request** hacia `develop` desde la interfaz de GitHub.
 
 Cuando el código ya fue mergeado a `develop` y las ramas originales están desactualizadas o eliminadas, **no tocar las ramas viejas**. Partir desde `develop` directamente.
 
-### Paso 1 — Cada quien crea su propia rama de documentación desde `devevelop`
+### Paso 1 — Cada quien crea su propia rama de documentación desde `develop`
 
 ```bash
 git checkout develop
