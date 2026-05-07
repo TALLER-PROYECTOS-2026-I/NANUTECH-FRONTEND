@@ -1,0 +1,10 @@
+export { default as DetalleContratoPage } from './DetalleContratoPage';
+export { default as DetalleHeader } from './DetalleHeader';
+export { default as AlertaVencimiento } from './AlertaVencimiento';
+export { default as InformacionGeneral } from './InformacionGeneral';
+export { default as EstadisticasPanel } from './EstadisticasPanel';
+export { default as InformacionSistemaComponent } from './InformacionSistema';
+export { default as CamionesAsignados } from './CamionesAsignados';
+export { default as HistorialCambios } from './HistorialCambios';
+export { default as EditarContratoForm } from './EditarContratoForm';
+export { default as AsignarUnidades } from './AsignarUnidades';
