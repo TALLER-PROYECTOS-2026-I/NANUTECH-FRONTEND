@@ -54,7 +54,7 @@ git commit -m "feat: agrega validación de formulario en login"
 
 ---
 
-### Paso 4 — Actualizar tu rama con lo último de `devevelop` (hacer esto cada día)
+### Paso 4 — Actualizar tu rama con lo último de `develop` (hacer esto cada día)
 
 Antes de seguir trabajando o de abrir un PR, traer los cambios nuevos de `develop`:
 
