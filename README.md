@@ -7,7 +7,7 @@
 ## 📋 Tabla de Contenidos
 
 - [Flujo de desarrollo (feature branches)](#-flujo-de-desarrollo-feature-branches)
-- [Cómo documentar código ya mergeado a dev](#-cómo-documentar-código-ya-mergeado-a-dev)
+- [Cómo documentar código ya mergeado a develop](#-cómo-documentar-código-ya-mergeado-a-develop)
 - [Reglas de oro](#-reglas-de-oro)
 
 ---
@@ -16,11 +16,11 @@
 
 Cada persona trabaja en su propia rama por funcionalidad (HU). Seguir estos pasos **en orden** evita el 90% de los conflictos.
 
-### Paso 1 — Partir siempre desde `dev` actualizado
+### Paso 1 — Partir siempre desde `develop` actualizado
 
 ```bash
-git checkout dev
-git pull origin dev
+git checkout develop
+git pull origin develop
 ```
 
 > ⚠️ Nunca crear una rama desde código desactualizado.
@@ -54,13 +54,13 @@ git commit -m "feat: agrega validación de formulario en login"
 
 ---
 
-### Paso 4 — Actualizar tu rama con lo último de `dev` (hacer esto cada día)
+### Paso 4 — Actualizar tu rama con lo último de `devevelop` (hacer esto cada día)
 
-Antes de seguir trabajando o de abrir un PR, traer los cambios nuevos de `dev`:
+Antes de seguir trabajando o de abrir un PR, traer los cambios nuevos de `develop`:
 
 ```bash
 git fetch origin
-git rebase origin/dev
+git rebase origin/develop
 ```
 
 > 💡 Si hay conflictos, resolverlos, luego:
@@ -77,30 +77,19 @@ git rebase origin/dev
 git push origin feature/nombre-de-la-hu
 ```
 
-Luego abrir el **Pull Request** hacia `dev` desde la interfaz de GitHub.
+Luego abrir el **Pull Request** hacia `develop` desde la interfaz de GitHub.
 
 ---
 
-### Flujo visual
+## 📝 Cómo documentar código ya mergeado a `devevelop`
 
-```
-dev
- ├── feature/login           → fetch+rebase diario → PR → dev ✅
- ├── feature/dashboard       → fetch+rebase diario → PR → dev ✅
- └── feature/cambio-password → fetch+rebase diario → PR → dev ✅
-```
+Cuando el código ya fue mergeado a `develop` y las ramas originales están desactualizadas o eliminadas, **no tocar las ramas viejas**. Partir desde `develop` directamente.
 
----
-
-## 📝 Cómo documentar código ya mergeado a `dev`
-
-Cuando el código ya fue mergeado a `dev` y las ramas originales están desactualizadas o eliminadas, **no tocar las ramas viejas**. Partir desde `dev` directamente.
-
-### Paso 1 — Cada quien crea su propia rama de documentación desde `dev`
+### Paso 1 — Cada quien crea su propia rama de documentación desde `devevelop`
 
 ```bash
-git checkout dev
-git pull origin dev
+git checkout develop
+git pull origin develop
 git checkout -b docs/comentarios-nombre-funcionalidad
 ```
 
@@ -126,13 +115,13 @@ git commit -m "docs: agrega comentarios a funciones de autenticación"
 
 ---
 
-### Paso 3 — Subir la rama y abrir el PR hacia `dev`
+### Paso 3 — Subir la rama y abrir el PR hacia `develop`
 
 ```bash
 git push origin docs/comentarios-nombre-funcionalidad
 ```
 
-Luego abrir el **Pull Request** hacia `dev`.
+Luego abrir el **Pull Request** hacia `develop`.
 
 ---
 
@@ -140,9 +129,9 @@ Luego abrir el **Pull Request** hacia `dev`.
 
 ```
 dev (con todo el código mergeado)
- ├── docs/comentarios-login       → PR → dev ✅
- ├── docs/comentarios-dashboard   → PR → dev ✅
- └── docs/comentarios-password    → PR → dev ✅
+ ├── docs/comentarios-login       → PR → develop ✅
+ ├── docs/comentarios-dashboard   → PR → develop ✅
+ └── docs/comentarios-password    → PR → develop ✅
 ```
 
 > ✅ Con ramas separadas por persona, cada quien es independiente. Si uno se tarda, los demás no se bloquean.
@@ -153,7 +142,7 @@ dev (con todo el código mergeado)
 
 | Regla | Por qué importa |
 |---|---|
-| Siempre partir desde `dev` actualizado | Evita trabajar sobre código viejo |
+| Siempre partir desde `develop` actualizado | Evita trabajar sobre código viejo |
 | `fetch` + `rebase` diario | Reduce conflictos al mínimo |
 | PRs pequeños y frecuentes | Más fácil de revisar y mergear |
 | Cada quien toca solo sus archivos | Evita pisar el trabajo de otros |
