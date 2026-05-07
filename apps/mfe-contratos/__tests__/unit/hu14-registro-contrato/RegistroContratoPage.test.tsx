@@ -1,13 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import RegistroContratoPage from '../../../src/modules/registro-contrato/pages/RegistroContratoPage';
-import { crearContrato } from '@nanutech/api-client';
-
-vi.mock('@nanutech/api-client', () => ({
-  crearContrato: vi.fn(),
-}));
-
-const crearContratoMock = vi.mocked(crearContrato);
 
 const completarPasoInformacionGeneral = () => {
   fireEvent.change(screen.getByLabelText(/Nombre del Cliente/i), {
@@ -22,22 +15,19 @@ const completarPasoInformacionGeneral = () => {
   fireEvent.change(screen.getByLabelText(/Fecha de Inicio/i), {
     target: { value: '2026-06-01' },
   });
-  fireEvent.change(screen.getByLabelText(/Fecha de Fin/i), {
+  fireEvent.change(screen.getByLabelText(/Fecha de Vencimiento/i), {
     target: { value: '2026-12-31' },
-  });
-  fireEvent.change(screen.getByLabelText(/Descripcion del Servicio|Descripción del Servicio/i), {
-    target: { value: 'Servicio de transporte Lima - Callao' },
   });
 };
 
 const completarPasoRuta = () => {
-  fireEvent.change(screen.getByPlaceholderText(/Av\. Lima 123/i), {
-    target: { value: 'Av. Lima 123' },
+  fireEvent.change(screen.getByLabelText(/Punto de Partida/i), {
+    target: { value: 'Lima - Terminal Ate' },
   });
-  fireEvent.change(screen.getByPlaceholderText(/Calle Arequipa 456/i), {
-    target: { value: 'Puerto del Callao' },
+  fireEvent.change(screen.getByLabelText(/Punto de Llegada/i), {
+    target: { value: 'Lima - Terminal Callao' },
   });
-  fireEvent.change(screen.getByPlaceholderText(/25\.50/i), {
+  fireEvent.change(screen.getByLabelText(/Distancia Estimada/i), {
     target: { value: '25.5' },
   });
 };
@@ -62,25 +52,15 @@ const avanzarAlPasoTarifas = () => {
   fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
 };
 
-describe('RegistroContratoPage - HU14', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
+describe('RegistroContratoPage - HU14 mock-first', () => {
   it('renderiza el primer paso del registro de contrato', () => {
     render(<RegistroContratoPage onBack={vi.fn()} />);
 
-    expect(screen.getByRole('heading', { name: /Registro de Contrato/i })).toBeTruthy();
-    expect(screen.getByText(/Paso 1 de 3/i)).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /Registrar Nuevo Contrato/i })).toBeTruthy();
+    expect(screen.getByText(/Paso 1/i)).toBeTruthy();
     expect(screen.getByLabelText(/Nombre del Cliente/i)).toBeTruthy();
     expect(screen.getByLabelText(/RUC/i)).toBeTruthy();
-    expect(screen.getByRole<HTMLButtonElement>('button', { name: /Anterior/i }).disabled).toBe(
-      true
-    );
+    expect(screen.getByRole('button', { name: /Cancelar/i })).toBeTruthy();
   });
 
   it('muestra errores de validacion cuando intenta avanzar sin datos validos', () => {
@@ -99,7 +79,7 @@ describe('RegistroContratoPage - HU14', () => {
     fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
     fireEvent.click(screen.getByRole('button', { name: /Siguiente/i }));
 
-    expect(screen.getByText(/Paso 2 de 3/i)).toBeTruthy();
+    expect(screen.getByText(/Paso 2/i)).toBeTruthy();
     expect(screen.getAllByText(/Campo obligatorio/i)).toHaveLength(2);
     expect(screen.getByText(/distancia debe ser mayor a 0/i)).toBeTruthy();
   });
@@ -110,32 +90,16 @@ describe('RegistroContratoPage - HU14', () => {
     avanzarAlPasoTarifas();
     completarPasoTarifas();
 
-    expect(screen.getByText(/Paso 3 de 3/i)).toBeTruthy();
-    expect(screen.getByText(/Tarifa Total: S\/ 81.60/i)).toBeTruthy();
+    expect(screen.getByText(/Paso 3/i)).toBeTruthy();
+    expect(screen.getByText(/Tarifa Total inicial/i)).toBeTruthy();
+    expect(screen.getByText('S/ 81.60')).toBeTruthy();
     expect(screen.getByText('Empresa Constructora ABC S.A.C.')).toBeTruthy();
     expect(screen.getByText('20123456789')).toBeTruthy();
   });
 
-  it('envia el contrato al api y vuelve al listado cuando el registro es exitoso', async () => {
+  it('crea un contrato mock y muestra el estado final exitoso', async () => {
     const onBack = vi.fn();
     const onRegistered = vi.fn();
-    crearContratoMock.mockResolvedValue({
-      id: 'CON-001',
-      codigo: 'CONT-2026-001',
-      cliente: 'Empresa Constructora ABC S.A.C.',
-      ruc: '20123456789',
-      tipo_servicio: 'POR_KM',
-      fecha_inicio: '2026-06-01',
-      fecha_fin: '2026-12-31',
-      origen: 'Av. Lima 123',
-      destino: 'Puerto del Callao',
-      distancia_estimada_km: 25.5,
-      tarifa_por_km: 3.2,
-      tarifa_por_hora: 50,
-      tarifa_espera: 12.5,
-      moneda: 'PEN',
-      tarifa: 81.6,
-    });
 
     render(<RegistroContratoPage onBack={onBack} onRegistered={onRegistered} />);
 
@@ -144,57 +108,27 @@ describe('RegistroContratoPage - HU14', () => {
     fireEvent.click(screen.getByRole('button', { name: /Registrar Contrato/i }));
 
     await waitFor(() => {
-      expect(crearContratoMock).toHaveBeenCalledWith({
-        cliente: 'Empresa Constructora ABC S.A.C.',
-        ruc: '20123456789',
-        descripcion: 'Servicio de transporte Lima - Callao',
-        tipo_servicio: 'POR_KM',
-        fecha_inicio: '2026-06-01',
-        fecha_fin: '2026-12-31',
-        origen: 'Av. Lima 123',
-        destino: 'Puerto del Callao',
-        distancia_estimada_km: 25.5,
-        tarifa_por_km: 3.2,
-        tarifa_por_hora: 50,
-        tarifa_espera: 12.5,
-        moneda: 'PEN',
-      });
+      expect(onRegistered).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cliente: 'Empresa Constructora ABC S.A.C.',
+          codigo: expect.stringMatching(/^CTR-2026-/),
+          tarifa: 81.6,
+        })
+      );
     });
-    expect(onRegistered).toHaveBeenCalledWith(
-      expect.objectContaining({ codigo: 'CONT-2026-001', tarifa: 81.6 })
-    );
-    expect(onBack).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/Contrato registrado exitosamente/i)).toBeTruthy();
+    expect(onBack).not.toHaveBeenCalled();
   });
 
   it('no registra si falta completar las tarifas obligatorias', () => {
-    render(<RegistroContratoPage onBack={vi.fn()} />);
+    const onRegistered = vi.fn();
+    render(<RegistroContratoPage onBack={vi.fn()} onRegistered={onRegistered} />);
 
     avanzarAlPasoTarifas();
     fireEvent.click(screen.getByRole('button', { name: /Registrar Contrato/i }));
 
-    expect(crearContratoMock).not.toHaveBeenCalled();
+    expect(onRegistered).not.toHaveBeenCalled();
     expect(screen.getByText(/Debe ser mayor a 0/i)).toBeTruthy();
     expect(screen.getAllByText(/Campo obligatorio/i)).toHaveLength(2);
-  });
-
-  it('muestra el mensaje de error del api cuando falla el registro', async () => {
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
-    crearContratoMock.mockRejectedValue({
-      response: {
-        data: {
-          message: 'El RUC ya tiene un contrato vigente',
-        },
-      },
-    });
-
-    render(<RegistroContratoPage onBack={vi.fn()} />);
-
-    avanzarAlPasoTarifas();
-    completarPasoTarifas();
-    fireEvent.click(screen.getByRole('button', { name: /Registrar Contrato/i }));
-
-    await waitFor(() => {
-      expect(alertMock).toHaveBeenCalledWith('El RUC ya tiene un contrato vigente');
-    });
   });
 });
