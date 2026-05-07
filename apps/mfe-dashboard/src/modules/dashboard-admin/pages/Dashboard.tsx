@@ -11,7 +11,7 @@ import {
   Legend,
 } from "recharts";
 
-import { getCamiones, type Camion } from "@nanutech/api-client";
+import { getCamiones, type Camion, getDashboard, type DashboardPayload } from "@nanutech/api-client";
 
 /* MOCK DATA */
 const kmData = [
@@ -63,6 +63,7 @@ type DashboardCamion = Camion & {
 
 function Dashboard() {
   const [camiones, setCamiones] = useState<DashboardCamion[]>([]);
+  const [dashboardData, setDashboardData] = useState<DashboardPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [horaActual, setHoraActual] = useState("");
   const [fechaActual, setFechaActual] = useState("");
@@ -82,8 +83,9 @@ function Dashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        const camiones = await getCamiones();
+        const [camiones, dashboard] = await Promise.all([getCamiones(), getDashboard()]);
         setCamiones(camiones);
+        setDashboardData(dashboard);
       } catch (err) {
         console.error("Error cargando unidades:", err);
         setCamiones([]);
@@ -98,6 +100,19 @@ function Dashboard() {
     const estado = (c?.estado || c?.status || "").toLowerCase();
     return estado === "activo" || estado === "disponible";
   });
+
+  // derive KPI values from dashboard payload when available
+  const totalCamiones = dashboardData?.kpis?.totalCamiones ?? camiones.length;
+  const activosFromGrafica = dashboardData?.graficas?.camiones?.find((g) => (g.estado || '').toUpperCase() === 'EN_JORNADA')?.total;
+  const disponiblesFromGrafica = dashboardData?.graficas?.camiones?.find((g) => (g.estado || '').toUpperCase() === 'DISPONIBLE')?.total;
+  const camionesEnUso = activosFromGrafica ?? camionesActivos.length;
+  const camionesDisponibles = disponiblesFromGrafica ?? (totalCamiones - camionesEnUso);
+  const contratosTotales = dashboardData?.contratos?.length ?? 0;
+  const contratosActivosKPI = dashboardData?.kpis?.contratosActivos ?? contratosTotales;
+  const contratosPorExpirar = dashboardData?.alertas?.contratosPorExpirar?.length ?? 0;
+  const alertasActivasCount = dashboardData?.alertas?.alertasActivas?.length ?? 0;
+  const ingresosEstimados = dashboardData?.kpis?.ingresos ?? 0;
+  const kmChartData = (dashboardData?.topCamiones ?? []).map((t, i) => ({ name: `U-${i + 1}`, km: t.km }));
 
   const handleLogout = () => {
     localStorage.clear();
@@ -240,11 +255,11 @@ function Dashboard() {
                 <div className="bg-white border border-gray-200 rounded-xl p-5 flex items-start justify-between">
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Total Camiones</p>
-                    <p className="text-3xl font-bold text-gray-900">{camiones.length || 13}</p>
+                    <p className="text-3xl font-bold text-gray-900">{totalCamiones || 0}</p>
                     <p className="text-xs mt-1.5">
-                      <span className="text-gray-500">{camionesActivos.length || 7} en uso</span>
+                      <span className="text-gray-500">{camionesEnUso || 0} en uso</span>
                       <span className="mx-1 text-gray-300">·</span>
-                      <span className="text-blue-500">{(camiones.length - camionesActivos.length) || 4} disponibles</span>
+                      <span className="text-blue-500">{camionesDisponibles || 0} disponibles</span>
                     </p>
                   </div>
                   <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
@@ -256,11 +271,11 @@ function Dashboard() {
                 <div className="bg-white border border-gray-200 rounded-xl p-5 flex items-start justify-between">
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Contratos Activos</p>
-                    <p className="text-3xl font-bold text-gray-900">12</p>
+                    <p className="text-3xl font-bold text-gray-900">{contratosActivosKPI}</p>
                     <p className="text-xs mt-1.5">
-                      <span className="text-gray-500">18 totales</span>
+                      <span className="text-gray-500">{contratosTotales} totales</span>
                       <span className="mx-1 text-gray-300">·</span>
-                      <span className="text-red-500">9 por expirar</span>
+                      <span className="text-red-500">{contratosPorExpirar} por expirar</span>
                     </p>
                   </div>
                   <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center shrink-0">
@@ -272,8 +287,8 @@ function Dashboard() {
                 <div className="bg-white border border-gray-200 rounded-xl p-5 flex items-start justify-between">
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Alertas Activas</p>
-                    <p className="text-3xl font-bold text-red-500">10</p>
-                    <p className="text-xs text-gray-500 mt-1.5">1 velocidad</p>
+                    <p className="text-3xl font-bold text-red-500">{alertasActivasCount}</p>
+                    <p className="text-xs text-gray-500 mt-1.5">{dashboardData?.graficas?.gps?.map(g => `${g.tipo_evento}: ${g.total}`).join(', ') || '—'}</p>
                   </div>
                   <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center shrink-0">
                     <svg className="w-6 h-6 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -284,7 +299,7 @@ function Dashboard() {
                 <div className="bg-white border border-gray-200 rounded-xl p-5 flex items-start justify-between">
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Ingresos Estimados</p>
-                    <p className="text-3xl font-bold text-purple-600">S/. 0</p>
+                    <p className="text-3xl font-bold text-purple-600">S/. {ingresosEstimados.toLocaleString()}</p>
                     <p className="text-xs text-gray-500 mt-1.5">Contratos activos</p>
                   </div>
                   <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center shrink-0">
@@ -382,7 +397,7 @@ function Dashboard() {
                 <div className="bg-white border border-gray-200 rounded-xl p-5">
                   <h3 className="font-bold text-gray-800 mb-4">Km por Camión</h3>
                   <ResponsiveContainer width="100%" height={260}>
-                    <BarChart data={kmData}>
+                    <BarChart data={kmChartData.length ? kmChartData : kmData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                       <YAxis tick={{ fontSize: 12 }} />

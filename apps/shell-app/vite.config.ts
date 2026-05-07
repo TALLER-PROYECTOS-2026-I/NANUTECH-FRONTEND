@@ -21,6 +21,14 @@ export default defineConfig({
   ],
   server: {
     port: 3000,
+    proxy: {
+      // Proxy /dev/* to the API Gateway to avoid CORS in local development
+      '': {
+        target: 'https://q26dwk17da.execute-api.us-east-1.amazonaws.com',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
   },
   build: {
     modulePreload: false,
