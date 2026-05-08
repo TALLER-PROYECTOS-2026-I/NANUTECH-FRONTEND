@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 
@@ -62,7 +62,7 @@ describe("HU08 - Integración GPS", () => {
     expect(await screen.findByText("ABC-123")).toBeInTheDocument();
   });
 
-  it("filtra por proveedor (evita duplicados)", async () => {
+  it("filtra por proveedor sin duplicados", async () => {
     renderPage();
 
     fireEvent.click(screen.getByText(/Ver datos GPS/i));
@@ -73,12 +73,11 @@ describe("HU08 - Integración GPS", () => {
       target: { value: "GPSControl.pe" },
     });
 
-    // usar findAll porque hay múltiples renders
     const matches = await screen.findAllByText("GPSControl.pe");
     expect(matches.length).toBeGreaterThan(0);
   });
 
-  it("permite subir archivo CSV sin romper UI", async () => {
+  it("permite subir archivo CSV sin romper UI", () => {
     renderPage();
 
     const file = new File(["gps,data"], "gps.csv", {
@@ -93,6 +92,7 @@ describe("HU08 - Integración GPS", () => {
       target: { files: [file] },
     });
 
+    expect(fileInput.files?.length).toBe(1);
     expect(fileInput.files?.[0].name).toBe("gps.csv");
   });
 
