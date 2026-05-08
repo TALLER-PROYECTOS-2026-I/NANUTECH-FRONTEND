@@ -4,7 +4,8 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import type { Contrato } from '@nanutech/api-client';
 import './App.css';
 import RegistroContratoPage from './modules/registro-contrato/pages/RegistroContratoPage';
-import ContratosPage from './modules/registro-contrato/pages/ContratosPage';
+import { GestionContratosPage as ContratosPage } from './modules/gestion-contratos';
+import { DetalleContratoPage } from './modules/detalle-contrato';
 
 type Toast = {
   title: string;
@@ -122,6 +123,7 @@ function NavItem({ label, active }: { label: string; active?: boolean }) {
 
 function AppRoutes() {
   const [showRegistro, setShowRegistro] = useState(false);
+  const [selectedContratoId, setSelectedContratoId] = useState<string | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
 
   const showToast = (nextToast: Toast) => {
@@ -149,8 +151,16 @@ function AppRoutes() {
                 onBack={() => setShowRegistro(false)}
                 onRegistered={handleRegistered}
               />
+            ) : selectedContratoId ? (
+              <DetalleContratoPage
+                contratoId={selectedContratoId}
+                onBack={() => setSelectedContratoId(null)}
+              />
             ) : (
-              <ContratosPage onNuevoContrato={() => setShowRegistro(true)} />
+              <ContratosPage
+                onNuevoContrato={() => setShowRegistro(true)}
+                onVerContrato={setSelectedContratoId}
+              />
             )
           }
         />
