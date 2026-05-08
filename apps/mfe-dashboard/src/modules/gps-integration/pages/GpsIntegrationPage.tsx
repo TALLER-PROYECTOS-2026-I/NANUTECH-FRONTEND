@@ -2,10 +2,10 @@ import { useState, useMemo } from "react";
 import { NavLink } from "react-router-dom";
 
 function GpsIntegrationPage() {
-  const [menuUsuarioAbierto, setMenuUsuarioAbierto] = useState(false);
+
 
   const [provider, setProvider] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+
   const [validated, setValidated] = useState(false);
   const [imported, setImported] = useState(false);
   const [filterProveedor, setFilterProveedor] = useState("");
@@ -121,8 +121,7 @@ function GpsIntegrationPage() {
 
   /* ───── VALIDACION CSV SIMULADA ───── */
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0] || null;
-    setFile(f);
+  const f = e.target.files?.[0] || null;
 
     if (f) {
       // simulación validación columnas
