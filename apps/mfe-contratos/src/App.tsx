@@ -14,7 +14,8 @@ import './App.css';
 
 /* Pages */
 import RegistroContratoPage from './modules/registro-contrato/pages/RegistroContratoPage';
-import ContratosPage from './modules/registro-contrato/pages/ContratosPage';
+import { GestionContratosPage as ContratosPage } from './modules/gestion-contratos';
+import { DetalleContratoPage } from './modules/detalle-contrato';
 
 /* Seguimiento (si existe, si no se usa fallback) */
 import SeguimientoJornadas from './modules/seguimiento-jornadas/SeguimientoJornadas';
@@ -167,6 +168,7 @@ function NavItem({
 /* ROUTES (NO TOCADO) */
 function AppRoutes() {
   const [showRegistro, setShowRegistro] = useState(false);
+  const [selectedContratoId, setSelectedContratoId] = useState<string | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
 
   const showToast = (t: Toast) => {
@@ -192,8 +194,16 @@ function AppRoutes() {
                 onBack={() => setShowRegistro(false)}
                 onRegistered={handleRegistered}
               />
+            ) : selectedContratoId ? (
+              <DetalleContratoPage
+                contratoId={selectedContratoId}
+                onBack={() => setSelectedContratoId(null)}
+              />
             ) : (
-              <ContratosPage onNuevoContrato={() => setShowRegistro(true)} />
+              <ContratosPage
+                onNuevoContrato={() => setShowRegistro(true)}
+                onVerContrato={setSelectedContratoId}
+              />
             )
           }
         />
