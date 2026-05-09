@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import App from "./App";
 import '@testing-library/jest-dom';
 
@@ -22,7 +23,11 @@ describe("Dashboard Microfrontend", () => {
 
   it("debería renderizar el título principal correctamente", async () => {
     //Renderizamos el componente
-    render(<App />);
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>
+    );
 
     //Esperamos a que el título se renderice
     await waitFor(() => {

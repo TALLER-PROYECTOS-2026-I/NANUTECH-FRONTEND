@@ -9,6 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute';
   
 const RemoteDashboard = lazy(() => import('dashboardApp/Dashboard'));
 const RemoteFlota = lazy(() => import('flotaApp/Dashboard'));
+const RemoteContratos = lazy(() => import('contratosApp/App'));
 
 /* v8 ignore start */
 const DashboardLayout = () => {
@@ -37,7 +38,21 @@ const ChoferLayout = () => {
       <RemoteFlota />
     </Suspense>
   );
-  };
+};
+
+const ContratosLayout = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="text-blue-700 animate-pulse mt-4">
+          Cargando modulo de Contratos...
+        </div>
+      }
+    >
+      <RemoteContratos />
+    </Suspense>
+  );
+};
 /* v8 ignore stop */
 
 /* v8 ignore next 2 */
@@ -49,19 +64,28 @@ function App() {
       <Route path="/recuperar/confirmar" element={<ResetPasswordPage />} />
 
       <Route
-        path="/dashboard/admin"
+        path="/dashboard/admin/*"
         element={
-          <ProtectedRoute>-
+          <ProtectedRoute allowedRoles={['ADMIN']}>
             <DashboardLayout />
           </ProtectedRoute>
         }
       />
 
       <Route
-        path="/dashboard/chofer"
+        path="/dashboard/chofer/*"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['CHOFER', 'CONDUCTOR']}>
             <ChoferLayout />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/dashboard/contratos/*"
+        element={
+          <ProtectedRoute allowedRoles={['GERENTE']}>
+            <ContratosLayout />
           </ProtectedRoute>
         }
       />

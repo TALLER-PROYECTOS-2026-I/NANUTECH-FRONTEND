@@ -12,6 +12,8 @@ const getJornadasMock = vi.mocked(getJornadas);
 
 beforeAll(() => {
   global.URL.createObjectURL = vi.fn(() => 'blob:url');
+  global.URL.revokeObjectURL = vi.fn();
+  vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
 });
 
 describe('HU05 - Seguimiento Jornadas', () => {

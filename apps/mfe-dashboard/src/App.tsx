@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 // PAGES
 import Dashboard from "./modules/dashboard-admin/pages/Dashboard";
@@ -9,35 +9,31 @@ import MonitoreoCamionesPage from "./modules/monitoreo-camiones/MonitoreoCamione
 // GPS
 import GpsIntegrationPage from "./modules/gps-integration/pages/GpsIntegrationPage";
 
-function AppRoutes() {
+export function AppRoutes() {
   return (
     <Routes>
       {/* base */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route index element={<Navigate to="dashboard" replace />} />
 
       {/* dashboard */}
-      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="dashboard" element={<Dashboard />} />
 
       {/* GPS */}
-      <Route path="/gps" element={<GpsIntegrationPage />} />
+      <Route path="gps" element={<GpsIntegrationPage />} />
 
       {/* jornadas */}
-      <Route path="/registro-jornada" element={<RegistroJornada />} />
-      <Route path="/registro-jornada/nueva" element={<RegistroNuevaJornada />} />
+      <Route path="registro-jornada" element={<RegistroJornada />} />
+      <Route path="registro-jornada/nueva" element={<RegistroNuevaJornada />} />
 
       {/* camiones */}
-      <Route path="/camiones" element={<MonitoreoCamionesPage />} />
+      <Route path="camiones" element={<MonitoreoCamionesPage />} />
 
       {/* fallback */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
   );
 }
 
 export default function App() {
-  return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
-  );
+  return <AppRoutes />;
 }

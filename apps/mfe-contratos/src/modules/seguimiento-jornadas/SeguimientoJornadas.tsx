@@ -2,12 +2,22 @@ import { useEffect, useState } from "react";
 import { getJornadas } from "./services/jornadas.service";
 import "./seguimiento.css";
 
+type JornadaSeguimiento = {
+  fecha: string;
+  chofer: string;
+  placa: string;
+  horaInicio: string;
+  horaFin?: string;
+  estado: string;
+  observaciones?: string;
+};
+
 export default function SeguimientoJornadas() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<JornadaSeguimiento[]>([]);
   const [search, setSearch] = useState("");
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
-  const [modal, setModal] = useState<any | null>(null);
+  const [modal, setModal] = useState<JornadaSeguimiento | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -15,7 +25,7 @@ export default function SeguimientoJornadas() {
     const load = async () => {
       try {
         const res = await getJornadas();
-        setData(Array.isArray(res) ? res : res?.data ?? []);
+        setData((Array.isArray(res) ? res : res?.data ?? []) as JornadaSeguimiento[]);
       } catch {
         setData([]);
       } finally {
@@ -25,7 +35,7 @@ export default function SeguimientoJornadas() {
     load();
   }, []);
 
-  const getDuracion = (j: any) => {
+  const getDuracion = (j: JornadaSeguimiento) => {
     if (!j.horaInicio || !j.horaFin) return "En curso";
     const inicio = new Date(`${j.fecha} ${j.horaInicio}`);
     const fin = new Date(`${j.fecha} ${j.horaFin}`);
@@ -35,7 +45,11 @@ export default function SeguimientoJornadas() {
 
   const filtered = data.filter((j) => {
     const text = `${j.chofer} ${j.placa}`.toLowerCase();
-    return text.includes(search.toLowerCase());
+    const fecha = new Date(j.fecha).getTime();
+    const desdeOk = desde ? fecha >= new Date(desde).getTime() : true;
+    const hastaOk = hasta ? fecha <= new Date(hasta).getTime() : true;
+
+    return text.includes(search.toLowerCase()) && desdeOk && hastaOk;
   });
 
   // 🔥 EXPORT CSV
@@ -106,8 +120,8 @@ export default function SeguimientoJornadas() {
             <option>Todos los conductores</option>
           </select>
 
-          <input type="date" onChange={(e) => setDesde(e.target.value)} />
-          <input type="date" onChange={(e) => setHasta(e.target.value)} />
+          <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
+          <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
         </div>
       </div>
 
@@ -115,6 +129,9 @@ export default function SeguimientoJornadas() {
       <div className="tableCard">
         <div className="title">Historial de Jornadas</div>
 
+        {loading ? (
+          <div className="empty">Cargando jornadas...</div>
+        ) : (
         <table>
           <thead>
             <tr>
@@ -168,6 +185,7 @@ export default function SeguimientoJornadas() {
             )}
           </tbody>
         </table>
+        )}
       </div>
 
       {/* MODAL OBSERVACIONES */}

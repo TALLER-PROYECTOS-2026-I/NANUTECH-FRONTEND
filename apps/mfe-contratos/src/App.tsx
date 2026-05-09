@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
-  BrowserRouter,
   Navigate,
   Route,
   Routes,
@@ -79,10 +78,10 @@ function AppShell({
         </div>
 
         <nav className="flex-1 space-y-2 px-4 py-6">
-          <NavItem label="Dashboard Gerencial" to="/dashboard" />
-          <NavItem label="Contratos" to="/" />
-          <NavItem label="Historial de Jornadas" to="/historial" />
-          <NavItem label="Seguimiento Jornadas" to="/seguimiento-jornadas" />
+          <NavItem label="Dashboard Gerencial" to="dashboard" />
+          <NavItem label="Contratos" to="." />
+          <NavItem label="Historial de Jornadas" to="historial" />
+          <NavItem label="Seguimiento Jornadas" to="seguimiento-jornadas" />
         </nav>
 
         {/* ✅ SOLO AGREGADO - BLOQUE MARÍA GERENTE */}
@@ -166,7 +165,7 @@ function NavItem({
 }
 
 /* ROUTES (NO TOCADO) */
-function AppRoutes() {
+export function AppRoutes() {
   const [showRegistro, setShowRegistro] = useState(false);
   const [selectedContratoId, setSelectedContratoId] = useState<string | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
@@ -187,7 +186,7 @@ function AppRoutes() {
     <AppShell toast={toast}>
       <Routes>
         <Route
-          path="/"
+          index
           element={
             showRegistro ? (
               <RegistroContratoPage
@@ -208,11 +207,11 @@ function AppRoutes() {
           }
         />
 
-        <Route path="/dashboard" element={<div>Dashboard Gerencial</div>} />
-        <Route path="/historial" element={<div>Historial de Jornadas</div>} />
+        <Route path="dashboard" element={<div>Dashboard Gerencial</div>} />
+        <Route path="historial" element={<div>Historial de Jornadas</div>} />
 
         <Route
-          path="/seguimiento-jornadas"
+          path="seguimiento-jornadas"
           element={
             SeguimientoJornadas ? (
               <SeguimientoJornadas />
@@ -222,16 +221,12 @@ function AppRoutes() {
           }
         />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="." replace />} />
       </Routes>
     </AppShell>
   );
 }
 
 export default function App() {
-  return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
-  );
+  return <AppRoutes />;
 }

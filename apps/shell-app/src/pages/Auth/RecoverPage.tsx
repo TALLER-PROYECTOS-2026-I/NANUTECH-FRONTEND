@@ -4,15 +4,20 @@ import { recuperarPassword } from '@nanutech/api-client';
 import { validarFormatoCorreo } from '@nanutech/utils';
 
 export default function RecoverPage() {
+  // Correo donde Cognito enviara el codigo de recuperacion.
   const [correo, setCorreo] = useState('');
+
+  // Estado del flujo para mostrar carga, exito o errores.
   const [estado, setEstado] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [mensaje, setMensaje] = useState('');
   const navigate = useNavigate();
 
+  // Solicita el codigo de recuperacion al backend.
   const handleRecover = async (e: React.FormEvent) => {
     e.preventDefault();
     setMensaje('');
 
+    // Detiene el flujo si el correo no tiene formato valido.
     if (!validarFormatoCorreo(correo)) {
       setEstado('error');
       return setMensaje('Ingresa un correo válido.');
@@ -21,6 +26,7 @@ export default function RecoverPage() {
     setEstado('loading');
 
     try {
+      // Llama al endpoint que inicia el flujo de recuperar password.
       const respuesta = await recuperarPassword(correo);
 
       setEstado('success');
@@ -30,10 +36,12 @@ export default function RecoverPage() {
           'Se envió el correo de recuperación.'
       );
 
+      // Lleva al usuario a confirmar el codigo recibido por correo.
       setTimeout(() => {
         navigate('/recuperar/confirmar', { state: { email: correo } });
       }, 1500);
     } catch (err: unknown) {
+      // Convierte distintos formatos de error en un mensaje visible.
       const error = err as {
         response?: { data?: { message?: string; mensaje?: string } };
         message?: string;
