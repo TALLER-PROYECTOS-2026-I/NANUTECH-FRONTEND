@@ -19,7 +19,7 @@ jobs:
 
     outputs:
       tests_passed: ${{ steps.tests.outputs.tests_passed }}
-      failed_mfes:  ${{ steps.tests.outputs.failed_mfes }}
+      failed_mfes: ${{ steps.tests.outputs.failed_mfes }}
 
     steps:
       - name: Checkout code
@@ -43,7 +43,6 @@ jobs:
           run_coverage() {
             local LABEL=$1
             local WORKSPACE=$2
-            local OPTIONAL=${3:-false}
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "▶  $LABEL"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -51,26 +50,15 @@ jobs:
               echo "✅ $LABEL — OK"
             else
               echo "⚠️  $LABEL — FALLÓ (coverage igual se recolectará)"
-              if [ "$OPTIONAL" = "false" ]; then
-                FAILED_MFES="$FAILED_MFES $LABEL"
-              else
-                echo "   (paquete opcional — no bloquea el job)"
-              fi
+              FAILED_MFES="$FAILED_MFES $LABEL"
             fi
           }
 
-          run_coverage "mfe-contratos"  "apps/mfe-contratos"
-          run_coverage "mfe-dashboard"  "apps/mfe-dashboard"
-          run_coverage "mfe-flota"      "apps/mfe-flota"
-          run_coverage "shell-app"      "apps/shell-app"
-          run_coverage "utils"          "packages/utils"
-
-          # Packages opcionales — nunca bloquean el workflow
-          for PKG in api-client ui-components; do
-            if [ -f "packages/$PKG/package.json" ]; then
-              run_coverage "pkg-$PKG" "packages/$PKG" "true"
-            fi
-          done
+          # Solo apps — packages completamente ignorados
+          run_coverage "mfe-contratos" "apps/mfe-contratos"
+          run_coverage "mfe-dashboard" "apps/mfe-dashboard"
+          run_coverage "mfe-flota"     "apps/mfe-flota"
+          run_coverage "shell-app"     "apps/shell-app"
 
           echo "tests_passed=$( [ -z "$FAILED_MFES" ] && echo true || echo false )" >> $GITHUB_OUTPUT
           echo "failed_mfes=$FAILED_MFES" >> $GITHUB_OUTPUT
@@ -98,15 +86,11 @@ jobs:
             fi
           }
 
+          # Solo apps — sin utils, sin api-client, sin ui-components, sin config, sin types
           collect "mfe-contratos" "apps/mfe-contratos"
           collect "mfe-dashboard" "apps/mfe-dashboard"
           collect "mfe-flota"     "apps/mfe-flota"
           collect "shell-app"     "apps/shell-app"
-          collect "utils"         "packages/utils"
-
-          for PKG in api-client ui-components; do
-            [ -d "packages/$PKG" ] && collect "pkg-$PKG" "packages/$PKG" || true
-          done
 
           echo ""
           echo "=== Estructura de all-coverage-reports/ ==="

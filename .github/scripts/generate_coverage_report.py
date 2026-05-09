@@ -3,6 +3,9 @@ import os
 from datetime import datetime
 from collections import defaultdict
 
+# Workspaces excluidos del reporte HTML
+EXCLUDED = {"utils", "pkg-api-client", "pkg-ui-components", "api-client", "ui-components", "config", "types"}
+
 def safe_pct(covered, total):
     if total == 0:
         return 100.0 if covered == 0 else 0.0
@@ -57,10 +60,6 @@ tbody tr:hover{background:#243044;transition:background .15s}
 .legend{display:flex;gap:20px;flex-wrap:wrap;padding:14px 20px;background:#1e293b;
         border-radius:12px;margin-bottom:24px;font-size:12px;color:#94a3b8}
 .legend-dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
-.back{display:inline-flex;align-items:center;gap:6px;color:#60a5fa;font-size:13px;
-      text-decoration:none;margin-bottom:20px;padding:8px 14px;background:#1e293b;
-      border-radius:8px;font-weight:600}
-.back:hover{background:#243044}
 .breadcrumb{display:flex;align-items:center;gap:8px;color:#475569;font-size:12px;margin-bottom:16px}
 .breadcrumb a{color:#60a5fa;text-decoration:none}
 .breadcrumb a:hover{text-decoration:underline}
@@ -68,7 +67,6 @@ tbody tr:hover{background:#243044;transition:background .15s}
 .badge{display:inline-block;font-size:10px;padding:3px 10px;border-radius:20px;
        font-weight:700;margin-left:8px;vertical-align:middle}
 .badge-app{background:#1e3a8a22;color:#93c5fd;border:1px solid #1e3a8a}
-.badge-pkg{background:#14532d22;color:#86efac;border:1px solid #14532d}
 .icon{margin-right:6px}
 .footer{margin-top:48px;padding:20px;text-align:center;color:#334155;
         border-top:1px solid #1e293b;font-size:12px}
@@ -80,6 +78,11 @@ BASE_DIR = "all-coverage-reports"
 mfe_list = []
 
 for mfe_name in sorted(os.listdir(BASE_DIR)):
+    # ← Saltar workspaces excluidos
+    if mfe_name in EXCLUDED:
+        print(f"  SKIP {mfe_name} (excluido)")
+        continue
+
     summary_path = os.path.join(BASE_DIR, mfe_name, "coverage-summary.json")
     if not os.path.isfile(summary_path):
         continue
@@ -90,23 +93,23 @@ for mfe_name in sorted(os.listdir(BASE_DIR)):
     total = data.get("total", {})
 
     mfe_info = {
-        "name":         mfe_name,
-        "badge":        "badge-pkg" if mfe_name.startswith("pkg-") or mfe_name == "utils" else "badge-app",
-        "label":        "package"   if mfe_name.startswith("pkg-") or mfe_name == "utils" else "app",
-        "s_pct":        total.get("statements", {}).get("pct",     0),
-        "b_pct":        total.get("branches",   {}).get("pct",     0),
-        "f_pct":        total.get("functions",  {}).get("pct",     0),
-        "l_pct":        total.get("lines",      {}).get("pct",     0),
-        "s_cov":        total.get("statements", {}).get("covered", 0),
-        "s_tot":        total.get("statements", {}).get("total",   0),
-        "b_cov":        total.get("branches",   {}).get("covered", 0),
-        "b_tot":        total.get("branches",   {}).get("total",   0),
-        "f_cov":        total.get("functions",  {}).get("covered", 0),
-        "f_tot":        total.get("functions",  {}).get("total",   0),
-        "l_cov":        total.get("lines",      {}).get("covered", 0),
-        "l_tot":        total.get("lines",      {}).get("total",   0),
-        "folders":      defaultdict(list),
-        "file_count":   0,
+        "name":          mfe_name,
+        "badge":         "badge-app",
+        "label":         "app",
+        "s_pct":         total.get("statements", {}).get("pct",     0),
+        "b_pct":         total.get("branches",   {}).get("pct",     0),
+        "f_pct":         total.get("functions",  {}).get("pct",     0),
+        "l_pct":         total.get("lines",      {}).get("pct",     0),
+        "s_cov":         total.get("statements", {}).get("covered", 0),
+        "s_tot":         total.get("statements", {}).get("total",   0),
+        "b_cov":         total.get("branches",   {}).get("covered", 0),
+        "b_tot":         total.get("branches",   {}).get("total",   0),
+        "f_cov":         total.get("functions",  {}).get("covered", 0),
+        "f_tot":         total.get("functions",  {}).get("total",   0),
+        "l_cov":         total.get("lines",      {}).get("covered", 0),
+        "l_tot":         total.get("lines",      {}).get("total",   0),
+        "folders":       defaultdict(list),
+        "file_count":    0,
         "has_real_data": len([k for k in data.keys() if k != "total"]) > 0,
     }
 
@@ -146,7 +149,7 @@ for mfe_name in sorted(os.listdir(BASE_DIR)):
 
     mfe_list.append(mfe_info)
 
-# Metricas globales
+# Metricas globales (solo apps, sin packages)
 gs_cov   = sum(m["s_cov"] for m in mfe_list)
 gs_tot   = sum(m["s_tot"] for m in mfe_list)
 gb_cov   = sum(m["b_cov"] for m in mfe_list)
@@ -184,7 +187,7 @@ for mfe in mfe_list:
         for f in files:
             file_rows += f"""
             <tr>
-              <td class="name-cell" style="padding-left:36px">file {f['name']}</td>
+              <td class="name-cell" style="padding-left:36px">📄 {f['name']}</td>
               {pct_cell(f['s_pct'], f['s_cov'], f['s_tot'])}
               {pct_cell(f['b_pct'], f['b_cov'], f['b_tot'])}
               {pct_cell(f['f_pct'], f['f_cov'], f['f_tot'])}
@@ -195,7 +198,7 @@ for mfe in mfe_list:
         folder_sections += f"""
         <tr style="background:#0f172a">
           <td class="name-cell" style="font-size:12px;color:#94a3b8;padding:10px 18px">
-            folder {folder_name}
+            📁 {folder_name}
             <span class="file-count">{len(files)} archivo(s)</span>
           </td>
           {pct_cell(fs_pct)}
@@ -213,7 +216,7 @@ for mfe in mfe_list:
     if not mfe["has_real_data"]:
         warning_banner = """
         <div class="warning-banner">
-          Los tests de este workspace fallaron. Los datos son placeholder (0%).
+          ⚠️ Los tests de este workspace fallaron. Los datos son placeholder (0%).
           Revisa los logs del CI para mas detalles.
         </div>"""
 
@@ -233,14 +236,11 @@ for mfe in mfe_list:
 <body>
 <div class="container">
   <div class="breadcrumb">
-    <a href="index.html">Inicio</a>
+    <a href="index.html">🏠 Inicio</a>
     <span>&rsaquo;</span>
     <span>{mfe_name}</span>
   </div>
-  <h1>
-    {"pkg" if mfe["label"]=="package" else "app"} {mfe_name}
-    <span class="badge {mfe['badge']}">{mfe['label']}</span>
-  </h1>
+  <h1>🖥️ {mfe_name} <span class="badge badge-app">app</span></h1>
   <div class="sub">
     {mfe['file_count']} archivo(s) &middot;
     Generado: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}
@@ -249,19 +249,19 @@ for mfe in mfe_list:
   <div class="cards">
     <div class="card">
       <div class="card-num" style="color:{get_color(mfe['l_pct'])}">{fmt(mfe['l_pct'])}</div>
-      <div class="card-label">Lineas</div>
+      <div class="card-label">📝 Lineas</div>
     </div>
     <div class="card">
       <div class="card-num" style="color:{get_color(mfe['s_pct'])}">{fmt(mfe['s_pct'])}</div>
-      <div class="card-label">Sentencias</div>
+      <div class="card-label">📌 Sentencias</div>
     </div>
     <div class="card">
       <div class="card-num" style="color:{get_color(mfe['b_pct'])}">{fmt(mfe['b_pct'])}</div>
-      <div class="card-label">Ramas</div>
+      <div class="card-label">🔀 Ramas</div>
     </div>
     <div class="card">
       <div class="card-num" style="color:{get_color(mfe['f_pct'])}">{fmt(mfe['f_pct'])}</div>
-      <div class="card-label">Funciones</div>
+      <div class="card-label">⚙️ Funciones</div>
     </div>
   </div>
   <div class="legend">
@@ -269,7 +269,7 @@ for mfe in mfe_list:
     <div><span class="legend-dot" style="background:#eab308"></span>50%-69% - Aceptable</div>
     <div><span class="legend-dot" style="background:#ef4444"></span>Menos de 50% - Necesita mejora</div>
   </div>
-  <h2>Archivos por carpeta</h2>
+  <h2>📂 Archivos por carpeta</h2>
   <div class="table-wrap">
     <table>
       <thead>
@@ -300,15 +300,12 @@ for mfe in mfe_list:
 # Pagina principal
 mfe_rows = ""
 for mfe in mfe_list:
-    estado    = "OK" if mfe["l_pct"] >= 50 else "FAIL"
     sin_datos = " (sin datos)" if not mfe["has_real_data"] else ""
     mfe_rows += f"""
     <tr>
       <td class="name-cell">
-        <a href="{mfe['name']}.html">
-          {"pkg" if mfe["label"]=="package" else "app"} {mfe['name']}
-        </a>
-        <span class="badge {mfe['badge']}">{mfe['label']}</span>
+        <a href="{mfe['name']}.html">🖥️ {mfe['name']}</a>
+        <span class="badge badge-app">app</span>
         <div class="file-count">{mfe['file_count']} archivo(s){sin_datos}</div>
       </td>
       {pct_cell(mfe['s_pct'])}
@@ -316,7 +313,7 @@ for mfe in mfe_list:
       {pct_cell(mfe['f_pct'])}
       {pct_cell(mfe['l_pct'])}
       <td>{bar(mfe['l_pct'])}</td>
-      <td style="font-size:18px;text-align:center">{"OK" if mfe["l_pct"] >= 50 else "FAIL"}</td>
+      <td style="font-size:18px;text-align:center">{"✅" if mfe["l_pct"] >= 50 else "❌"}</td>
     </tr>"""
 
 index_html = f"""<!DOCTYPE html>
@@ -329,31 +326,31 @@ index_html = f"""<!DOCTYPE html>
 </head>
 <body>
 <div class="container">
-  <h1>NANUTECH Frontend - Reporte de Cobertura</h1>
+  <h1>🚛 NANUTECH Frontend - Reporte de Cobertura</h1>
   <div class="sub">
-    {len(mfe_list)} workspace(s) &middot;
+    {len(mfe_list)} app(s) &middot;
     Generado: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}
   </div>
   <div class="cards">
     <div class="card">
       <div class="card-num" style="color:{get_color(g_lines)}">{fmt(g_lines)}</div>
-      <div class="card-label">Lineas</div>
+      <div class="card-label">📝 Lineas</div>
     </div>
     <div class="card">
       <div class="card-num" style="color:{get_color(g_stmt)}">{fmt(g_stmt)}</div>
-      <div class="card-label">Sentencias</div>
+      <div class="card-label">📌 Sentencias</div>
     </div>
     <div class="card">
       <div class="card-num" style="color:{get_color(g_branch)}">{fmt(g_branch)}</div>
-      <div class="card-label">Ramas</div>
+      <div class="card-label">🔀 Ramas</div>
     </div>
     <div class="card">
       <div class="card-num" style="color:{get_color(g_func)}">{fmt(g_func)}</div>
-      <div class="card-label">Funciones</div>
+      <div class="card-label">⚙️ Funciones</div>
     </div>
     <div class="card">
       <div class="card-num">{len(mfe_list)}</div>
-      <div class="card-label">Workspaces</div>
+      <div class="card-label">📦 Apps</div>
     </div>
   </div>
   <div class="legend">
@@ -361,7 +358,7 @@ index_html = f"""<!DOCTYPE html>
     <div><span class="legend-dot" style="background:#eab308"></span>50%-69% - Aceptable</div>
     <div><span class="legend-dot" style="background:#ef4444"></span>Menos de 50% - Necesita mejora</div>
   </div>
-  <h2>Microfrontends</h2>
+  <h2>🖥️ Microfrontends</h2>
   <div class="table-wrap">
     <table>
       <thead>
@@ -391,4 +388,4 @@ index_html = f"""<!DOCTYPE html>
 with open(os.path.join(OUT_DIR, "index.html"), "w", encoding="utf-8") as fh:
     fh.write(index_html)
 
-print(f"OK index.html generado - {len(mfe_list)} MFEs")
+print(f"OK index.html generado - {len(mfe_list)} apps")
