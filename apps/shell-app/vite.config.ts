@@ -23,8 +23,8 @@ export default defineConfig({
     port: 3000,
     proxy: {
       // Proxy /dev/* to the API Gateway to avoid CORS in local development
-      '': {
-        target: 'https://q26dwk17da.execute-api.us-east-1.amazonaws.com',
+      "": {
+        target: "https://q26dwk17da.execute-api.us-east-1.amazonaws.com",
         changeOrigin: true,
         secure: true,
       },
@@ -40,14 +40,22 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: "./vitest.setup.ts",
-    coverage: {                          // ← agrega esto
+    coverage: {
+      // ← agrega esto
       provider: "v8",
-      reporter: ["text", "json-summary", "json"],
+      reporter: ["text", "json-summary", "json", "lcov"],
       reportsDirectory: "./coverage",
       reportOnFailure: true,
-      include: ["src/App.tsx"],
-      exclude: ["src/main.tsx", "src/**/*.d.ts"],
+      all: true,
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "src/main.tsx",
+        "src/**/*.d.ts",
+        "src/**/types/**",
+        "src/**/index.ts",
+        "src/**/*.test.{ts,tsx}",
+        "src/**/*.spec.{ts,tsx}",
+      ],
     },
   },
-  
 });

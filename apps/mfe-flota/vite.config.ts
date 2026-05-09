@@ -1,20 +1,20 @@
 /// <reference types="vitest" />
 
-import { defineConfig } from 'vitest/config' 
-import react from '@vitejs/plugin-react'
-import federation from '@originjs/vite-plugin-federation'
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
+import federation from "@originjs/vite-plugin-federation";
 
 export default defineConfig({
   plugins: [
     react(),
     federation({
-      name: 'mfe_flota',
-      filename: 'remoteEntry.js',
+      name: "mfe_flota",
+      filename: "remoteEntry.js",
       exposes: {
-        './Dashboard': './src/App.tsx',
+        "./Dashboard": "./src/App.tsx",
       },
-      shared: ['react', 'react-dom']
-    })
+      shared: ["react", "react-dom"],
+    }),
   ],
   server: {
     port: 4173,
@@ -24,24 +24,29 @@ export default defineConfig({
   },
   build: {
     modulePreload: false,
-    target: 'esnext',
+    target: "esnext",
     minify: false,
     cssCodeSplit: false,
   },
-  // Vitest configuration
   test: {
     globals: true,
-    environment: 'jsdom',
-    setupFiles: './vitest.setup.ts',
-    coverage: {                          // ← agrega esto
+    environment: "jsdom",
+    setupFiles: "./vitest.setup.ts",
+    coverage: {
       provider: "v8",
-      reporter: ["text", "json-summary", "json"],
+      reporter: ["text", "json-summary", "json", "lcov"],
       reportsDirectory: "./coverage",
       reportOnFailure: true,
-      include: [
-        "src/App.tsx",
+      all: true,
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "src/main.tsx",
+        "src/**/*.d.ts",
+        "src/**/types/**",
+        "src/**/index.ts",
+        "src/**/*.test.{ts,tsx}",
+        "src/**/*.spec.{ts,tsx}",
       ],
-      exclude: ["src/main.tsx", "src/**/*.d.ts", "src/**/types/**", "src/**/index.ts"],
     },
-  }
-})
+  },
+});

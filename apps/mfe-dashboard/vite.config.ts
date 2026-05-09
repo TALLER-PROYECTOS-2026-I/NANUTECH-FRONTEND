@@ -36,17 +36,20 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: "./vitest.setup.ts",
-    coverage: {                          // ← agrega esto
+    coverage: {
       provider: "v8",
-      reporter: ["text", "json-summary", "json"],
+      reporter: ["text", "json-summary", "json", "lcov"],
       reportsDirectory: "./coverage",
       reportOnFailure: true,
-      include: [
-        "src/App.tsx",
-        "src/modules/dashboard-admin/**/*.{ts,tsx}",
-        "src/modules/monitoreo-camiones/**/*.{ts,tsx}",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "src/main.tsx",
+        "src/**/*.d.ts",
+        "src/**/index.ts",
+        "src/**/types.ts",
+        "src/**/*.test.{ts,tsx}",
+        "src/**/*.spec.{ts,tsx}",
       ],
-      exclude: ["src/main.tsx", "src/**/*.d.ts", "src/**/index.ts", "src/**/types.ts"],
     },
   },
 });
