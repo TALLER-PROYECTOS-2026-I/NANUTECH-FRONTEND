@@ -1,5 +1,11 @@
 import { useState, useMemo } from "react";
 import { NavLink } from "react-router-dom";
+import {
+  ADMIN_DASHBOARD_HOME,
+  adminNavItems,
+  adminNavLinkClassName,
+} from "../../../navigation/adminNav";
+import { AdminSidebarSession } from "../../../components/AdminSidebarSession";
 
 function GpsIntegrationPage() {
 
@@ -10,69 +16,6 @@ function GpsIntegrationPage() {
   const [imported, setImported] = useState(false);
   const [filterProveedor, setFilterProveedor] = useState("");
   const [filterPlaca, setFilterPlaca] = useState("");
-
-  /* ───── MENU (NO TOCAR SIDEBAR LOGICA) ───── */
-  const menuItems = [
-    { label: "Dashboard Admin", path: "/dashboard", icon: (
-      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="3" y="3" width="7" height="7"/>
-        <rect x="14" y="3" width="7" height="7"/>
-        <rect x="14" y="14" width="7" height="7"/>
-        <rect x="3" y="14" width="7" height="7"/>
-      </svg>
-    )},
-
-    { label: "Alertas y Emergencias", path: "/alertas", icon: (
-      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-        <line x1="12" y1="9" x2="12" y2="13"/>
-        <line x1="12" y1="17" x2="12.01" y2="17"/>
-      </svg>
-    )},
-
-    { label: "Camiones", path: "/camiones", icon: (
-      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="1" y="3" width="15" height="13" rx="1"/>
-        <path d="M16 8h4l3 5v4h-7V8z"/>
-        <circle cx="5.5" cy="18.5" r="2.5"/>
-        <circle cx="18.5" cy="18.5" r="2.5"/>
-      </svg>
-    )},
-
-    { label: "Conductores", path: "/conductores", icon: (
-      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-        <circle cx="12" cy="7" r="4"/>
-      </svg>
-    )},
-
-    { label: "GPS", path: "/gps", icon: (
-      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="12" r="10"/>
-        <circle cx="12" cy="12" r="3"/>
-      </svg>
-    )},
-
-    { label: "Tracking GPS", path: "/tracking", icon: (
-      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
-        <circle cx="12" cy="10" r="3"/>
-      </svg>
-    )},
-
-    { label: "Registro Jornadas", path: "/registro-jornada/nueva", icon: (
-      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="12" r="10"/>
-        <polyline points="12 6 12 12 16 14"/>
-      </svg>
-    )},
-
-    { label: "Auditoría", path: "/auditoria", icon: (
-      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-      </svg>
-    )},
-  ];
 
   /* ───── DESCARGAR PLANTILLA CSV ───── */
   const downloadTemplate = () => {
@@ -162,36 +105,23 @@ function GpsIntegrationPage() {
           </div>
         </div>
 
-        <nav className="flex-1 py-4 px-2 flex flex-col gap-0.5 overflow-y-auto">
-          {menuItems.map((item) => (
+        <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-4">
+          {adminNavItems.map((item) => (
             <NavLink
               key={item.label}
-              to={item.path}
+              to={item.to}
+              end={item.to === ADMIN_DASHBOARD_HOME}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                  isActive ? "bg-blue-600 text-white font-semibold" : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`
+                adminNavLinkClassName(isActive, item.accentWhenActive)
               }
             >
-              {item.icon}
+              <span className="shrink-0 text-current">{item.icon}</span>
               {item.label}
             </NavLink>
           ))}
         </nav>
 
-        {/* SESION COMPLETA */}
-        <div className="px-4 py-3 border-t border-slate-700">
-          <p className="text-slate-400 text-xs mb-2">Sesión activa</p>
-          <p className="text-white text-xs font-semibold mb-3">1h 58m</p>
-
-          <div className="flex items-center gap-2 text-white text-sm">
-            <div className="w-7 h-7 bg-blue-500 rounded-full flex items-center justify-center">C</div>
-            <div>
-              <p className="text-xs font-semibold">Carlos Administr...</p>
-              <p className="text-xs text-slate-400">Administrador General</p>
-            </div>
-          </div>
-        </div>
+        <AdminSidebarSession />
       </aside>
 
       {/* ───── MAIN ───── */}
