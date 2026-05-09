@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>pkg-api-client - Cobertura</title>
+  <style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0e27;color:#e2e8f0;padding:24px;min-height:100vh}
+.container{max-width:1400px;margin:0 auto}
+h1{font-size:28px;font-weight:800;margin-bottom:6px}
+h2{font-size:18px;font-weight:700;margin:32px 0 16px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px}
+.sub{color:#64748b;font-size:13px;margin-bottom:28px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:36px}
+.card{background:#1e293b;border-radius:16px;padding:20px;text-align:center}
+.card-num{font-size:36px;font-weight:800;line-height:1}
+.card-label{font-size:11px;color:#64748b;margin-top:8px;text-transform:uppercase;letter-spacing:1px}
+.table-wrap{overflow-x:auto;border-radius:16px;background:#1e293b}
+table{width:100%;border-collapse:collapse}
+th{background:#0f172a;color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;
+   letter-spacing:.5px;padding:14px 18px;text-align:left;white-space:nowrap}
+td{padding:14px 18px;border-bottom:1px solid #1e293b;font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr{background:#1e293b}
+tbody tr:hover{background:#243044;transition:background .15s}
+.name-cell{font-weight:600;color:#e2e8f0}
+.name-cell a{color:#60a5fa;text-decoration:none;font-weight:700}
+.name-cell a:hover{text-decoration:underline}
+.file-count{font-size:11px;color:#475569;margin-top:2px}
+.bar{background:#334155;border-radius:8px;height:8px;width:120px;overflow:hidden;display:inline-block}
+.bar-fill{height:100%;border-radius:8px}
+.good{background:#22c55e}
+.medium{background:#eab308}
+.bad{background:#ef4444}
+.sub-num{font-size:10px;color:#475569;font-weight:400}
+.legend{display:flex;gap:20px;flex-wrap:wrap;padding:14px 20px;background:#1e293b;
+        border-radius:12px;margin-bottom:24px;font-size:12px;color:#94a3b8}
+.legend-dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
+.back{display:inline-flex;align-items:center;gap:6px;color:#60a5fa;font-size:13px;
+      text-decoration:none;margin-bottom:20px;padding:8px 14px;background:#1e293b;
+      border-radius:8px;font-weight:600}
+.back:hover{background:#243044}
+.breadcrumb{display:flex;align-items:center;gap:8px;color:#475569;font-size:12px;margin-bottom:16px}
+.breadcrumb a{color:#60a5fa;text-decoration:none}
+.breadcrumb a:hover{text-decoration:underline}
+.breadcrumb span{color:#334155}
+.badge{display:inline-block;font-size:10px;padding:3px 10px;border-radius:20px;
+       font-weight:700;margin-left:8px;vertical-align:middle}
+.badge-app{background:#1e3a8a22;color:#93c5fd;border:1px solid #1e3a8a}
+.badge-pkg{background:#14532d22;color:#86efac;border:1px solid #14532d}
+.icon{margin-right:6px}
+.footer{margin-top:48px;padding:20px;text-align:center;color:#334155;
+        border-top:1px solid #1e293b;font-size:12px}
+.warning-banner{background:#422006;border:1px solid #92400e;border-radius:12px;
+                padding:14px 20px;margin-bottom:24px;color:#fbbf24;font-size:13px}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb">
+    <a href="index.html">Inicio</a>
+    <span>&rsaquo;</span>
+    <span>pkg-api-client</span>
+  </div>
+  <h1>
+    pkg pkg-api-client
+    <span class="badge badge-pkg">package</span>
+  </h1>
+  <div class="sub">
+    0 archivo(s) &middot;
+    Generado: 2026-05-09 18:11 UTC
+  </div>
+  
+        <div class="warning-banner">
+          Los tests de este workspace fallaron. Los datos son placeholder (0%).
+          Revisa los logs del CI para mas detalles.
+        </div>
+  <div class="cards">
+    <div class="card">
+      <div class="card-num" style="color:#ef4444">0.0%</div>
+      <div class="card-label">Lineas</div>
+    </div>
+    <div class="card">
+      <div class="card-num" style="color:#ef4444">0.0%</div>
+      <div class="card-label">Sentencias</div>
+    </div>
+    <div class="card">
+      <div class="card-num" style="color:#ef4444">0.0%</div>
+      <div class="card-label">Ramas</div>
+    </div>
+    <div class="card">
+      <div class="card-num" style="color:#ef4444">0.0%</div>
+      <div class="card-label">Funciones</div>
+    </div>
+  </div>
+  <div class="legend">
+    <div><span class="legend-dot" style="background:#22c55e"></span>70% o mas - Excelente</div>
+    <div><span class="legend-dot" style="background:#eab308"></span>50%-69% - Aceptable</div>
+    <div><span class="legend-dot" style="background:#ef4444"></span>Menos de 50% - Necesita mejora</div>
+  </div>
+  <h2>Archivos por carpeta</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Carpeta / Archivo</th>
+          <th>Sentencias</th>
+          <th>Ramas</th>
+          <th>Funciones</th>
+          <th>Lineas</th>
+          <th>Barra</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan='6' style='text-align:center;padding:40px;color:#475569'>Sin datos de cobertura — los tests fallaron o no generaron reporte</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="footer">Generado automaticamente por CI/CD Pipeline</div>
+</div>
+</body>
+</html>

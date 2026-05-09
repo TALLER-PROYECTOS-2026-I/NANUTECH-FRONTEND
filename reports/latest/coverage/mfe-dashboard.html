@@ -1,235 +1,414 @@
 <!DOCTYPE html>
-    <html>
-    <head><meta charset="UTF-8"><title>mfe-dashboard - Cobertura</title>
-    <style>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>mfe-dashboard - Cobertura</title>
+  <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0e27;color:#e2e8f0;padding:24px}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0e27;color:#e2e8f0;padding:24px;min-height:100vh}
 .container{max-width:1400px;margin:0 auto}
-h1{font-size:32px;margin-bottom:8px}
-.sub{color:#94a3b8;margin-bottom:24px;font-size:14px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:40px}
-.stat-card{background:#1e293b;border-radius:20px;padding:24px;text-align:center}
-.stat-number{font-size:42px;font-weight:800}
-.stat-label{font-size:13px;color:#64748b;margin-top:8px;text-transform:uppercase}
-table{width:100%;border-collapse:collapse;background:#1e293b;border-radius:16px;overflow:hidden}
-th,td{padding:16px 20px;text-align:left;border-bottom:1px solid #334155}
-th{background:#0f172a;color:#94a3b8;font-size:13px;font-weight:600}
-tr:hover{background:#243044}
-.progress-bar{background:#334155;border-radius:12px;height:10px;width:140px;overflow:hidden}
-.progress-fill{height:100%;border-radius:12px}
+h1{font-size:28px;font-weight:800;margin-bottom:6px}
+h2{font-size:18px;font-weight:700;margin:32px 0 16px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px}
+.sub{color:#64748b;font-size:13px;margin-bottom:28px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:36px}
+.card{background:#1e293b;border-radius:16px;padding:20px;text-align:center}
+.card-num{font-size:36px;font-weight:800;line-height:1}
+.card-label{font-size:11px;color:#64748b;margin-top:8px;text-transform:uppercase;letter-spacing:1px}
+.table-wrap{overflow-x:auto;border-radius:16px;background:#1e293b}
+table{width:100%;border-collapse:collapse}
+th{background:#0f172a;color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;
+   letter-spacing:.5px;padding:14px 18px;text-align:left;white-space:nowrap}
+td{padding:14px 18px;border-bottom:1px solid #1e293b;font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr{background:#1e293b}
+tbody tr:hover{background:#243044;transition:background .15s}
+.name-cell{font-weight:600;color:#e2e8f0}
+.name-cell a{color:#60a5fa;text-decoration:none;font-weight:700}
+.name-cell a:hover{text-decoration:underline}
+.file-count{font-size:11px;color:#475569;margin-top:2px}
+.bar{background:#334155;border-radius:8px;height:8px;width:120px;overflow:hidden;display:inline-block}
+.bar-fill{height:100%;border-radius:8px}
 .good{background:#22c55e}
 .medium{background:#eab308}
 .bad{background:#ef4444}
-a{color:#60a5fa;text-decoration:none}
-.footer{margin-top:40px;padding:20px;text-align:center;color:#475569;border-top:1px solid #334155}
-.legend{display:flex;gap:24px;justify-content:center;margin:20px 0;padding:16px;background:#1e293b;border-radius:16px}
-.legend-color{width:20px;height:20px;border-radius:6px;display:inline-block;margin-right:8px}
-.table-container{overflow-x:auto}
-.badge-fail{background:#ef444420;color:#ef4444;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
-.badge-ok{background:#22c55e20;color:#22c55e;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.sub-num{font-size:10px;color:#475569;font-weight:400}
+.legend{display:flex;gap:20px;flex-wrap:wrap;padding:14px 20px;background:#1e293b;
+        border-radius:12px;margin-bottom:24px;font-size:12px;color:#94a3b8}
+.legend-dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
+.back{display:inline-flex;align-items:center;gap:6px;color:#60a5fa;font-size:13px;
+      text-decoration:none;margin-bottom:20px;padding:8px 14px;background:#1e293b;
+      border-radius:8px;font-weight:600}
+.back:hover{background:#243044}
+.breadcrumb{display:flex;align-items:center;gap:8px;color:#475569;font-size:12px;margin-bottom:16px}
+.breadcrumb a{color:#60a5fa;text-decoration:none}
+.breadcrumb a:hover{text-decoration:underline}
+.breadcrumb span{color:#334155}
+.badge{display:inline-block;font-size:10px;padding:3px 10px;border-radius:20px;
+       font-weight:700;margin-left:8px;vertical-align:middle}
+.badge-app{background:#1e3a8a22;color:#93c5fd;border:1px solid #1e3a8a}
+.badge-pkg{background:#14532d22;color:#86efac;border:1px solid #14532d}
+.icon{margin-right:6px}
+.footer{margin-top:48px;padding:20px;text-align:center;color:#334155;
+        border-top:1px solid #1e293b;font-size:12px}
+.warning-banner{background:#422006;border:1px solid #92400e;border-radius:12px;
+                padding:14px 20px;margin-bottom:24px;color:#fbbf24;font-size:13px}
 </style>
-    </head>
-    <body>
-    <div class="container">
-        <a href="index.html" style="display:inline-block;margin-bottom:20px">← Volver al Dashboard</a>
-        <h1>📁 mfe-dashboard</h1>
-        <div class="sub">Detalle de cobertura por archivo</div>
-        <div class="legend">
-            <div><span class="legend-color" style="background:#22c55e"></span> ≥ 70% Excelente</div>
-            <div><span class="legend-color" style="background:#eab308"></span> 50%-69% Aceptable</div>
-            <div><span class="legend-color" style="background:#ef4444"></span> &lt;50% Necesita mejora</div>
-        </div>
-        <div class="table-container">
-        <table>
-            <thead><tr><th>Archivo</th><th>Sentencias</th><th>Ramas</th><th>Funciones</th><th>Líneas</th><th>Barra</th></tr></thead>
-            <tbody>
-        <tr>
-            <td style="font-weight:500">App.tsx</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:100.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">Dashboard.tsx</td>
-            <td style="color:#22c55e">72.2%</td>
-            <td style="color:#eab308">51.1%</td>
-            <td style="color:#eab308">50.0%</td>
-            <td style="color:#22c55e">77.5%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:77.5%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">GpsIntegrationPage.tsx</td>
-            <td style="color:#22c55e">93.6%</td>
-            <td style="color:#22c55e">75.0%</td>
-            <td style="color:#22c55e">88.2%</td>
-            <td style="color:#22c55e">93.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:93.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">MonitoreoCamionesPage.tsx</td>
-            <td style="color:#22c55e">77.2%</td>
-            <td style="color:#eab308">60.8%</td>
-            <td style="color:#22c55e">75.0%</td>
-            <td style="color:#22c55e">77.9%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:77.9%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">FleetFilters.tsx</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:100.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">FleetGrid.tsx</td>
-            <td style="color:#eab308">66.7%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#eab308">66.7%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:100.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">FormInput.tsx</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:100.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">Icon.tsx</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:100.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">KpiCard.tsx</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:100.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">Metric.tsx</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:100.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">MonitoreoSidebar.tsx</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:100.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">MovementChart.tsx</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:100.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">RegistrationModal.tsx</td>
-            <td style="color:#eab308">50.0%</td>
-            <td style="color:#eab308">50.0%</td>
-            <td style="color:#eab308">50.0%</td>
-            <td style="color:#eab308">50.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill medium" style="width:50.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">RegistrationToast.tsx</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:100.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">TruckCard.tsx</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">71.4%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:100.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">constants.ts</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:100.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">initialState.ts</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:100.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">mockCamiones.ts</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:100.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">csv.ts</td>
-            <td style="color:#22c55e">93.3%</td>
-            <td style="color:#eab308">61.5%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:100.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">format.ts</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:100.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">panel.ts</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td style="color:#22c55e">100.0%</td>
-            <td><div class="progress-bar"><div class="progress-fill good" style="width:100.0%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">RegistroJornada.tsx</td>
-            <td style="color:#ef4444">5.4%</td>
-            <td style="color:#ef4444">0.0%</td>
-            <td style="color:#ef4444">0.0%</td>
-            <td style="color:#ef4444">5.9%</td>
-            <td><div class="progress-bar"><div class="progress-fill bad" style="width:5.9%"></div></div></td>
-        </tr>
-        <tr>
-            <td style="font-weight:500">RegistroNuevaJornada.tsx</td>
-            <td style="color:#ef4444">1.4%</td>
-            <td style="color:#ef4444">0.0%</td>
-            <td style="color:#ef4444">0.0%</td>
-            <td style="color:#ef4444">1.6%</td>
-            <td><div class="progress-bar"><div class="progress-fill bad" style="width:1.6%"></div></div></td>
-        </tr></tbody>
-        </table>
-        </div>
-        <div class="footer">Generado automáticamente por CI/CD Pipeline</div>
+</head>
+<body>
+<div class="container">
+  <div class="breadcrumb">
+    <a href="index.html">Inicio</a>
+    <span>&rsaquo;</span>
+    <span>mfe-dashboard</span>
+  </div>
+  <h1>
+    app mfe-dashboard
+    <span class="badge badge-app">app</span>
+  </h1>
+  <div class="sub">
+    23 archivo(s) &middot;
+    Generado: 2026-05-09 18:11 UTC
+  </div>
+  
+  <div class="cards">
+    <div class="card">
+      <div class="card-num" style="color:#eab308">54.4%</div>
+      <div class="card-label">Lineas</div>
     </div>
-    </body>
-    </html>
+    <div class="card">
+      <div class="card-num" style="color:#eab308">53.1%</div>
+      <div class="card-label">Sentencias</div>
+    </div>
+    <div class="card">
+      <div class="card-num" style="color:#ef4444">41.7%</div>
+      <div class="card-label">Ramas</div>
+    </div>
+    <div class="card">
+      <div class="card-num" style="color:#eab308">51.6%</div>
+      <div class="card-label">Funciones</div>
+    </div>
+  </div>
+  <div class="legend">
+    <div><span class="legend-dot" style="background:#22c55e"></span>70% o mas - Excelente</div>
+    <div><span class="legend-dot" style="background:#eab308"></span>50%-69% - Aceptable</div>
+    <div><span class="legend-dot" style="background:#ef4444"></span>Menos de 50% - Necesita mejora</div>
+  </div>
+  <h2>Archivos por carpeta</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Carpeta / Archivo</th>
+          <th>Sentencias</th>
+          <th>Ramas</th>
+          <th>Funciones</th>
+          <th>Lineas</th>
+          <th>Barra</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr style="background:#0f172a">
+          <td class="name-cell" style="font-size:12px;color:#94a3b8;padding:10px 18px">
+            folder (raiz)
+            <span class="file-count">1 archivo(s)</span>
+          </td>
+          <td style="color:#22c55e;font-weight:700">100.0%</td>
+          <td style="color:#22c55e;font-weight:700">100.0%</td>
+          <td style="color:#22c55e;font-weight:700">100.0%</td>
+          <td style="color:#22c55e;font-weight:700">100.0%</td>
+          <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+        </tr>
+        
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file App.tsx</td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">2/2</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">0/0</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">2/2</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">2/2</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+            </tr>
+        <tr><td colspan="6" style="padding:0;height:4px;background:#0a0e27"></td></tr>
+        
+        <tr style="background:#0f172a">
+          <td class="name-cell" style="font-size:12px;color:#94a3b8;padding:10px 18px">
+            folder modules/dashboard-admin/pages
+            <span class="file-count">1 archivo(s)</span>
+          </td>
+          <td style="color:#22c55e;font-weight:700">72.2%</td>
+          <td style="color:#eab308;font-weight:700">51.1%</td>
+          <td style="color:#eab308;font-weight:700">50.0%</td>
+          <td style="color:#22c55e;font-weight:700">77.5%</td>
+          <td><div class="bar"><div class="bar-fill good" style="width:77.5%"></div></div></td>
+        </tr>
+        
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file Dashboard.tsx</td>
+              <td style="color:#22c55e;font-weight:700">72.2%<br><span class="sub-num">39/54</span></td>
+              <td style="color:#eab308;font-weight:700">51.1%<br><span class="sub-num">23/45</span></td>
+              <td style="color:#eab308;font-weight:700">50.0%<br><span class="sub-num">8/16</span></td>
+              <td style="color:#22c55e;font-weight:700">77.5%<br><span class="sub-num">38/49</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:77.5%"></div></div></td>
+            </tr>
+        <tr><td colspan="6" style="padding:0;height:4px;background:#0a0e27"></td></tr>
+        
+        <tr style="background:#0f172a">
+          <td class="name-cell" style="font-size:12px;color:#94a3b8;padding:10px 18px">
+            folder modules/gps-integration/pages
+            <span class="file-count">1 archivo(s)</span>
+          </td>
+          <td style="color:#22c55e;font-weight:700">93.6%</td>
+          <td style="color:#22c55e;font-weight:700">75.0%</td>
+          <td style="color:#22c55e;font-weight:700">88.2%</td>
+          <td style="color:#22c55e;font-weight:700">93.0%</td>
+          <td><div class="bar"><div class="bar-fill good" style="width:93.0%"></div></div></td>
+        </tr>
+        
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file GpsIntegrationPage.tsx</td>
+              <td style="color:#22c55e;font-weight:700">93.6%<br><span class="sub-num">44/47</span></td>
+              <td style="color:#22c55e;font-weight:700">75.0%<br><span class="sub-num">18/24</span></td>
+              <td style="color:#22c55e;font-weight:700">88.2%<br><span class="sub-num">15/17</span></td>
+              <td style="color:#22c55e;font-weight:700">93.0%<br><span class="sub-num">40/43</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:93.0%"></div></div></td>
+            </tr>
+        <tr><td colspan="6" style="padding:0;height:4px;background:#0a0e27"></td></tr>
+        
+        <tr style="background:#0f172a">
+          <td class="name-cell" style="font-size:12px;color:#94a3b8;padding:10px 18px">
+            folder modules/monitoreo-camiones
+            <span class="file-count">2 archivo(s)</span>
+          </td>
+          <td style="color:#22c55e;font-weight:700">78.3%</td>
+          <td style="color:#eab308;font-weight:700">60.8%</td>
+          <td style="color:#22c55e;font-weight:700">75.0%</td>
+          <td style="color:#22c55e;font-weight:700">79.2%</td>
+          <td><div class="bar"><div class="bar-fill good" style="width:79.2%"></div></div></td>
+        </tr>
+        
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file MonitoreoCamionesPage.tsx</td>
+              <td style="color:#22c55e;font-weight:700">77.2%<br><span class="sub-num">61/79</span></td>
+              <td style="color:#eab308;font-weight:700">60.8%<br><span class="sub-num">31/51</span></td>
+              <td style="color:#22c55e;font-weight:700">75.0%<br><span class="sub-num">18/24</span></td>
+              <td style="color:#22c55e;font-weight:700">77.9%<br><span class="sub-num">53/68</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:77.9%"></div></div></td>
+            </tr>
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file constants.ts</td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">4/4</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">0/0</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">0/0</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">4/4</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+            </tr>
+        <tr><td colspan="6" style="padding:0;height:4px;background:#0a0e27"></td></tr>
+        
+        <tr style="background:#0f172a">
+          <td class="name-cell" style="font-size:12px;color:#94a3b8;padding:10px 18px">
+            folder modules/monitoreo-camiones/components
+            <span class="file-count">11 archivo(s)</span>
+          </td>
+          <td style="color:#22c55e;font-weight:700">83.7%</td>
+          <td style="color:#22c55e;font-weight:700">87.5%</td>
+          <td style="color:#22c55e;font-weight:700">75.0%</td>
+          <td style="color:#22c55e;font-weight:700">85.4%</td>
+          <td><div class="bar"><div class="bar-fill good" style="width:85.4%"></div></div></td>
+        </tr>
+        
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file FleetFilters.tsx</td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">4/4</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">0/0</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">4/4</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">4/4</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+            </tr>
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file FleetGrid.tsx</td>
+              <td style="color:#eab308;font-weight:700">66.7%<br><span class="sub-num">2/3</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">0/0</span></td>
+              <td style="color:#eab308;font-weight:700">66.7%<br><span class="sub-num">2/3</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">2/2</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+            </tr>
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file FormInput.tsx</td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">2/2</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">1/1</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">2/2</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">2/2</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+            </tr>
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file Icon.tsx</td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">14/14</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">14/14</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">1/1</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">14/14</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+            </tr>
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file KpiCard.tsx</td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">2/2</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">4/4</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">1/1</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">2/2</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+            </tr>
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file Metric.tsx</td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">2/2</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">3/3</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">1/1</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">2/2</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+            </tr>
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file MonitoreoSidebar.tsx</td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">3/3</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">2/2</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">3/3</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">3/3</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+            </tr>
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file MovementChart.tsx</td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">1/1</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">0/0</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">1/1</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">1/1</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+            </tr>
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file RegistrationModal.tsx</td>
+              <td style="color:#eab308;font-weight:700">50.0%<br><span class="sub-num">7/14</span></td>
+              <td style="color:#eab308;font-weight:700">50.0%<br><span class="sub-num">1/2</span></td>
+              <td style="color:#eab308;font-weight:700">50.0%<br><span class="sub-num">7/14</span></td>
+              <td style="color:#eab308;font-weight:700">50.0%<br><span class="sub-num">7/14</span></td>
+              <td><div class="bar"><div class="bar-fill medium" style="width:50.0%"></div></div></td>
+            </tr>
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file RegistrationToast.tsx</td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">1/1</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">0/0</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">1/1</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">1/1</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+            </tr>
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file TruckCard.tsx</td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">3/3</span></td>
+              <td style="color:#22c55e;font-weight:700">71.4%<br><span class="sub-num">10/14</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">1/1</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">3/3</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+            </tr>
+        <tr><td colspan="6" style="padding:0;height:4px;background:#0a0e27"></td></tr>
+        
+        <tr style="background:#0f172a">
+          <td class="name-cell" style="font-size:12px;color:#94a3b8;padding:10px 18px">
+            folder modules/monitoreo-camiones/mocks
+            <span class="file-count">2 archivo(s)</span>
+          </td>
+          <td style="color:#22c55e;font-weight:700">100.0%</td>
+          <td style="color:#22c55e;font-weight:700">100.0%</td>
+          <td style="color:#22c55e;font-weight:700">100.0%</td>
+          <td style="color:#22c55e;font-weight:700">100.0%</td>
+          <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+        </tr>
+        
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file initialState.ts</td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">2/2</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">0/0</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">0/0</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">2/2</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+            </tr>
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file mockCamiones.ts</td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">4/4</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">4/4</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">3/3</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">4/4</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+            </tr>
+        <tr><td colspan="6" style="padding:0;height:4px;background:#0a0e27"></td></tr>
+        
+        <tr style="background:#0f172a">
+          <td class="name-cell" style="font-size:12px;color:#94a3b8;padding:10px 18px">
+            folder modules/monitoreo-camiones/utils
+            <span class="file-count">3 archivo(s)</span>
+          </td>
+          <td style="color:#22c55e;font-weight:700">96.2%</td>
+          <td style="color:#22c55e;font-weight:700">75.0%</td>
+          <td style="color:#22c55e;font-weight:700">100.0%</td>
+          <td style="color:#22c55e;font-weight:700">100.0%</td>
+          <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+        </tr>
+        
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file csv.ts</td>
+              <td style="color:#22c55e;font-weight:700">93.3%<br><span class="sub-num">14/15</span></td>
+              <td style="color:#eab308;font-weight:700">61.5%<br><span class="sub-num">8/13</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">5/5</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">12/12</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+            </tr>
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file format.ts</td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">1/1</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">3/3</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">1/1</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">1/1</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+            </tr>
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file panel.ts</td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">10/10</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">4/4</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">6/6</span></td>
+              <td style="color:#22c55e;font-weight:700">100.0%<br><span class="sub-num">8/8</span></td>
+              <td><div class="bar"><div class="bar-fill good" style="width:100.0%"></div></div></td>
+            </tr>
+        <tr><td colspan="6" style="padding:0;height:4px;background:#0a0e27"></td></tr>
+        
+        <tr style="background:#0f172a">
+          <td class="name-cell" style="font-size:12px;color:#94a3b8;padding:10px 18px">
+            folder modules/registro-jornada/pages
+            <span class="file-count">2 archivo(s)</span>
+          </td>
+          <td style="color:#ef4444;font-weight:700">3.7%</td>
+          <td style="color:#ef4444;font-weight:700">0.0%</td>
+          <td style="color:#ef4444;font-weight:700">0.0%</td>
+          <td style="color:#ef4444;font-weight:700">4.1%</td>
+          <td><div class="bar"><div class="bar-fill bad" style="width:4.1%"></div></div></td>
+        </tr>
+        
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file RegistroJornada.tsx</td>
+              <td style="color:#ef4444;font-weight:700">5.4%<br><span class="sub-num">5/92</span></td>
+              <td style="color:#ef4444;font-weight:700">0.0%<br><span class="sub-num">0/69</span></td>
+              <td style="color:#ef4444;font-weight:700">0.0%<br><span class="sub-num">0/24</span></td>
+              <td style="color:#ef4444;font-weight:700">5.9%<br><span class="sub-num">5/85</span></td>
+              <td><div class="bar"><div class="bar-fill bad" style="width:5.9%"></div></div></td>
+            </tr>
+            <tr>
+              <td class="name-cell" style="padding-left:36px">file RegistroNuevaJornada.tsx</td>
+              <td style="color:#ef4444;font-weight:700">1.4%<br><span class="sub-num">1/70</span></td>
+              <td style="color:#ef4444;font-weight:700">0.0%<br><span class="sub-num">0/49</span></td>
+              <td style="color:#ef4444;font-weight:700">0.0%<br><span class="sub-num">0/29</span></td>
+              <td style="color:#ef4444;font-weight:700">1.6%<br><span class="sub-num">1/62</span></td>
+              <td><div class="bar"><div class="bar-fill bad" style="width:1.6%"></div></div></td>
+            </tr>
+        <tr><td colspan="6" style="padding:0;height:4px;background:#0a0e27"></td></tr>
+        
+      </tbody>
+    </table>
+  </div>
+  <div class="footer">Generado automaticamente por CI/CD Pipeline</div>
+</div>
+</body>
+</html>
