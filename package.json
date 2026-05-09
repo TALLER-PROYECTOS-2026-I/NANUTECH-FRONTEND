@@ -11,7 +11,7 @@
   "scripts": {
     "test:all": "npm run test --workspaces --if-present",
     "build:remotes": "npm run build -w apps/mfe-flota && npm run build -w apps/mfe-contratos && npm run build -w apps/mfe-dashboard",
-    "test:coverage:all": "npm run test:coverage --workspaces --if-present",
+    "test:coverage:all": "npm run test:coverage -w apps/mfe-contratos -w apps/mfe-dashboard -w apps/mfe-flota -w apps/shell-app",
     "preview:remotes": "concurrently -c \"magenta,yellow,green\" \"npm run preview -w apps/mfe-flota\" \"npm run preview -w apps/mfe-contratos\" \"npm run preview -w apps/mfe-dashboard\"",
     "dev:shell": "npm run dev -w apps/shell-app",
     "start:ecosystem": "npm run build:remotes && concurrently -c \"cyan,gray\" \"npm run preview:remotes\" \"npm run dev:shell\"",
