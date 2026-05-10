@@ -13,7 +13,7 @@ export const crearPanelDesdeCamiones = (camiones: CamionHu11[]): PanelCamionesHu
   return {
     resumen: {
       total_camiones: camiones.length,
-      en_uso: camiones.filter((camion) => camion.estado === "EN_JORNADA").length,
+      en_uso: camiones.filter((camion) => camion.estado === "EN_JORNADA" || camion.estado === "EN_AUXILIO").length,
       disponibles: camiones.filter((camion) => camion.estado === "DISPONIBLE").length,
       mantenimiento: camiones.filter((camion) => camion.estado === "MANTENIMIENTO").length,
     },

@@ -1,10 +1,9 @@
 // Opciones del selector de estado para filtrar la flota.
 export const estadoOptions = [
-  { label: "Todos los estados", value: "TODOS" },
+  { label: "Todos", value: "TODOS" },
+  { label: "Disponibles", value: "DISPONIBLE" },
   { label: "En Uso", value: "EN_JORNADA" },
-  { label: "Disponible", value: "DISPONIBLE" },
   { label: "Mantenimiento", value: "MANTENIMIENTO" },
-  { label: "Inactivo", value: "INACTIVA" },
 ];
 
 // Traduce estados técnicos del backend a texto legible para el usuario.
