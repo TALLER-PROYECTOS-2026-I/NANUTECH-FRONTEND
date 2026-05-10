@@ -50,22 +50,23 @@ export const esTimestampValido = (timestamp: string): boolean => {
  */
 export const validarDatosTurno = (turno: Record<string, unknown>): { valido: boolean; errores: string[] } => {
   const errores: string[] = [];
+  const tieneTexto = (valor: unknown) => typeof valor === 'string' && valor.trim().length > 0;
 
   const datosJornada = turno.datosJornada as Record<string, unknown>;
-  if (!String(datosJornada?.nombreConductor).trim()) {
+  if (!tieneTexto(datosJornada?.nombreConductor)) {
     errores.push('El nombre del conductor es requerido');
   }
 
-  if (!String(datosJornada?.idContrato).trim()) {
+  if (!tieneTexto(datosJornada?.idContrato)) {
     errores.push('El ID de contrato es requerido');
   }
 
   const ruta = datosJornada?.ruta as Record<string, unknown>;
-  if (!String(ruta?.origen).trim()) {
+  if (!tieneTexto(ruta?.origen)) {
     errores.push('La ruta de origen es requerida');
   }
 
-  if (!String(ruta?.destino).trim()) {
+  if (!tieneTexto(ruta?.destino)) {
     errores.push('La ruta de destino es requerida');
   }
 

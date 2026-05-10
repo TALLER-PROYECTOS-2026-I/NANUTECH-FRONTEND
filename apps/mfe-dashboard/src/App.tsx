@@ -1,37 +1,39 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 // PAGES
 import Dashboard from "./modules/dashboard-admin/pages/Dashboard";
 import RegistroJornada from "./modules/registro-jornada/pages/RegistroJornada";
 import RegistroNuevaJornada from "./modules/registro-jornada/pages/RegistroNuevaJornada";
+import MonitoreoCamionesPage from "./modules/monitoreo-camiones/MonitoreoCamionesPage";
 
-function AppRoutes() {
+// GPS
+import GpsIntegrationPage from "./modules/gps-integration/pages/GpsIntegrationPage";
+
+export function AppRoutes() {
   return (
     <Routes>
+      {/* base */}
+      <Route index element={<Navigate to="dashboard" replace />} />
 
-      {/* 🔥 ENTRADA DIRECTA AL DASHBOARD */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      {/* dashboard */}
+      <Route path="dashboard" element={<Dashboard />} />
 
-      {/* DASHBOARD */}
-      <Route path="/dashboard" element={<Dashboard />} />
+      {/* GPS */}
+      <Route path="gps" element={<GpsIntegrationPage />} />
 
-      {/* JORNADAS */}
-      <Route path="/RegistroJornada" element={<RegistroJornada />} />
-      <Route path="/RegistroNuevaJornada" element={<RegistroNuevaJornada />} />
+      {/* jornadas */}
+      <Route path="registro-jornada" element={<RegistroJornada />} />
+      <Route path="registro-jornada/nueva" element={<RegistroNuevaJornada />} />
 
-      {/* 🔥 CUALQUIER RUTA INVALIDA TAMBIÉN VA AL DASHBOARD */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      {/* camiones */}
+      <Route path="camiones" element={<MonitoreoCamionesPage />} />
 
+      {/* fallback */}
+      <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
   );
 }
 
-function App() {
-  return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
-  );
+export default function App() {
+  return <AppRoutes />;
 }
-
-export default App;

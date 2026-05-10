@@ -1,40 +1,55 @@
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
-import federation from '@originjs/vite-plugin-federation'
+/// <reference types="vitest" />
 
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
+import federation from "@originjs/vite-plugin-federation";
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     federation({
-      name: 'dashboard_app',
-      filename: 'remoteEntry.js',
+      name: "dashboard_app",
+      filename: "remoteEntry.js",
       // Aquí "exponemos" el componente App de este microfrontend
       exposes: {
-        './Dashboard': './src/App.tsx',
+        "./Dashboard": "./src/App.tsx",
       },
-      shared: ['react', 'react-dom', 'recharts'] // Compartimos React, ReactDOM y Recharts para evitar cargar varias versiones en la app final
-    })
+      shared: ["react", "react-dom", "react-router-dom", "recharts"], // Compartimos React, ReactDOM y Recharts para evitar cargar varias versiones en la app final
+    }),
   ],
   server: {
     port: 3001, // Le asignamos un puerto fijo
   },
-  preview: {           // Configuración para el comando "vite preview"
+  preview: {
+    // Configuración para el comando "vite preview"
     port: 3001,
   },
   build: {
     modulePreload: false,
-    target: 'esnext',
+    target: "esnext",
     minify: false,
     cssCodeSplit: false,
   },
   //Agregamos esta nueva sección para Vitest
   test: {
     globals: true,
-    environment: 'jsdom',
-    setupFiles: './vitest.setup.ts',
-  }
-  
-})
-
+    environment: "jsdom",
+    setupFiles: "./vitest.setup.ts",
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json-summary", "json", "lcov"],
+      reportsDirectory: "./coverage",
+      reportOnFailure: true,
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "src/main.tsx",
+        "src/**/*.d.ts",
+        "src/**/index.ts",
+        "src/**/types.ts",
+        "src/**/*.test.{ts,tsx}",
+        "src/**/*.spec.{ts,tsx}",
+      ],
+    },
+  },
+});
