@@ -3,20 +3,35 @@ import { useNavigate } from 'react-router-dom';
 import { login } from '@nanutech/api-client';
 import { validarFormatoCorreo } from '@nanutech/utils';
 
-// Define el dashboard inicial segun el rol recibido desde Cognito/API.
-const getRouteByRole = (role: string) => {
+const getDashboardRouteByRole = (role: string) => {
   switch (role.toUpperCase()) {
     case 'ADMIN':
-      return '/dashboard/admin';
+      return '/dashboard/admin/dashboard';
     case 'GERENTE':
-      return '/dashboard/contratos';
+    case 'GERENCIAL':
+      return '/dashboard/contratos/dashboard';
     default:
       return '/dashboard/chofer';
   }
 };
 
+const normalizeNextRoute = (role: string, nextRoute?: string) => {
+  if (!nextRoute) {
+    return getDashboardRouteByRole(role);
+  }
+
+  if (role.toUpperCase() === 'ADMIN' && nextRoute.startsWith('/dashboard/admin')) {
+    return nextRoute === '/dashboard/admin' ? '/dashboard/admin/dashboard' : nextRoute;
+  }
+
+  if (['GERENTE', 'GERENCIAL'].includes(role.toUpperCase()) && nextRoute.startsWith('/dashboard/contratos')) {
+    return nextRoute === '/dashboard/contratos' ? '/dashboard/contratos/dashboard' : nextRoute;
+  }
+
+  return getDashboardRouteByRole(role);
+};
+
 export default function LoginPage() {
-  // Guarda los valores escritos por el usuario en el formulario.
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
 
@@ -43,19 +58,14 @@ export default function LoginPage() {
 
       const { user, session, role, nextRoute } = respuesta.data;
 
-      // Persiste los tokens y datos necesarios para rutas protegidas.
       localStorage.setItem('nanutech_token', session.accessToken);
       localStorage.setItem('nanutech_id_token', session.idToken);
       localStorage.setItem('nanutech_user', JSON.stringify(user));
       localStorage.setItem('nanutech_role', role);
       localStorage.setItem('nanutech_expires_at', session.expiresAt);
-      localStorage.setItem('nanutech_token', respuesta.data.session.accessToken);
-      localStorage.setItem('nanutech_user', JSON.stringify(respuesta.data.user));
 
-      // Usa la ruta sugerida por backend o calcula el destino por rol.
-      navigate(nextRoute || getRouteByRole(role));
+      navigate(normalizeNextRoute(role, nextRoute));
     } catch (err: unknown) {
-      // Normaliza errores posibles del cliente HTTP o de Cognito.
       const error = err as {
         response?: { data?: { message?: string; mensaje?: string } };
         message?: string;
@@ -68,7 +78,6 @@ export default function LoginPage() {
 
       setError(mensaje);
     } finally {
-      // Reactiva el boton aunque el login falle.
       setCargando(false);
     }
   };

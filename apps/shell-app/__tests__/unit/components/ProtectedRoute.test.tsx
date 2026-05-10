@@ -20,8 +20,8 @@ const renderProtectedRoute = (allowedRoles?: string[]) =>
           }
         />
         <Route path="/login" element={<div>Login destino</div>} />
-        <Route path="/dashboard/admin" element={<div>Home admin</div>} />
-        <Route path="/dashboard/contratos" element={<div>Home gerente</div>} />
+        <Route path="/dashboard/admin/dashboard" element={<div>Home admin</div>} />
+        <Route path="/dashboard/contratos/dashboard" element={<div>Home gerente</div>} />
         <Route path="/dashboard/chofer" element={<div>Home chofer</div>} />
       </Routes>
     </MemoryRouter>
