@@ -37,6 +37,8 @@ export default function LoginPage() {
         navigate(nextRoute);
       } else if (role.toUpperCase() === 'ADMIN') {
         navigate('/dashboard/admin');
+      } else if (role.toUpperCase() === 'GERENCIAL') {
+        navigate('/dashboard/gerencial');
       } else {
         navigate('/dashboard/chofer');
       }
