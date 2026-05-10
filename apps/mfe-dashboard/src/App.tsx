@@ -1,10 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
-// PAGES
 import Dashboard from "./modules/dashboard-admin/pages/Dashboard";
 import RegistroJornada from "./modules/registro-jornada/pages/RegistroJornada";
 import RegistroNuevaJornada from "./modules/registro-jornada/pages/RegistroNuevaJornada";
 import DashboardGerencial from "./modules/dashboard-gerencial/pages/DashboardGerencial";
+import MonitoreoCamionesPage from "./modules/monitoreo-camiones";
 
 function AppRoutes() {
   return (
@@ -22,6 +21,10 @@ function AppRoutes() {
       {/* JORNADAS */}
       <Route path="/RegistroJornada" element={<RegistroJornada />} />
       <Route path="/RegistroNuevaJornada" element={<RegistroNuevaJornada />} />
+
+
+      {/* MONITOREO DE CAMIONES */}
+      <Route path="/camiones" element={<MonitoreoCamionesPage />} />
 
       {/* 🔥 CUALQUIER RUTA INVALIDA TAMBIÉN VA AL DASHBOARD */}
       <Route path="*" element={<Navigate to="/dashboard/admin" replace />} />
