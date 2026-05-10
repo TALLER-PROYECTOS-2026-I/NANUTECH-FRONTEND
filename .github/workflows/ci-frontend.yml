@@ -1,0 +1,329 @@
+name: Frontend Security Scan - Nanutech
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+  schedule:
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  # =========================================================
+  # SECRET SCANNING
+  # =========================================================
+  secret-scanning:
+    runs-on: ubuntu-latest
+    name: Secret Scanning
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: TruffleHog Secret Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+        continue-on-error: true
+
+  # =========================================================
+  # ESLINT - MONOREPO ROOT + TODOS LOS MFE
+  # =========================================================
+  eslint-check:
+    runs-on: ubuntu-latest
+    name: ESLint Code Quality
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies (workspace root)
+        run: npm ci
+
+      - name: Run ESLint (all workspaces)
+        run: npm run lint
+        continue-on-error: true
+
+  # =========================================================
+  # CODEQL
+  # =========================================================
+  codeql-analysis:
+    runs-on: ubuntu-latest
+    name: CodeQL Security Analysis
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+          queries: security-and-quality
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:javascript'
+
+  # =========================================================
+  # DEPENDENCY CHECK - AUDITORÍA DE VULNERABILIDADES
+  # =========================================================
+  dependency-check:
+    runs-on: ubuntu-latest
+    name: Dependency Vulnerabilities
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=moderate || true
+
+      - name: Check outdated packages
+        run: npm outdated || true
+
+  # =========================================================
+  # TESTS + COVERAGE - TODOS LOS MFE EN PARALELO
+  # =========================================================
+  test-mfe-contratos:
+    runs-on: ubuntu-latest
+    name: Test - mfe-contratos
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage (mfe-contratos)
+        run: npm run test:coverage -w apps/mfe-contratos
+        continue-on-error: true
+
+      - name: Upload coverage artifact (mfe-contratos)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-mfe-contratos
+          path: apps/mfe-contratos/coverage/
+          retention-days: 1
+
+  test-mfe-dashboard:
+    runs-on: ubuntu-latest
+    name: Test - mfe-dashboard
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage (mfe-dashboard)
+        run: npm run test:coverage -w apps/mfe-dashboard
+        continue-on-error: true
+
+      - name: Upload coverage artifact (mfe-dashboard)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-mfe-dashboard
+          path: apps/mfe-dashboard/coverage/
+          retention-days: 1
+
+  test-mfe-flota:
+    runs-on: ubuntu-latest
+    name: Test - mfe-flota
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage (mfe-flota)
+        run: npm run test:coverage -w apps/mfe-flota
+        continue-on-error: true
+
+      - name: Upload coverage artifact (mfe-flota)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-mfe-flota
+          path: apps/mfe-flota/coverage/
+          retention-days: 1
+
+  test-shell-app:
+    runs-on: ubuntu-latest
+    name: Test - shell-app
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage (shell-app)
+        run: npm run test:coverage -w apps/shell-app
+        continue-on-error: true
+
+      - name: Upload coverage artifact (shell-app)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-shell-app
+          path: apps/shell-app/coverage/
+          retention-days: 1
+
+  # =========================================================
+  # SONARCLOUD - espera a que todos los tests terminen
+  # =========================================================
+  sonarcloud-scan:
+    runs-on: ubuntu-latest
+    name: SonarCloud Analysis
+    needs:
+      - test-mfe-contratos
+      - test-mfe-dashboard
+      - test-mfe-flota
+      - test-shell-app
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # necesario para blame info de Sonar
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download coverage - mfe-contratos
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-mfe-contratos
+          path: apps/mfe-contratos/coverage/
+        continue-on-error: true
+
+      - name: Download coverage - mfe-dashboard
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-mfe-dashboard
+          path: apps/mfe-dashboard/coverage/
+        continue-on-error: true
+
+      - name: Download coverage - mfe-flota
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-mfe-flota
+          path: apps/mfe-flota/coverage/
+        continue-on-error: true
+
+      - name: Download coverage - shell-app
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-shell-app
+          path: apps/shell-app/coverage/
+        continue-on-error: true
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v3.1.0
+        with:
+          args: >
+            -Dsonar.projectKey=TALLER-PROYECTOS-2026-I_NANUTECH-FRONTEND
+            -Dsonar.organization=prueba-demo-devsecops
+            -Dsonar.javascript.lcov.reportPaths=apps/mfe-contratos/coverage/lcov.info,apps/mfe-dashboard/coverage/lcov.info,apps/mfe-flota/coverage/lcov.info,apps/shell-app/coverage/lcov.info
+            -Dsonar.sources=apps
+            -Dsonar.exclusions=**/node_modules/**,**/__tests__/**,**/*.test.{ts,tsx},**/*.spec.{ts,tsx},**/dist/**,**/.vite/**
+            -Dsonar.test.inclusions=**/__tests__/**,**/*.test.{ts,tsx},**/*.spec.{ts,tsx}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # =========================================================
+  # BUILD - verifica que todos los MFE compilan
+  # =========================================================
+  build-check:
+    runs-on: ubuntu-latest
+    name: Build Check (all MFEs)
+    needs:
+      - eslint-check
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build all workspaces
+        run: npm run build --workspaces --if-present
+        continue-on-error: true
