@@ -3,20 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { login } from '@nanutech/api-client';
 import { validarFormatoCorreo } from '@nanutech/utils';
 
-// Define el dashboard inicial segun el rol recibido desde Cognito/API.
-const getRouteByRole = (role: string) => {
-  switch (role.toUpperCase()) {
-    case 'ADMIN':
-      return '/dashboard/admin';
-    case 'GERENTE':
-      return '/dashboard/contratos';
-    default:
-      return '/dashboard/chofer';
-  }
-};
-
 export default function LoginPage() {
-  // Guarda los valores escritos por el usuario en el formulario.
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
 
@@ -43,7 +30,6 @@ export default function LoginPage() {
 
       const { user, session, role, nextRoute } = respuesta.data;
 
-      // Persiste los tokens y datos necesarios para rutas protegidas.
       localStorage.setItem('nanutech_token', session.accessToken);
       localStorage.setItem('nanutech_id_token', session.idToken);
       localStorage.setItem('nanutech_user', JSON.stringify(user));
@@ -52,10 +38,18 @@ export default function LoginPage() {
       localStorage.setItem('nanutech_token', respuesta.data.session.accessToken);
       localStorage.setItem('nanutech_user', JSON.stringify(respuesta.data.user));
 
-      // Usa la ruta sugerida por backend o calcula el destino por rol.
-      navigate(nextRoute || getRouteByRole(role));
+      if (nextRoute) {
+        navigate(nextRoute);
+      } else if (role.toUpperCase() === 'ADMIN') {
+        navigate('/dashboard/admin');
+      } else if (role.toUpperCase() === 'GERENCIAL') {
+        navigate('/dashboard/gerencial');
+      } else if (role.toUpperCase() === 'GERENTE') {
+        navigate('/dashboard/contratos');
+      } else {
+        navigate('/dashboard/chofer');
+      }
     } catch (err: unknown) {
-      // Normaliza errores posibles del cliente HTTP o de Cognito.
       const error = err as {
         response?: { data?: { message?: string; mensaje?: string } };
         message?: string;
@@ -68,7 +62,6 @@ export default function LoginPage() {
 
       setError(mensaje);
     } finally {
-      // Reactiva el boton aunque el login falle.
       setCargando(false);
     }
   };

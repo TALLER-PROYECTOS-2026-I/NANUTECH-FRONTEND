@@ -15,6 +15,7 @@ import './App.css';
 import RegistroContratoPage from './modules/registro-contrato/pages/RegistroContratoPage';
 import { GestionContratosPage as ContratosPage } from './modules/gestion-contratos';
 import { DetalleContratoPage } from './modules/detalle-contrato';
+import { DashboardGerencial } from './modules/dashboard-gerencial';
 
 /* Seguimiento (si existe, si no se usa fallback) */
 import SeguimientoJornadas from './modules/seguimiento-jornadas/SeguimientoJornadas';
@@ -207,7 +208,7 @@ export function AppRoutes() {
           }
         />
 
-        <Route path="dashboard" element={<div>Dashboard Gerencial</div>} />
+        <Route path="dashboard" element={<DashboardGerencial />} />
         <Route path="historial" element={<div>Historial de Jornadas</div>} />
 
         <Route

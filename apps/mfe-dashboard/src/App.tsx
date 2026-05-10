@@ -1,10 +1,8 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-
-// PAGES
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./modules/dashboard-admin/pages/Dashboard";
 import RegistroJornada from "./modules/registro-jornada/pages/RegistroJornada";
 import RegistroNuevaJornada from "./modules/registro-jornada/pages/RegistroNuevaJornada";
-import MonitoreoCamionesPage from "./modules/monitoreo-camiones/MonitoreoCamionesPage";
+import MonitoreoCamionesPage from "./modules/monitoreo-camiones";
 
 // GPS
 import GpsIntegrationPage from "./modules/gps-integration/pages/GpsIntegrationPage";
@@ -12,28 +10,34 @@ import GpsIntegrationPage from "./modules/gps-integration/pages/GpsIntegrationPa
 export function AppRoutes() {
   return (
     <Routes>
-      {/* base */}
-      <Route index element={<Navigate to="dashboard" replace />} />
+      {/* 🔥 ENTRADA DIRECTA AL DASHBOARD */}
+      <Route path="/" element={<Navigate to="/dashboard/admin" replace />} />
 
-      {/* dashboard */}
-      <Route path="dashboard" element={<Dashboard />} />
+      {/* DASHBOARD ADMIN */}
+      <Route path="/dashboard/admin" element={<Dashboard />} />
 
       {/* GPS */}
-      <Route path="gps" element={<GpsIntegrationPage />} />
+      <Route path="/gps" element={<GpsIntegrationPage />} />
 
-      {/* jornadas */}
-      <Route path="registro-jornada" element={<RegistroJornada />} />
-      <Route path="registro-jornada/nueva" element={<RegistroNuevaJornada />} />
+      {/* JORNADAS */}
+      <Route path="/RegistroJornada" element={<RegistroJornada />} />
+      <Route path="/RegistroNuevaJornada" element={<RegistroNuevaJornada />} />
 
-      {/* camiones */}
-      <Route path="camiones" element={<MonitoreoCamionesPage />} />
+      {/* MONITOREO DE CAMIONES */}
+      <Route path="/camiones" element={<MonitoreoCamionesPage />} />
 
-      {/* fallback */}
-      <Route path="*" element={<Navigate to="dashboard" replace />} />
+      {/* 🔥 CUALQUIER RUTA INVALIDA TAMBIÉN VA AL DASHBOARD */}
+      <Route path="*" element={<Navigate to="/dashboard/admin" replace />} />
     </Routes>
   );
 }
 
-export default function App() {
-  return <AppRoutes />;
+function App() {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
+  );
 }
+
+export default App;

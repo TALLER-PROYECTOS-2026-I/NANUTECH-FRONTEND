@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
-import App from "./App";
+import { AppRoutes } from "./App";
 import '@testing-library/jest-dom';
 
 describe("Dashboard Microfrontend", () => {
@@ -25,7 +25,7 @@ describe("Dashboard Microfrontend", () => {
     //Renderizamos el componente
     render(
       <MemoryRouter>
-        <App />
+        <AppRoutes />
       </MemoryRouter>
     );
 
