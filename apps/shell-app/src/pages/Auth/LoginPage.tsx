@@ -3,6 +3,34 @@ import { useNavigate } from 'react-router-dom';
 import { login } from '@nanutech/api-client';
 import { validarFormatoCorreo } from '@nanutech/utils';
 
+const getDashboardRouteByRole = (role: string) => {
+  switch (role.toUpperCase()) {
+    case 'ADMIN':
+      return '/dashboard/admin/dashboard';
+    case 'GERENTE':
+    case 'GERENCIAL':
+      return '/dashboard/contratos/dashboard';
+    default:
+      return '/dashboard/chofer';
+  }
+};
+
+const normalizeNextRoute = (role: string, nextRoute?: string) => {
+  if (!nextRoute) {
+    return getDashboardRouteByRole(role);
+  }
+
+  if (role.toUpperCase() === 'ADMIN' && nextRoute.startsWith('/dashboard/admin')) {
+    return nextRoute === '/dashboard/admin' ? '/dashboard/admin/dashboard' : nextRoute;
+  }
+
+  if (['GERENTE', 'GERENCIAL'].includes(role.toUpperCase()) && nextRoute.startsWith('/dashboard/contratos')) {
+    return nextRoute === '/dashboard/contratos' ? '/dashboard/contratos/dashboard' : nextRoute;
+  }
+
+  return getDashboardRouteByRole(role);
+};
+
 export default function LoginPage() {
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
@@ -35,20 +63,8 @@ export default function LoginPage() {
       localStorage.setItem('nanutech_user', JSON.stringify(user));
       localStorage.setItem('nanutech_role', role);
       localStorage.setItem('nanutech_expires_at', session.expiresAt);
-      localStorage.setItem('nanutech_token', respuesta.data.session.accessToken);
-      localStorage.setItem('nanutech_user', JSON.stringify(respuesta.data.user));
 
-      if (nextRoute) {
-        navigate(nextRoute);
-      } else if (role.toUpperCase() === 'ADMIN') {
-        navigate('/dashboard/admin');
-      } else if (role.toUpperCase() === 'GERENCIAL') {
-        navigate('/dashboard/gerencial');
-      } else if (role.toUpperCase() === 'GERENTE') {
-        navigate('/dashboard/contratos');
-      } else {
-        navigate('/dashboard/chofer');
-      }
+      navigate(normalizeNextRoute(role, nextRoute));
     } catch (err: unknown) {
       const error = err as {
         response?: { data?: { message?: string; mensaje?: string } };

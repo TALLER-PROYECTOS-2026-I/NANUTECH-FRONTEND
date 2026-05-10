@@ -1,43 +1,42 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./modules/dashboard-admin/pages/Dashboard";
 import RegistroJornada from "./modules/registro-jornada/pages/RegistroJornada";
 import RegistroNuevaJornada from "./modules/registro-jornada/pages/RegistroNuevaJornada";
 import MonitoreoCamionesPage from "./modules/monitoreo-camiones";
-
-// GPS
 import GpsIntegrationPage from "./modules/gps-integration/pages/GpsIntegrationPage";
 
 export function AppRoutes() {
   return (
     <Routes>
-      {/* 🔥 ENTRADA DIRECTA AL DASHBOARD */}
-      <Route path="/" element={<Navigate to="/dashboard/admin" replace />} />
+      {/* Rutas relativas usadas cuando el shell monta este MFE en /dashboard/admin/*. */}
+      <Route index element={<Navigate to="dashboard" replace />} />
+      <Route path="dashboard" element={<Dashboard />} />
+      <Route path="gps" element={<GpsIntegrationPage />} />
+      <Route path="registro-jornada" element={<RegistroJornada />} />
+      <Route path="registro-jornada/nueva" element={<RegistroNuevaJornada />} />
+      <Route path="camiones" element={<MonitoreoCamionesPage />} />
 
-      {/* DASHBOARD ADMIN */}
-      <Route path="/dashboard/admin" element={<Dashboard />} />
+      {/* Compatibilidad cuando el MFE se abre directo en localhost:3001. */}
+      <Route path="/" element={<Navigate to="/dashboard/admin/dashboard" replace />} />
+      <Route path="/dashboard/admin" element={<Navigate to="/dashboard/admin/dashboard" replace />} />
+      <Route path="/dashboard/admin/dashboard" element={<Dashboard />} />
+      <Route path="/dashboard/admin/gps" element={<GpsIntegrationPage />} />
+      <Route path="/dashboard/admin/registro-jornada" element={<RegistroJornada />} />
+      <Route path="/dashboard/admin/registro-jornada/nueva" element={<RegistroNuevaJornada />} />
+      <Route path="/dashboard/admin/camiones" element={<MonitoreoCamionesPage />} />
+      <Route path="/gps" element={<Navigate to="/dashboard/admin/gps" replace />} />
+      <Route path="/RegistroJornada" element={<Navigate to="/dashboard/admin/registro-jornada" replace />} />
+      <Route path="/RegistroNuevaJornada" element={<Navigate to="/dashboard/admin/registro-jornada/nueva" replace />} />
+      <Route path="/camiones" element={<Navigate to="/dashboard/admin/camiones" replace />} />
 
-      {/* GPS */}
-      <Route path="/gps" element={<GpsIntegrationPage />} />
-
-      {/* JORNADAS */}
-      <Route path="/RegistroJornada" element={<RegistroJornada />} />
-      <Route path="/RegistroNuevaJornada" element={<RegistroNuevaJornada />} />
-
-      {/* MONITOREO DE CAMIONES */}
-      <Route path="/camiones" element={<MonitoreoCamionesPage />} />
-
-      {/* 🔥 CUALQUIER RUTA INVALIDA TAMBIÉN VA AL DASHBOARD */}
-      <Route path="*" element={<Navigate to="/dashboard/admin" replace />} />
+      {/* Cualquier ruta invalida vuelve al panel principal sin salir del contexto actual. */}
+      <Route path="*" element={<Navigate to="dashboard" replace />} />
     </Routes>
   );
 }
 
 function App() {
-  return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
-  );
+  return <AppRoutes />;
 }
 
 export default App;

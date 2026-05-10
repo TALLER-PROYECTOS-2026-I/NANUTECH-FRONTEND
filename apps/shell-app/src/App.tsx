@@ -66,7 +66,7 @@ function App() {
       <Route
         path="/dashboard/admin/*"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['ADMIN']}>
             <DashboardLayout />
           </ProtectedRoute>
         }
@@ -74,17 +74,13 @@ function App() {
 
       <Route
         path="/dashboard/gerencial"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout />
-          </ProtectedRoute>
-        }
+        element={<Navigate to="/dashboard/contratos/dashboard" replace />}
       />
 
       <Route
         path="/dashboard/chofer/*"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['CHOFER', 'CONDUCTOR']}>
             <ChoferLayout />
           </ProtectedRoute>
         }
@@ -93,7 +89,7 @@ function App() {
       <Route
         path="/dashboard/contratos/*"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['GERENTE', 'GERENCIAL']}>
             <ContratosLayout />
           </ProtectedRoute>
         }

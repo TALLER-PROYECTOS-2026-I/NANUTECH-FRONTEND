@@ -16,6 +16,19 @@ export default defineConfig({
       shared: ["react", "react-dom", "react-router-dom"],
     }),
   ],
+  server: {
+    port: 4174,
+  },
+  preview: {
+    port: 4174,
+  },
+  build: {
+    modulePreload: false,
+    target: "esnext",
+    minify: false,
+    cssCodeSplit: false,
+  },
+
   //test
   test: {
     globals: true,

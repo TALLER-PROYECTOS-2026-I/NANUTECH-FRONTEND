@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { crearContrato } from '@nanutech/api-client';
 import {
   ContractSummaryPanel,
   InlineNotice,
@@ -11,14 +12,13 @@ import {
 } from '../components/RegistroFormControls';
 import { Stepper } from '../components/Stepper';
 import { initialRegistroContratoForm, terminalOptions, tipoServicioOptions } from '../constants';
-import { createMockContrato } from '../mocks/registroContratoRepository';
 import type {
   RegistroContratoErrors,
   RegistroContratoForm,
   RegistroContratoPageProps,
   RegistroContratoSuccess,
 } from '../types';
-import { getRegistroTarifaTotal } from '../utils/registroContratoMapper';
+import { buildCrearContratoPayload, getRegistroTarifaTotal } from '../utils/registroContratoMapper';
 import {
   hasErrors,
   validateGeneralStep,
@@ -32,11 +32,7 @@ import {
  * Esta pagina es el entregable principal de la historia:
  * 1. Captura datos generales del cliente y vigencia.
  * 2. Captura parametros de ruta que luego usara monitoreo/GPS.
- * 3. Captura tarifas, calcula tarifa total y genera un ID unico mock.
- *
- * El backend aun no esta listo; por eso la creacion esta aislada en
- * createMockContrato(). Cuando exista el API AWS, se reemplaza ese repositorio
- * sin reescribir el flujo visual ni las validaciones.
+ * 3. Captura tarifas, calcula tarifa total y registra el contrato en el API.
  */
 export default function RegistroContratoPage({ onBack, onRegistered }: RegistroContratoPageProps) {
   // Paso actual del wizard: 1 datos generales, 2 ruta de servicio, 3 reglas de tarifa.
@@ -48,8 +44,9 @@ export default function RegistroContratoPage({ onBack, onRegistered }: RegistroC
   // Errores por campo, poblados por los validadores del modulo.
   const [errors, setErrors] = useState<RegistroContratoErrors>({});
 
-  // Estado de guardado para deshabilitar el boton mientras se crea el mock.
+  // Estado de guardado para deshabilitar el boton mientras responde el backend.
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Contrato registrado. Si existe, se muestra la pantalla final de exito.
   const [registeredContrato, setRegisteredContrato] = useState<RegistroContratoSuccess | null>(null);
@@ -83,8 +80,8 @@ export default function RegistroContratoPage({ onBack, onRegistered }: RegistroC
   };
 
   /**
-   * Registra el contrato en modo mock.
-   * Genera ID unico, tarifa total y devuelve el contrato a App.tsx mediante onRegistered.
+   * Registra el contrato en backend usando POST /contratos.
+   * Devuelve el contrato creado a App.tsx mediante onRegistered.
    */
   const registrar = async () => {
     const nextErrors = validateRatesStep(form);
@@ -92,14 +89,26 @@ export default function RegistroContratoPage({ onBack, onRegistered }: RegistroC
     if (hasErrors(nextErrors)) return;
 
     setLoading(true);
+    setSubmitError(null);
     try {
-      const contrato = await createMockContrato(form);
+      const contrato = await crearContrato(buildCrearContratoPayload(form));
       setRegisteredContrato({
         id: contrato.id,
         codigo: contrato.codigo,
         estado: contrato.estado,
       });
       onRegistered?.(contrato);
+    } catch (error) {
+      const apiError = error as {
+        response?: { data?: { message?: string; mensaje?: string } };
+        message?: string;
+      };
+      setSubmitError(
+        apiError.response?.data?.message ||
+          apiError.response?.data?.mensaje ||
+          apiError.message ||
+          'No se pudo registrar el contrato en el backend'
+      );
     } finally {
       setLoading(false);
     }
@@ -349,6 +358,12 @@ export default function RegistroContratoPage({ onBack, onRegistered }: RegistroC
           )}
 
           {/* Navegacion del wizard: cancelar, anterior, siguiente y registrar. */}
+          {submitError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+              {submitError}
+            </div>
+          )}
+
           <footer className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               {step > 1 && (
@@ -406,7 +421,7 @@ function SuccessState({
       </div>
       <h2 className="mt-6 text-2xl font-bold text-slate-950">Contrato registrado exitosamente</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-        El contrato ha sido creado y esta disponible en el sistema mock para asociar jornadas y registrar kilometrajes.
+        El contrato ha sido creado en el backend y esta disponible para asociar jornadas y registrar kilometrajes.
       </p>
 
       <div className="mx-auto mt-6 inline-flex items-center gap-5 rounded-lg border border-blue-200 bg-blue-50 px-6 py-4">
