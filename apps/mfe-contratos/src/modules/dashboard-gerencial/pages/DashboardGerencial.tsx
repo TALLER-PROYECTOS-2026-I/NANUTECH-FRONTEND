@@ -4,6 +4,89 @@ import {
   type DashboardGerencialPayload,
 } from '@nanutech/api-client';
 
+const dashboardGerencialFallback: DashboardGerencialPayload = {
+  ultimo_actualizacion: new Date().toISOString(),
+  estado_sistema: 'Datos referenciales',
+  resumen_general: {
+    jornadas: 22,
+    jornadas_completadas: 18,
+    horas_acumuladas: '164.5',
+    km_totales: 29159,
+    eficiencia: '82%',
+    flota_activa: 12,
+    conductores_activos: 9,
+    contratos_activos: 6,
+    ingresos_estimados: 84500,
+  },
+  graficas: {
+    jornadas_por_dia: [
+      { fecha_jornada: '2026-05-06', total: '4', km: '512' },
+      { fecha_jornada: '2026-05-07', total: '5', km: '690' },
+      { fecha_jornada: '2026-05-08', total: '6', km: '730' },
+      { fecha_jornada: '2026-05-09', total: '3', km: '405' },
+    ],
+    sectores_jornadas: [
+      { estado: 'COMPLETADA', total: '18' },
+      { estado: 'EN_PROCESO', total: '4' },
+    ],
+    sectores_camiones: [
+      { estado: 'DISPONIBLE', total: '8' },
+      { estado: 'EN_RUTA', total: '4' },
+    ],
+    sectores_conductores: [
+      { estado: 'ACTIVO', total: '9' },
+      { estado: 'DESCANSO', total: '3' },
+    ],
+  },
+  operaciones: {
+    en_progreso: [
+      { id: 'op-1', conductor: 'Luis Herrera', camion: 'ABC-123', hora_inicio: '2026-05-10T08:30:00.000Z' },
+      { id: 'op-2', conductor: 'Rosa Mendez', camion: 'DEF-456', hora_inicio: '2026-05-10T09:15:00.000Z' },
+    ],
+    camiones_mantenimiento: [
+      { placa: 'GHI-789', marca: 'Volvo', modelo: 'FH' },
+    ],
+    conductores_disponibles: [
+      { nombre: 'Carlos Ruiz' },
+      { nombre: 'Ana Torres' },
+      { nombre: 'Miguel Castro' },
+    ],
+  },
+  rendimiento: {
+    top_conductores_km: [
+      { conductor: 'Luis Herrera', km_totales: '6420' },
+      { conductor: 'Rosa Mendez', km_totales: '5980' },
+      { conductor: 'Carlos Ruiz', km_totales: '5340' },
+    ],
+    top_camiones_uso: [
+      { placa: 'ABC-123', usos: '14', km_totales: '9200' },
+      { placa: 'DEF-456', usos: '12', km_totales: '8150' },
+    ],
+  },
+  historial: [
+    {
+      id: 'hist-1',
+      conductor: 'Luis Herrera',
+      camion: 'ABC-123',
+      hora_inicio: '2026-05-09T08:00:00.000Z',
+      hora_fin: '2026-05-09T17:00:00.000Z',
+      km_recorridos: '520',
+      horas_duracion: '9',
+      estado: 'COMPLETADA',
+    },
+    {
+      id: 'hist-2',
+      conductor: 'Rosa Mendez',
+      camion: 'DEF-456',
+      hora_inicio: '2026-05-10T09:15:00.000Z',
+      hora_fin: null,
+      km_recorridos: '188',
+      horas_duracion: '3.5',
+      estado: 'EN_PROCESO',
+    },
+  ],
+};
+
 function DashboardGerencial() {
   const [data, setData] = useState<DashboardGerencialPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -12,12 +95,15 @@ function DashboardGerencial() {
   useEffect(() => {
     getDashboardGerencial({ tiempo: 'todas' })
       .then((res) => setData(res))
-      .catch(() => setError('Error al obtener datos del dashboard gerencial'))
+      .catch(() => {
+        setData(dashboardGerencialFallback);
+        setError('No se pudo conectar con /dashboard/gerencial. Se muestran datos referenciales.');
+      })
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="p-8 text-blue-700 animate-pulse">Cargando dashboard gerencial...</div>;
-  if (error || !data) return <div className="p-8 text-red-500">{error}</div>;
+  if (!data) return <div className="p-8 text-red-500">No hay datos disponibles para el dashboard gerencial</div>;
 
   const { resumen_general, graficas, operaciones, rendimiento, historial, estado_sistema } = data;
 
@@ -27,6 +113,12 @@ function DashboardGerencial() {
         <h2 className="text-xl font-bold text-slate-800">Dashboard Gerencial</h2>
         <span className="text-sm text-green-600 font-medium">{estado_sistema}</span>
       </div>
+
+      {error && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          {error}
+        </div>
+      )}
 
       {/* Resumen general */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">

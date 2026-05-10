@@ -7,7 +7,7 @@ export const toMoneyNumber = (value: string) => Number(Number(value || 0).toFixe
 
 /**
  * Traduce el formulario editable al shape que espera crear contrato.
- * Hoy lo consume el repositorio mock; luego puede enviarse al API sin cambiar la pagina.
+ * Este payload se envia al API de contratos mediante POST /contratos.
  */
 export const buildCrearContratoPayload = (form: RegistroContratoForm) => ({
   cliente: form.cliente.trim(),
