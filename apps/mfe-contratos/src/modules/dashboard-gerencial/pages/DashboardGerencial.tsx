@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 import {
   getDashboardGerencial,
   type DashboardGerencialPayload,
-} from "@nanutech/api-client";
+} from '@nanutech/api-client';
 
 function DashboardGerencial() {
   const [data, setData] = useState<DashboardGerencialPayload | null>(null);
@@ -10,9 +10,9 @@ function DashboardGerencial() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getDashboardGerencial({ tiempo: "todas" })
+    getDashboardGerencial({ tiempo: 'todas' })
       .then((res) => setData(res))
-      .catch(() => setError("Error al obtener datos del dashboard gerencial"))
+      .catch(() => setError('Error al obtener datos del dashboard gerencial'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -22,9 +22,9 @@ function DashboardGerencial() {
   const { resumen_general, graficas, operaciones, rendimiento, historial, estado_sistema } = data;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard Gerencial</h1>
+        <h2 className="text-xl font-bold text-slate-800">Dashboard Gerencial</h2>
         <span className="text-sm text-green-600 font-medium">{estado_sistema}</span>
       </div>
 
@@ -44,10 +44,10 @@ function DashboardGerencial() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* Jornadas por día */}
         <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="font-semibold text-gray-700 mb-3">Jornadas por día</h2>
+          <h3 className="font-semibold text-slate-700 mb-3">Jornadas por día</h3>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-gray-500 border-b">
+              <tr className="text-left text-slate-500 border-b">
                 <th className="pb-2">Fecha</th>
                 <th className="pb-2">Total</th>
                 <th className="pb-2">KM</th>
@@ -56,7 +56,7 @@ function DashboardGerencial() {
             <tbody>
               {graficas.jornadas_por_dia.map((j) => (
                 <tr key={j.fecha_jornada} className="border-b last:border-0">
-                  <td className="py-1">{new Date(j.fecha_jornada).toLocaleDateString("es-PE")}</td>
+                  <td className="py-1">{new Date(j.fecha_jornada).toLocaleDateString('es-PE')}</td>
                   <td className="py-1">{j.total}</td>
                   <td className="py-1">{j.km}</td>
                 </tr>
@@ -65,31 +65,31 @@ function DashboardGerencial() {
           </table>
         </div>
 
-        {/* Sectores jornadas */}
+        {/* Sectores */}
         <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="font-semibold text-gray-700 mb-3">Estado de jornadas</h2>
-          <div className="space-y-2">
+          <h3 className="font-semibold text-slate-700 mb-3">Estado de jornadas</h3>
+          <div className="space-y-2 mb-4">
             {graficas.sectores_jornadas.map((s) => (
               <div key={s.estado} className="flex justify-between text-sm">
-                <span className="text-gray-600">{s.estado}</span>
+                <span className="text-slate-600">{s.estado}</span>
                 <span className="font-semibold">{s.total}</span>
               </div>
             ))}
           </div>
-          <h2 className="font-semibold text-gray-700 mt-4 mb-3">Estado de camiones</h2>
-          <div className="space-y-2">
+          <h3 className="font-semibold text-slate-700 mb-3">Estado de camiones</h3>
+          <div className="space-y-2 mb-4">
             {graficas.sectores_camiones.map((s) => (
               <div key={s.estado} className="flex justify-between text-sm">
-                <span className="text-gray-600">{s.estado}</span>
+                <span className="text-slate-600">{s.estado}</span>
                 <span className="font-semibold">{s.total}</span>
               </div>
             ))}
           </div>
-          <h2 className="font-semibold text-gray-700 mt-4 mb-3">Estado de conductores</h2>
+          <h3 className="font-semibold text-slate-700 mb-3">Estado de conductores</h3>
           <div className="space-y-2">
             {graficas.sectores_conductores.map((s) => (
               <div key={s.estado} className="flex justify-between text-sm">
-                <span className="text-gray-600">{s.estado}</span>
+                <span className="text-slate-600">{s.estado}</span>
                 <span className="font-semibold">{s.total}</span>
               </div>
             ))}
@@ -98,12 +98,12 @@ function DashboardGerencial() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* Operaciones en progreso */}
+        {/* Operaciones */}
         <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="font-semibold text-gray-700 mb-3">Operaciones en progreso</h2>
+          <h3 className="font-semibold text-slate-700 mb-3">Operaciones en progreso</h3>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-gray-500 border-b">
+              <tr className="text-left text-slate-500 border-b">
                 <th className="pb-2">Conductor</th>
                 <th className="pb-2">Camión</th>
                 <th className="pb-2">Inicio</th>
@@ -115,25 +115,25 @@ function DashboardGerencial() {
                   <td className="py-1">{op.conductor}</td>
                   <td className="py-1">{op.camion}</td>
                   <td className="py-1">
-                    {op.hora_inicio ? new Date(op.hora_inicio).toLocaleTimeString("es-PE") : "—"}
+                    {op.hora_inicio ? new Date(op.hora_inicio).toLocaleTimeString('es-PE') : '—'}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
 
-          <h2 className="font-semibold text-gray-700 mt-4 mb-2">Camiones en mantenimiento</h2>
+          <h3 className="font-semibold text-slate-700 mt-4 mb-2">Camiones en mantenimiento</h3>
           {operaciones.camiones_mantenimiento.length === 0 ? (
-            <p className="text-sm text-gray-400">Ninguno</p>
+            <p className="text-sm text-slate-400">Ninguno</p>
           ) : (
             operaciones.camiones_mantenimiento.map((c) => (
-              <div key={c.placa} className="text-sm text-gray-600">
+              <div key={c.placa} className="text-sm text-slate-600">
                 {c.placa} — {c.marca} {c.modelo}
               </div>
             ))
           )}
 
-          <h2 className="font-semibold text-gray-700 mt-4 mb-2">Conductores disponibles</h2>
+          <h3 className="font-semibold text-slate-700 mt-4 mb-2">Conductores disponibles</h3>
           <div className="flex flex-wrap gap-2">
             {operaciones.conductores_disponibles.map((c) => (
               <span key={c.nombre} className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
@@ -145,10 +145,10 @@ function DashboardGerencial() {
 
         {/* Rendimiento */}
         <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="font-semibold text-gray-700 mb-3">Top conductores por KM</h2>
+          <h3 className="font-semibold text-slate-700 mb-3">Top conductores por KM</h3>
           <table className="w-full text-sm mb-4">
             <thead>
-              <tr className="text-left text-gray-500 border-b">
+              <tr className="text-left text-slate-500 border-b">
                 <th className="pb-2">Conductor</th>
                 <th className="pb-2">KM totales</th>
               </tr>
@@ -163,10 +163,10 @@ function DashboardGerencial() {
             </tbody>
           </table>
 
-          <h2 className="font-semibold text-gray-700 mb-3">Top camiones por uso</h2>
+          <h3 className="font-semibold text-slate-700 mb-3">Top camiones por uso</h3>
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-gray-500 border-b">
+              <tr className="text-left text-slate-500 border-b">
                 <th className="pb-2">Placa</th>
                 <th className="pb-2">Usos</th>
                 <th className="pb-2">KM</th>
@@ -187,10 +187,10 @@ function DashboardGerencial() {
 
       {/* Historial */}
       <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="font-semibold text-gray-700 mb-3">Historial de jornadas</h2>
+        <h3 className="font-semibold text-slate-700 mb-3">Historial de jornadas</h3>
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-gray-500 border-b">
+            <tr className="text-left text-slate-500 border-b">
               <th className="pb-2">Conductor</th>
               <th className="pb-2">Camión</th>
               <th className="pb-2">Inicio</th>
@@ -206,10 +206,10 @@ function DashboardGerencial() {
                 <td className="py-1">{h.conductor}</td>
                 <td className="py-1">{h.camion}</td>
                 <td className="py-1">
-                  {h.hora_inicio ? new Date(h.hora_inicio).toLocaleString("es-PE") : "—"}
+                  {h.hora_inicio ? new Date(h.hora_inicio).toLocaleString('es-PE') : '—'}
                 </td>
                 <td className="py-1">
-                  {h.hora_fin ? new Date(h.hora_fin).toLocaleString("es-PE") : "—"}
+                  {h.hora_fin ? new Date(h.hora_fin).toLocaleString('es-PE') : '—'}
                 </td>
                 <td className="py-1">{h.km_recorridos}</td>
                 <td className="py-1">{parseFloat(h.horas_duracion).toFixed(1)}</td>
@@ -228,20 +228,20 @@ function DashboardGerencial() {
 function KpiCard({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="bg-white rounded-lg shadow p-4">
-      <p className="text-xs text-gray-500 mb-1">{label}</p>
-      <p className="text-xl font-bold text-gray-800">{value}</p>
+      <p className="text-xs text-slate-500 mb-1">{label}</p>
+      <p className="text-xl font-bold text-slate-800">{value}</p>
     </div>
   );
 }
 
 function EstadoBadge({ estado }: { estado: string }) {
   const colors: Record<string, string> = {
-    COMPLETADA: "bg-green-100 text-green-700",
-    EN_PROCESO: "bg-blue-100 text-blue-700",
-    PENDIENTE: "bg-yellow-100 text-yellow-700",
+    COMPLETADA: 'bg-green-100 text-green-700',
+    EN_PROCESO: 'bg-blue-100 text-blue-700',
+    PENDIENTE: 'bg-yellow-100 text-yellow-700',
   };
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors[estado] ?? "bg-gray-100 text-gray-700"}`}>
+    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors[estado] ?? 'bg-slate-100 text-slate-700'}`}>
       {estado}
     </span>
   );
