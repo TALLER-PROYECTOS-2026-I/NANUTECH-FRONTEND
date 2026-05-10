@@ -6,14 +6,18 @@ import { validarFormatoCorreo } from '@nanutech/utils';
 export default function LoginPage() {
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
+
+  // Controla el mensaje visible y el estado de carga del boton.
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
   const navigate = useNavigate();
 
+  // Procesa el submit, valida credenciales y crea la sesion local.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
+    // Evita llamar al backend si el correo no tiene formato valido.
     if (!validarFormatoCorreo(correo)) {
       return setError('Por favor, ingresa un correo válido.');
     }
@@ -21,6 +25,7 @@ export default function LoginPage() {
     setCargando(true);
 
     try {
+      // Autentica contra el cliente API conectado a Cognito.
       const respuesta = await login(correo, password);
 
       const { user, session, role, nextRoute } = respuesta.data;
@@ -39,6 +44,8 @@ export default function LoginPage() {
         navigate('/dashboard/admin');
       } else if (role.toUpperCase() === 'GERENCIAL') {
         navigate('/dashboard/gerencial');
+      } else if (role.toUpperCase() === 'GERENTE') {
+        navigate('/dashboard/contratos');
       } else {
         navigate('/dashboard/chofer');
       }

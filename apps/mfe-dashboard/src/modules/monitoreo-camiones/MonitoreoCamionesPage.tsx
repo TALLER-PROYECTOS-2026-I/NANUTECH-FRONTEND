@@ -248,7 +248,7 @@ function MonitoreoCamionesPage() {
               <FleetGrid
                 camiones={filteredCamiones}
                 totalCamiones={panel.camiones.length}
-                onDetail={(camionId) => navigate(`/camiones/${camionId}/configuracion`)}
+                onDetail={(camionId) => navigate(`../camiones/${camionId}/configuracion`)}
               />
             </>
           )}

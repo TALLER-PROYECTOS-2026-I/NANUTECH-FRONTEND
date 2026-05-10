@@ -12,6 +12,7 @@ export default tseslint.config(
   {
     ignores: [
       '**/dist/**',
+      '**/coverage/**',
       '**/node_modules/**',
       'apps/mobile-chofer/.expo/**',
       '**/*.d.ts',

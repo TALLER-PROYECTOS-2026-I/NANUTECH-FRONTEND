@@ -12,6 +12,12 @@ import {
 } from "recharts";
 
 import { getCamiones, type Camion, getDashboard, type DashboardPayload } from "@nanutech/api-client";
+import {
+  ADMIN_DASHBOARD_HOME,
+  adminNavItems,
+  adminNavLinkClassName,
+} from "../../../navigation/adminNav";
+import { AdminSidebarSession } from "../../../components/AdminSidebarSession";
 
 /* MOCK DATA */
 const kmData = [
@@ -30,33 +36,6 @@ const productividadData = [
   { name: "Conductor E", horas: 8.5 },
 ];
 
-const menuItems = [
-  { label: "Dashboard Admin", path: "/dashboard", icon: (
-    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-  )},
-  { label: "Alertas y Emergencias", path: "/alertas", icon: (
-    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-  )},
-  { label: "Camiones", path: "/camiones", icon: (
-    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-  )},
-  { label: "Conductores", path: "/conductores", icon: (
-    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-  )},
-  { label: "GPS", path: "/gps", icon: (
-    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
-  )},
-  { label: "Tracking GPS", path: "/tracking", icon: (
-    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-  )},
-  { label: "Registro Jornadas", path: "/RegistroNuevaJornada", icon: (
-    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-  )},
-  { label: "Auditoría", path: "/auditoria", icon: (
-    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-  )},
-];
-
 type DashboardCamion = Camion & {
   status?: string;
 };
@@ -67,8 +46,6 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [horaActual, setHoraActual] = useState("");
   const [fechaActual, setFechaActual] = useState("");
-  const [menuUsuarioAbierto, setMenuUsuarioAbierto] = useState(false);  
-
   useEffect(() => {
     const actualizar = () => {
       const ahora = new Date();
@@ -114,11 +91,6 @@ function Dashboard() {
   const ingresosEstimados = dashboardData?.kpis?.ingresos ?? 0;
   const kmChartData = (dashboardData?.topCamiones ?? []).map((t, i) => ({ name: `U-${i + 1}`, km: t.km }));
 
-  const handleLogout = () => {
-    localStorage.clear();
-    window.location.href = "/login";
-  };
-
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans">
 
@@ -140,17 +112,14 @@ function Dashboard() {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 py-4 px-2 flex flex-col gap-0.5 overflow-y-auto">
-          {menuItems.map((item) => (
+        <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-4">
+          {adminNavItems.map((item) => (
             <NavLink
               key={item.label}
-              to={item.path}
+              to={item.to}
+              end={item.to === ADMIN_DASHBOARD_HOME}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                  isActive
-                    ? "bg-blue-600 text-white font-semibold"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`
+                adminNavLinkClassName(isActive, item.accentWhenActive)
               }
             >
               <span className="shrink-0 text-current">{item.icon}</span>
@@ -159,56 +128,7 @@ function Dashboard() {
           ))}
         </nav>
 
-        {/* Sesión activa */}
-        <div className="px-4 py-3 border-t border-slate-700">
-          <div className="flex items-center gap-2 text-slate-400 text-xs mb-3">
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span className="text-slate-400">Sesión activa</span>
-          </div>
-          <p className="text-white text-xs font-semibold mb-3">1h 58m</p>
- 
-          {/* User + dropdown */}
-          <div className="relative">
-            {/* Dropdown popup — aparece encima del botón */}
-            {menuUsuarioAbierto && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
-                <div className="px-4 py-3 border-b border-gray-100">
-                  <p className="text-xs text-gray-500 mb-0.5">Sesión iniciada como</p>
-                  <p className="text-sm font-bold text-gray-900">admin1@nanutech.com</p>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-sm font-semibold text-red-500 hover:bg-red-50 transition-colors"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
-                    <polyline points="16 17 21 12 16 7"/>
-                    <line x1="21" y1="12" x2="9" y2="12"/>
-                  </svg>
-                  Cerrar Sesión
-                </button>
-              </div>
-            )}
- 
-            {/* Botón usuario */}
-            <button
-              className="w-full flex items-center gap-2 rounded-lg hover:bg-slate-800 transition-colors p-1 -mx-1"
-              onClick={() => setMenuUsuarioAbierto((prev) => !prev)}
-            >
-              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold shrink-0">C</div>
-              <div className="min-w-0 text-left">
-                <p className="text-white text-xs font-semibold truncate">Carlos Administr...</p>
-                <p className="text-slate-400 text-xs truncate">Administrador Gene...</p>
-              </div>
-              <svg
-                className={`w-4 h-4 ml-auto text-slate-400 shrink-0 transition-transform ${menuUsuarioAbierto ? "rotate-180" : ""}`}
-                viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-              >
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </button>
-          </div>
-        </div>
+        <AdminSidebarSession />
       </aside>
 
       {/* ── MAIN ── */}

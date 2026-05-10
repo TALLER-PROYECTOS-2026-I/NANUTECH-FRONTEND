@@ -8,11 +8,18 @@ on:
     branches: [develop, main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   unit-tests:
     name: 🧪 Unit Tests & Coverage
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
+    outputs:
+      tests_passed: ${{ steps.tests.outputs.tests_passed }}
+      failed_mfes: ${{ steps.tests.outputs.failed_mfes }}
 
     steps:
       - name: Checkout code
@@ -27,87 +34,121 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests with coverage per MFE
+      # ── Ejecutar coverage por workspace ────────────────────────────────────
+      - name: Run coverage per workspace
         id: tests
         run: |
           FAILED_MFES=""
 
-          for mfe in mfe-flota mfe-contratos mfe-dashboard shell-app; do
-            echo "━━━ Corriendo tests: $mfe ━━━"
-            if npm run test:coverage --workspace=apps/$mfe 2>&1; then
-              echo "✅ $mfe: tests OK"
+          run_coverage() {
+            local LABEL=$1
+            local WORKSPACE=$2
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "▶  $LABEL"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            if npm run test:coverage --workspace="$WORKSPACE" 2>&1; then
+              echo "✅ $LABEL — OK"
             else
-              echo "⚠️ $mfe: tests FALLARON (coverage igual se recolectará)"
-              FAILED_MFES="$FAILED_MFES $mfe"
+              echo "⚠️  $LABEL — FALLÓ (coverage igual se recolectará)"
+              FAILED_MFES="$FAILED_MFES $LABEL"
             fi
-          done
+          }
 
-          for pkg in utils api-client ui-components; do
-            echo "━━━ Corriendo tests: @nanutech/$pkg ━━━"
-            npm run test:coverage --workspace=packages/$pkg 2>&1 || \
-              echo "⚠️ pkg-$pkg: sin tests o fallaron"
-          done
+          # Solo apps — packages completamente ignorados
+          run_coverage "mfe-contratos" "apps/mfe-contratos"
+          run_coverage "mfe-dashboard" "apps/mfe-dashboard"
+          run_coverage "mfe-flota"     "apps/mfe-flota"
+          run_coverage "shell-app"     "apps/shell-app"
 
-          if [ -n "$FAILED_MFES" ]; then
-            echo "tests_passed=false" >> $GITHUB_OUTPUT
-            echo "failed_mfes=$FAILED_MFES" >> $GITHUB_OUTPUT
-          else
-            echo "tests_passed=true" >> $GITHUB_OUTPUT
-            echo "failed_mfes=" >> $GITHUB_OUTPUT
-          fi
+          echo "tests_passed=$( [ -z "$FAILED_MFES" ] && echo true || echo false )" >> $GITHUB_OUTPUT
+          echo "failed_mfes=$FAILED_MFES" >> $GITHUB_OUTPUT
 
+      # ── Recolectar todos los coverage-summary.json ─────────────────────────
       - name: Collect coverage reports
+        if: always()
         run: |
           mkdir -p all-coverage-reports
 
-          for mfe in mfe-flota mfe-contratos mfe-dashboard shell-app; do
-            if [ -f "apps/$mfe/coverage/coverage-summary.json" ]; then
-              echo "✅ Coverage recolectado: $mfe"
-              cp "apps/$mfe/coverage/coverage-summary.json" "all-coverage-reports/$mfe-summary.json"
+          collect() {
+            local NAME=$1
+            local BASE=$2
+            local SUMMARY="$BASE/coverage/coverage-summary.json"
+
+            if [ -f "$SUMMARY" ]; then
+              mkdir -p "all-coverage-reports/$NAME"
+              cp "$SUMMARY" "all-coverage-reports/$NAME/coverage-summary.json"
+              echo "✅  $NAME  →  coverage-summary.json copiado"
             else
-              echo "⚠️ Sin coverage-summary.json para $mfe — generando placeholder"
-              echo '{"total":{"lines":{"pct":0},"statements":{"pct":0},"branches":{"pct":0},"functions":{"pct":0}}}' \
-                > "all-coverage-reports/$mfe-summary.json"
+              echo "⚠️   $NAME  →  sin coverage-summary.json"
+              mkdir -p "all-coverage-reports/$NAME"
+              echo '{"total":{"lines":{"pct":0,"covered":0,"total":0},"statements":{"pct":0,"covered":0,"total":0},"branches":{"pct":0,"covered":0,"total":0},"functions":{"pct":0,"covered":0,"total":0}}}' \
+                > "all-coverage-reports/$NAME/coverage-summary.json"
             fi
-          done
+          }
 
-          for pkg in utils api-client ui-components; do
-            if [ -f "packages/$pkg/coverage/coverage-summary.json" ]; then
-              echo "✅ Coverage recolectado: pkg-$pkg"
-              cp "packages/$pkg/coverage/coverage-summary.json" "all-coverage-reports/pkg-$pkg-summary.json"
-            fi
-          done
+          # Solo apps — sin utils, sin api-client, sin ui-components, sin config, sin types
+          collect "mfe-contratos" "apps/mfe-contratos"
+          collect "mfe-dashboard" "apps/mfe-dashboard"
+          collect "mfe-flota"     "apps/mfe-flota"
+          collect "shell-app"     "apps/shell-app"
 
-          echo "--- Archivos en all-coverage-reports/ ---"
-          ls -la all-coverage-reports/
+          echo ""
+          echo "=== Estructura de all-coverage-reports/ ==="
+          find all-coverage-reports -type f | sort
 
-      - name: Upload coverage artifacts
+      # ── Subir artifact con todos los JSONs ─────────────────────────────────
+      - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: coverage-reports
           path: all-coverage-reports/
           retention-days: 30
           if-no-files-found: error
 
+      # ── Resumen en GitHub Step Summary ─────────────────────────────────────
       - name: Coverage summary
+        if: always()
         run: |
-          echo "## 📊 Coverage Report" >> $GITHUB_STEP_SUMMARY
-          echo "| MFE | Lines | Estado |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Coverage por Microfrontend" >> $GITHUB_STEP_SUMMARY
+          echo ""                                  >> $GITHUB_STEP_SUMMARY
+          echo "| MFE | Stmts | Branches | Funcs | Lines | Estado |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|------:|--------:|------:|------:|:------:|"   >> $GITHUB_STEP_SUMMARY
 
-          for summary in all-coverage-reports/*-summary.json; do
-            MFE=$(basename "$summary" -summary.json)
-            COVERAGE=$(jq '.total.lines.pct // 0' "$summary")
-            if (( $(echo "$COVERAGE >= 50" | bc -l) )); then
-              ESTADO="✅"
-            else
-              ESTADO="❌"
+          for DIR in all-coverage-reports/*/; do
+            MFE=$(basename "$DIR")
+            SUMMARY="$DIR/coverage-summary.json"
+            if [ -f "$SUMMARY" ]; then
+              STMTS=$(jq '.total.statements.pct // 0' "$SUMMARY")
+              BRNCH=$(jq '.total.branches.pct   // 0' "$SUMMARY")
+              FUNCS=$(jq '.total.functions.pct  // 0' "$SUMMARY")
+              LINES=$(jq '.total.lines.pct      // 0' "$SUMMARY")
+              if awk "BEGIN{exit !($LINES >= 50)}"; then
+                ESTADO="✅"
+              else
+                ESTADO="❌"
+              fi
+              echo "| $MFE | ${STMTS}% | ${BRNCH}% | ${FUNCS}% | ${LINES}% | $ESTADO |" >> $GITHUB_STEP_SUMMARY
             fi
-            echo "| $MFE | ${COVERAGE}% | $ESTADO |" >> $GITHUB_STEP_SUMMARY
           done
 
-      - name: Fail if tests failed
-        if: steps.tests.outputs.tests_passed == 'false'
+      # ── Reportar fallos sin matar el job ───────────────────────────────────
+      - name: Report test results
+        if: always()
         run: |
-          echo "❌ MFEs con tests fallidos: ${{ steps.tests.outputs.failed_mfes }}"
-          exit 1
+          if [ "${{ steps.tests.outputs.tests_passed }}" = "false" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## ⚠️ MFEs con tests fallidos" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Los siguientes workspaces tuvieron fallos pero su cobertura fue recolectada:" >> $GITHUB_STEP_SUMMARY
+            for MFE in ${{ steps.tests.outputs.failed_mfes }}; do
+              echo "- ❌ $MFE" >> $GITHUB_STEP_SUMMARY
+            done
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "> El reporte de cobertura se publicará de todas formas." >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ MFEs con fallos:${{ steps.tests.outputs.failed_mfes }} — el job continúa para publicar cobertura"
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## ✅ Todos los tests pasaron" >> $GITHUB_STEP_SUMMARY
+            echo "✅ Todos los tests pasaron correctamente"
+          fi

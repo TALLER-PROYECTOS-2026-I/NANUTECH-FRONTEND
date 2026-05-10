@@ -4,29 +4,37 @@ import { confirmarRecuperacionPassword } from '@nanutech/api-client';
 import { validarFormatoCorreo } from '@nanutech/utils';
 
 export default function ResetPasswordPage() {
+  // Lee el email enviado desde la pantalla de recuperacion.
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Campos requeridos por Cognito para confirmar el cambio de password.
   const [email, setEmail] = useState(location.state?.email || '');
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
+
+  // Controla estado visual del formulario y mensajes de respuesta.
   const [estado, setEstado] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [mensaje, setMensaje] = useState('');
 
+  // Confirma el codigo recibido y actualiza la password del usuario.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMensaje('');
 
+    // Valida correo antes de enviar datos al backend.
     if (!validarFormatoCorreo(email)) {
       setEstado('error');
       return setMensaje('Ingresa un correo válido.');
     }
 
+    // El codigo es obligatorio para confirmar el flujo de recuperacion.
     if (!code.trim()) {
       setEstado('error');
       return setMensaje('Ingresa el código de verificación.');
     }
 
+    // No permite confirmar una password vacia.
     if (!newPassword.trim()) {
       setEstado('error');
       return setMensaje('Ingresa una nueva contraseña.');
@@ -35,6 +43,7 @@ export default function ResetPasswordPage() {
     setEstado('loading');
 
     try {
+      // Envia email, codigo y nueva password al cliente API.
       const respuesta = await confirmarRecuperacionPassword(
         email,
         code,
@@ -44,10 +53,12 @@ export default function ResetPasswordPage() {
       setEstado('success');
       setMensaje(respuesta.message || 'Contraseña actualizada correctamente.');
 
+      // Luego del exito, regresa al login para iniciar sesion.
       setTimeout(() => {
         navigate('/login');
       }, 1800);
     } catch (err: unknown) {
+      // Muestra mensajes de error provenientes del backend o del cliente HTTP.
       const error = err as {
         response?: { data?: { message?: string; mensaje?: string } };
         message?: string;
