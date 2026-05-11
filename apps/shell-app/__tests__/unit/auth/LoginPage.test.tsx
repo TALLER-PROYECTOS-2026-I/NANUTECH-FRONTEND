@@ -23,8 +23,8 @@ const renderLogin = () =>
     >
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/dashboard/admin" element={<div>Dashboard admin</div>} />
-        <Route path="/dashboard/contratos" element={<div>Dashboard gerente</div>} />
+        <Route path="/dashboard/admin/dashboard" element={<div>Dashboard admin</div>} />
+        <Route path="/dashboard/contratos/dashboard" element={<div>Dashboard gerente</div>} />
         <Route path="/dashboard/chofer" element={<div>Dashboard chofer</div>} />
       </Routes>
     </MemoryRouter>
@@ -109,6 +109,29 @@ describe('LoginPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Iniciar/i }));
 
     expect(await screen.findByText('Dashboard admin')).not.toBeNull();
+  });
+
+  it('ignora un nextRoute de otro rol y mantiene al gerente en contratos', async () => {
+    // Protege el flujo si el backend envia una ruta antigua o de otro perfil.
+    vi.mocked(login).mockResolvedValue({
+      data: {
+        user: { id: 'gerente-2', email: 'gerente@nanutech.com' },
+        role: 'GERENTE',
+        nextRoute: '/dashboard/admin/dashboard',
+        session: {
+          accessToken: 'access-token',
+          idToken: 'id-token',
+          expiresAt: '2026-05-09T23:59:00.000Z',
+        },
+      },
+    } as never);
+
+    renderLogin();
+
+    completarFormulario('gerente@nanutech.com', 'Gerente123!');
+    fireEvent.click(screen.getByRole('button', { name: /Iniciar/i }));
+
+    expect(await screen.findByText('Dashboard gerente')).not.toBeNull();
   });
 
   it('muestra mensaje de error cuando Cognito rechaza credenciales', async () => {

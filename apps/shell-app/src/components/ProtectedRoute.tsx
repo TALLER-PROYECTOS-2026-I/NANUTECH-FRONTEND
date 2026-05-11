@@ -16,9 +16,10 @@ const clearSession = () => {
 const getHomeRouteByRole = (role: string | null) => {
   switch ((role || '').toUpperCase()) {
     case 'ADMIN':
-      return '/dashboard/admin';
+      return '/dashboard/admin/dashboard';
     case 'GERENTE':
-      return '/dashboard/contratos';
+    case 'GERENCIAL':
+      return '/dashboard/contratos/dashboard';
     default:
       return '/dashboard/chofer';
   }

@@ -82,6 +82,11 @@ function App() {
       />
 
       <Route
+        path="/dashboard/gerencial"
+        element={<Navigate to="/dashboard/contratos/dashboard" replace />}
+      />
+
+      <Route
         path="/dashboard/chofer/*"
         element={
           <ProtectedRoute>
@@ -93,7 +98,7 @@ function App() {
       <Route
         path="/dashboard/contratos/*"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['GERENTE', 'GERENCIAL']}>
             <ContratosLayout />
           </ProtectedRoute>
         }
