@@ -31,6 +31,7 @@ const normalizeNextRoute = (role: string, nextRoute?: string) => {
   return getDashboardRouteByRole(role);
 };
 
+
 export default function LoginPage() {
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
