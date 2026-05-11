@@ -33,12 +33,12 @@ export function RegistrationModal({ form, error, onChange, onClose, onSubmit }: 
 
         <h3 className="mb-3 text-sm font-bold text-gray-900">Información Básica</h3>
         <div className="grid grid-cols-2 gap-3">
-          <FormInput label="ID" value={form.id} onChange={(value) => onChange("id", value)} placeholder="unidad-001" />
+          <FormInput label="ID *" value={form.id} onChange={(value) => onChange("id", value)} placeholder="unidad-001" />
           <FormInput label="Placa *" value={form.placa} onChange={(value) => onChange("placa", value)} placeholder="ABC-123" />
           <FormInput label="Marca *" value={form.marca} onChange={(value) => onChange("marca", value)} placeholder="Volvo, Scania..." />
           <FormInput label="Modelo *" value={form.modelo} onChange={(value) => onChange("modelo", value)} placeholder="FH16, R450..." />
           <FormInput label="Año *" type="number" value={form.anio} onChange={(value) => onChange("anio", value)} />
-          <FormInput label="Capacidad (toneladas) *" type="number" value={form.capacidad_ton} onChange={(value) => onChange("capacidad_ton", value)} placeholder="28" />
+          <FormInput label="Capacidad (ton) *" type="number" value={form.capacidad_ton} onChange={(value) => onChange("capacidad_ton", value)} placeholder="28" />
           <FormInput label="VIN *" value={form.vin} onChange={(value) => onChange("vin", value)} placeholder="VIN único" />
           <FormInput label="Color *" value={form.color} onChange={(value) => onChange("color", value)} placeholder="Blanco, Rojo..." />
         </div>
@@ -46,7 +46,7 @@ export function RegistrationModal({ form, error, onChange, onClose, onSubmit }: 
         <h3 className="mb-3 mt-5 text-sm font-bold text-gray-900">Información Técnica</h3>
         <div className="grid grid-cols-2 gap-3">
           <label className="flex flex-col gap-1 text-xs font-semibold text-gray-700">
-            Tipo de Combustible
+            Combustible
             <select
               value={form.combustible}
               onChange={(event) => onChange("combustible", event.target.value)}

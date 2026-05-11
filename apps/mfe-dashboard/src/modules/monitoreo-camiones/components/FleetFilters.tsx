@@ -40,7 +40,7 @@ export function FleetFilters({
             className="inline-flex items-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
           >
             <span aria-hidden="true">↓</span>
-            Exportar CSV
+            Descargar CSV
           </button>
         </div>
       </div>
@@ -49,7 +49,7 @@ export function FleetFilters({
         <input
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Buscar por placa o marca..."
+          placeholder="Buscar por placa..."
           className="h-9 rounded-md border border-gray-200 bg-gray-50 px-3 text-sm outline-none focus:border-blue-500 focus:bg-white"
         />
         <select

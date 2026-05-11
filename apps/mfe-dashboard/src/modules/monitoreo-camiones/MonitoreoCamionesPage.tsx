@@ -97,11 +97,11 @@ function MonitoreoCamionesPage() {
     const normalizedSearch = search.trim().toUpperCase();
 
     return panel.camiones.filter((camion) => {
-      const matchesSearch =
-        !normalizedSearch ||
-        camion.placa.toUpperCase().includes(normalizedSearch) ||
-        camion.marca.toUpperCase().includes(normalizedSearch);
-      const matchesEstado = estado === "TODOS" || camion.estado === estado;
+      const matchesSearch = !normalizedSearch || camion.placa.toUpperCase().includes(normalizedSearch);
+      const matchesEstado =
+        estado === "TODOS" ||
+        camion.estado === estado ||
+        (estado === "EN_JORNADA" && camion.estado === "EN_AUXILIO");
 
       return matchesSearch && matchesEstado;
     });
@@ -109,13 +109,6 @@ function MonitoreoCamionesPage() {
 
   // Recalcula KPIs y porcentajes usando solo los camiones filtrados.
   const filteredPanel = useMemo(() => crearPanelDesdeCamiones(filteredCamiones), [filteredCamiones]);
-
-  // Adapta la lista filtrada al formato esperado por Recharts.
-  const chartData = filteredCamiones.map((camion) => ({
-    placa: camion.placa,
-    movimiento: camion.horas_movimiento,
-    detenido: camion.horas_detenido,
-  }));
 
   // Actualiza un campo específico del formulario sin perder los demás.
   const handleFormChange = (field: keyof FormState, value: string | boolean) => {
@@ -128,7 +121,7 @@ function MonitoreoCamionesPage() {
     setFormError("");
 
     const payload: CrearCamionHu11Payload = {
-      id: form.id.trim() || undefined,
+      id: form.id.trim(),
       placa: form.placa.trim().toUpperCase(),
       marca: form.marca.trim(),
       modelo: form.modelo.trim(),
@@ -143,7 +136,7 @@ function MonitoreoCamionesPage() {
       notas: form.notas.trim() || undefined,
     };
 
-    if (!payload.placa || !payload.marca || !payload.modelo || !payload.vin || !payload.color) {
+    if (!payload.id || !payload.placa || !payload.marca || !payload.modelo || !payload.vin || !payload.color) {
       setFormError("Completa los campos obligatorios antes de registrar.");
       return;
     }
@@ -231,8 +224,8 @@ function MonitoreoCamionesPage() {
             <>
               <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <KpiCard label="Total Camiones" value={panel.resumen.total_camiones} tone="blue" icon="truck" />
-                <KpiCard label="En Uso" value={panel.resumen.en_uso} tone="green" icon="route" />
-                <KpiCard label="Disponibles" value={panel.resumen.disponibles} tone="blue" icon="pin" />
+                <KpiCard label="En Uso" value={panel.resumen.en_uso} tone="blue" icon="route" />
+                <KpiCard label="Disponibles" value={panel.resumen.disponibles} tone="green" icon="pin" />
                 <KpiCard label="Mantenimiento" value={panel.resumen.mantenimiento} tone="orange" icon="alert" />
               </section>
 
@@ -244,7 +237,7 @@ function MonitoreoCamionesPage() {
                 onOpenRegister={() => setModalOpen(true)}
                 onDownloadCsv={handleDownloadCsv}
               />
-              <MovementChart chartData={chartData} filteredPanel={filteredPanel} />
+              <MovementChart filteredPanel={filteredPanel} />
               <FleetGrid
                 camiones={filteredCamiones}
                 totalCamiones={panel.camiones.length}

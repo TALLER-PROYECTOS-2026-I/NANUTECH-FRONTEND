@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { crearCamionHu11, getPanelCamionesHu11 } from "@nanutech/api-client";
+import { crearCamionHu11, descargarCamionesHu11Csv, getPanelCamionesHu11 } from "@nanutech/api-client";
 import type { CamionHu11, PanelCamionesHu11 } from "@nanutech/api-client";
 import MonitoreoCamionesPage from "../../../src/modules/monitoreo-camiones";
 
@@ -10,12 +10,11 @@ import MonitoreoCamionesPage from "../../../src/modules/monitoreo-camiones";
 // Por eso reemplazamos sus componentes por versiones simples y estables para pruebas unitarias.
 vi.mock("recharts", () => ({
   ResponsiveContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  BarChart: ({ children }: { children: ReactNode }) => <div data-testid="bar-chart">{children}</div>,
-  Bar: () => <div />,
-  CartesianGrid: () => <div />,
+  PieChart: ({ children }: { children: ReactNode }) => <div data-testid="pie-chart">{children}</div>,
+  Pie: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  Cell: () => <div />,
+  Legend: () => <div />,
   Tooltip: () => <div />,
-  XAxis: () => <div />,
-  YAxis: () => <div />,
 }));
 
 // Mock del cliente API: permite controlar respuestas sin depender del backend real.
@@ -107,11 +106,11 @@ describe("HU11 - Monitoreo de camiones", () => {
     expect(await screen.findByText("Total Camiones")).toBeInTheDocument();
     // getAllByText se usa porque "En Uso" puede aparecer en menú, KPI o tarjeta.
     expect(screen.getAllByText("En Uso").length).toBeGreaterThan(0);
-    expect(screen.getByText("Disponibles")).toBeInTheDocument();
+    expect(screen.getAllByText("Disponibles").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Mantenimiento").length).toBeGreaterThan(0);
-    expect(screen.getByText("Comparativa de Horas: Movimiento vs Detenido")).toBeInTheDocument();
+    expect(screen.getByText("Comparativas de Horas: Movimiento vs Detenido")).toBeInTheDocument();
     // Valida que el gráfico mockeado se haya renderizado.
-    expect(screen.getByTestId("bar-chart")).toBeInTheDocument();
+    expect(screen.getByTestId("pie-chart")).toBeInTheDocument();
   });
 
   // Comprueba que búsqueda y filtro de estado modifiquen la grilla visible.
@@ -124,7 +123,7 @@ describe("HU11 - Monitoreo de camiones", () => {
     expect(screen.getByText("DEF-456")).toBeInTheDocument();
 
     // Escribe una placa parcial para filtrar por búsqueda.
-    fireEvent.change(screen.getByPlaceholderText("Buscar por placa o marca..."), {
+    fireEvent.change(screen.getByPlaceholderText("Buscar por placa..."), {
       target: { value: "ABC" },
     });
 
@@ -183,10 +182,11 @@ describe("HU11 - Monitoreo de camiones", () => {
     // within evita que las búsquedas tomen elementos fuera del modal.
     const form = within(modal as HTMLFormElement);
     // Completa campos requeridos por las validaciones del componente.
+    fireEvent.change(form.getByLabelText("ID *"), { target: { value: "unidad-003" } });
     fireEvent.change(form.getByLabelText("Placa *"), { target: { value: "GHI-789" } });
     fireEvent.change(form.getByLabelText("Marca *"), { target: { value: "Mercedes-Benz" } });
     fireEvent.change(form.getByLabelText("Modelo *"), { target: { value: "Actros" } });
-    fireEvent.change(form.getByLabelText("Capacidad (toneladas) *"), { target: { value: "26" } });
+    fireEvent.change(form.getByLabelText("Capacidad (ton) *"), { target: { value: "26" } });
     fireEvent.change(form.getByLabelText("VIN *"), { target: { value: "VINGHI789" } });
     fireEvent.change(form.getByLabelText("Color *"), { target: { value: "Azul" } });
     // Envía el formulario desde el botón submit.
@@ -199,5 +199,28 @@ describe("HU11 - Monitoreo de camiones", () => {
 
     // Verifica que el toast muestre los datos del nuevo camión.
     expect(screen.getByText("GHI-789 · Actros fue agregado al sistema.")).toBeInTheDocument();
+  });
+
+  // Comprueba que la descarga de CSV use los filtros aplicados en pantalla.
+  it("descarga CSV respetando busqueda por placa y estado", async () => {
+    vi.mocked(descargarCamionesHu11Csv).mockResolvedValue('"ID","Placa"\n"unidad-001","ABC-123"');
+
+    renderPage();
+    await screen.findByText("ABC-123");
+
+    fireEvent.change(screen.getByPlaceholderText("Buscar por placa..."), {
+      target: { value: "ABC" },
+    });
+    fireEvent.change(screen.getByLabelText("Estado"), {
+      target: { value: "EN_JORNADA" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Descargar CSV/i }));
+
+    await waitFor(() => {
+      expect(descargarCamionesHu11Csv).toHaveBeenCalledWith({
+        placa: "ABC",
+        estado: "EN_JORNADA",
+      });
+    });
   });
 });
