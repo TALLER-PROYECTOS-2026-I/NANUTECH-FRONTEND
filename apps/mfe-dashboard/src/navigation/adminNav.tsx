@@ -58,8 +58,8 @@ export const adminNavItems: AdminNavItem[] = [
   },
   {
     label: "Conductores",
-    to: ADMIN_DASHBOARD_HOME,
-    accentWhenActive: false,
+    to: `${ADMIN_ROUTE_PREFIX}/conductores`,
+    accentWhenActive: true,
     icon: (
       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />

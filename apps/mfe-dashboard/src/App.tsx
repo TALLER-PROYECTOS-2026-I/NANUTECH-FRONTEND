@@ -4,6 +4,7 @@ import RegistroJornada from "./modules/registro-jornada/pages/RegistroJornada";
 import RegistroNuevaJornada from "./modules/registro-jornada/pages/RegistroNuevaJornada";
 import MonitoreoCamionesPage from "./modules/monitoreo-camiones";
 import GpsIntegrationPage from "./modules/gps-integration/pages/GpsIntegrationPage";
+import GestionConductoresPage from "./modules/gestión-conductores";
 
 export function AppRoutes() {
   return (
@@ -15,6 +16,8 @@ export function AppRoutes() {
       <Route path="registro-jornada" element={<RegistroJornada />} />
       <Route path="registro-jornada/nueva" element={<RegistroNuevaJornada />} />
       <Route path="camiones" element={<MonitoreoCamionesPage />} />
+      <Route path="conductores" element={<GestionConductoresPage />} />
+      <Route path="conductores/:id" element={<GestionConductoresPage />} />
 
       {/* Compatibilidad cuando el MFE se abre directo en localhost:3001. */}
       <Route path="/" element={<Navigate to="/dashboard/admin/dashboard" replace />} />
@@ -24,10 +27,13 @@ export function AppRoutes() {
       <Route path="/dashboard/admin/registro-jornada" element={<RegistroJornada />} />
       <Route path="/dashboard/admin/registro-jornada/nueva" element={<RegistroNuevaJornada />} />
       <Route path="/dashboard/admin/camiones" element={<MonitoreoCamionesPage />} />
+      <Route path="/dashboard/admin/conductores" element={<GestionConductoresPage />} />
+      <Route path="/dashboard/admin/conductores/:id" element={<GestionConductoresPage />} />
       <Route path="/gps" element={<Navigate to="/dashboard/admin/gps" replace />} />
       <Route path="/RegistroJornada" element={<Navigate to="/dashboard/admin/registro-jornada" replace />} />
       <Route path="/RegistroNuevaJornada" element={<Navigate to="/dashboard/admin/registro-jornada/nueva" replace />} />
       <Route path="/camiones" element={<Navigate to="/dashboard/admin/camiones" replace />} />
+      <Route path="/conductores" element={<Navigate to="/dashboard/admin/conductores" replace />} />
 
       {/* Cualquier ruta invalida vuelve al panel principal sin salir del contexto actual. */}
       <Route path="*" element={<Navigate to="dashboard" replace />} />
