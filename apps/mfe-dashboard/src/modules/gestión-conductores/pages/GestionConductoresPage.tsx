@@ -101,7 +101,7 @@ function GestionConductoresPage() {
   };
 
   const handleView = (conductor: ConductorDashboard) => {
-    navigate(`/dashboard/admin/conductores/${conductor.id}`);
+    navigate(`/dashboard/admin/conductores/${conductor.id}`, { state: { conductor } });
   };
 
   return (

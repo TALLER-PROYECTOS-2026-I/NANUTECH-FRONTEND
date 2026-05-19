@@ -27,5 +27,6 @@ export * from './src/services/registrojornada/jornadas';
 export * from './src/services/dashboard/dashboard.service';
 export * from './src/services/monitoreoCamiones/camionesHu11';
 export * from './src/services/conductores/conductoresDashboard';
+export * from './src/services/conductores/conductorPerfil';
 
 export default apiClient;

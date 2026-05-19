@@ -5,6 +5,7 @@ import RegistroNuevaJornada from "./modules/registro-jornada/pages/RegistroNueva
 import MonitoreoCamionesPage from "./modules/monitoreo-camiones";
 import GpsIntegrationPage from "./modules/gps-integration/pages/GpsIntegrationPage";
 import GestionConductoresPage from "./modules/gestión-conductores";
+import { PerfilConductorPage } from "./modules/perfil-conductor";
 
 export function AppRoutes() {
   return (
@@ -17,7 +18,7 @@ export function AppRoutes() {
       <Route path="registro-jornada/nueva" element={<RegistroNuevaJornada />} />
       <Route path="camiones" element={<MonitoreoCamionesPage />} />
       <Route path="conductores" element={<GestionConductoresPage />} />
-      <Route path="conductores/:id" element={<GestionConductoresPage />} />
+      <Route path="conductores/:id" element={<PerfilConductorPage />} />
 
       {/* Compatibilidad cuando el MFE se abre directo en localhost:3001. */}
       <Route path="/" element={<Navigate to="/dashboard/admin/dashboard" replace />} />
@@ -28,7 +29,7 @@ export function AppRoutes() {
       <Route path="/dashboard/admin/registro-jornada/nueva" element={<RegistroNuevaJornada />} />
       <Route path="/dashboard/admin/camiones" element={<MonitoreoCamionesPage />} />
       <Route path="/dashboard/admin/conductores" element={<GestionConductoresPage />} />
-      <Route path="/dashboard/admin/conductores/:id" element={<GestionConductoresPage />} />
+      <Route path="/dashboard/admin/conductores/:id" element={<PerfilConductorPage />} />
       <Route path="/gps" element={<Navigate to="/dashboard/admin/gps" replace />} />
       <Route path="/RegistroJornada" element={<Navigate to="/dashboard/admin/registro-jornada" replace />} />
       <Route path="/RegistroNuevaJornada" element={<Navigate to="/dashboard/admin/registro-jornada/nueva" replace />} />
