@@ -42,56 +42,62 @@ vi.mock("@nanutech/api-client", () => ({
   getDashboardConductores: vi.fn(),
 }));
 
+const conductoresBackend = [
+  {
+    id: "conductor-1",
+    nombre: "Carlos Ramirez",
+    licencia: "A-IIIB-12345678",
+    estadoOperacional: "DISPONIBLE",
+    camionAsignado: "Sin asignar",
+    estado: "ACTIVO",
+  },
+  {
+    id: "conductor-2",
+    nombre: "Lucia Torres",
+    licencia: "A-IIIA-87654321",
+    estadoOperacional: "EN_RUTA",
+    camionAsignado: "ABC-123",
+    estado: "ACTIVO",
+  },
+  {
+    id: "conductor-3",
+    nombre: "Mario Salas",
+    licencia: "A-IIC-45678901",
+    estadoOperacional: "DESCANSANDO",
+    camionAsignado: "Sin asignar",
+    estado: "ACTIVO",
+  },
+  {
+    id: "conductor-4",
+    nombre: "Rosa Vega",
+    licencia: "A-IIIB-56781234",
+    estadoOperacional: "SIN_ASIGNAR",
+    camionAsignado: "Sin asignar",
+    estado: "INACTIVO",
+  },
+];
+
 const backendPayload = {
+  indicadores: {
+    total_conductores: 4,
+    conductores_activos: 3,
+    disponibles: 1,
+    en_ruta: 1,
+  },
+  graficos: {
+    distribucionContrato: [
+      { estado: "ACTIVOS", cantidad: 3 },
+      { estado: "INACTIVOS", cantidad: 1 },
+    ],
+    estadoOperacional: [
+      { estado: "DISPONIBLE", cantidad: 1 },
+      { estado: "EN_RUTA", cantidad: 1 },
+      { estado: "DESCANSANDO", cantidad: 1 },
+      { estado: "DE_PERMISO", cantidad: 0 },
+    ],
+  },
   conductores: [
-    {
-      id: "conductor-1",
-      nombre: "Carlos Ramirez",
-      email: "carlos@nanutech.com",
-      dni: "12345678",
-      licencia: "A-IIIB-12345678",
-      contacto: "+51 900111222",
-      estadoContrato: "ACTIVO",
-      estadoOperacional: "DISPONIBLE",
-      camionAsignado: null,
-      activo: true,
-    },
-    {
-      id: "conductor-2",
-      nombre: "Lucia Torres",
-      email: "lucia@nanutech.com",
-      dni: "87654321",
-      licencia: "A-IIIA-87654321",
-      contacto: "+51 900333444",
-      estadoContrato: "ACTIVO",
-      estadoOperacional: "EN_RUTA",
-      camionAsignado: "ABC-123",
-      activo: true,
-    },
-    {
-      id: "conductor-3",
-      nombre: "Mario Salas",
-      email: "mario@nanutech.com",
-      dni: "45678901",
-      licencia: "A-IIC-45678901",
-      contacto: "+51 900555666",
-      estadoContrato: "ACTIVO",
-      estadoOperacional: "DESCANSANDO",
-      camionAsignado: null,
-      activo: true,
-    },
-    {
-      id: "conductor-4",
-      nombre: "Rosa Vega",
-      email: "rosa@nanutech.com",
-      dni: "56781234",
-      licencia: "A-IIIB-56781234",
-      contacto: "+51 900777888",
-      estadoContrato: "INACTIVO",
-      estadoOperacional: "SIN_ASIGNAR",
-      camionAsignado: null,
-      activo: false,
-    },
+    ...conductoresBackend,
   ],
 };
 
@@ -112,7 +118,37 @@ function renderPage(initialEntry = "/dashboard/admin/conductores") {
 describe("HU10 - Gestion de conductores", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getDashboardConductores).mockResolvedValue(backendPayload);
+    vi.mocked(getDashboardConductores).mockImplementation(async (filters = {}) => {
+      let conductores = [...conductoresBackend];
+
+      if (filters.busqueda) {
+        const search = filters.busqueda.toLowerCase();
+        conductores = conductores.filter(
+          (conductor) =>
+            conductor.nombre.toLowerCase().includes(search) ||
+            conductor.licencia.toLowerCase().includes(search),
+        );
+      }
+
+      if (filters.estado && filters.estado !== "TODOS") {
+        conductores = conductores.filter((conductor) =>
+          filters.estado === "ACTIVOS"
+            ? conductor.estado === "ACTIVO"
+            : conductor.estado === "INACTIVO",
+        );
+      }
+
+      if (filters.disponibilidad && filters.disponibilidad !== "TODOS") {
+        conductores = conductores.filter(
+          (conductor) => conductor.estadoOperacional === filters.disponibilidad,
+        );
+      }
+
+      return {
+        ...backendPayload,
+        conductores,
+      };
+    });
   });
 
   it("muestra KPIs, graficas y listado de conductores al cargar", async () => {
@@ -134,25 +170,31 @@ describe("HU10 - Gestion de conductores", () => {
 
     expect(await screen.findByText("Carlos Ramirez")).toBeInTheDocument();
     fireEvent.change(screen.getByPlaceholderText("Buscar por nombre, DNI o licencia..."), {
-      target: { value: "87654321" },
+      target: { value: "Lucia" },
     });
 
-    expect(screen.getByText("Lucia Torres")).toBeInTheDocument();
-    expect(screen.queryByText("Carlos Ramirez")).not.toBeInTheDocument();
+    expect(await screen.findByText("Lucia Torres")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("Carlos Ramirez")).not.toBeInTheDocument();
+    });
 
     fireEvent.change(screen.getByPlaceholderText("Buscar por nombre, DNI o licencia..."), {
       target: { value: "" },
     });
     fireEvent.click(screen.getByRole("button", { name: /Inactivos/i }));
 
-    expect(screen.getByText("Rosa Vega")).toBeInTheDocument();
-    expect(screen.queryByText("Lucia Torres")).not.toBeInTheDocument();
+    expect(await screen.findByText("Rosa Vega")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("Lucia Torres")).not.toBeInTheDocument();
+    });
 
-    fireEvent.click(screen.getAllByRole("button", { name: /Todos \(4\)/i })[0]);
-    fireEvent.click(screen.getByRole("button", { name: /Descansando \(1\)/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /Todos/i })[0]);
+    fireEvent.click(await screen.findByRole("button", { name: /Descansando \(1\)/i }));
 
-    expect(screen.getByText("Mario Salas")).toBeInTheDocument();
-    expect(screen.queryByText("Rosa Vega")).not.toBeInTheDocument();
+    expect(await screen.findByText("Mario Salas")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("Rosa Vega")).not.toBeInTheDocument();
+    });
   });
 
   it("muestra mensaje sin resultados cuando ningun conductor coincide", async () => {
@@ -163,7 +205,7 @@ describe("HU10 - Gestion de conductores", () => {
       target: { value: "no existe" },
     });
 
-    expect(screen.getByText("No se encontraron conductores")).toBeInTheDocument();
+    expect(await screen.findByText("No se encontraron conductores")).toBeInTheDocument();
   });
 
   it("permite drill-down desde las graficas y actualiza la tabla", async () => {
@@ -172,14 +214,18 @@ describe("HU10 - Gestion de conductores", () => {
     await screen.findByText("Carlos Ramirez");
     fireEvent.click(screen.getByTestId("bar-descansando"));
 
-    expect(screen.getByText("Mario Salas")).toBeInTheDocument();
-    expect(screen.queryByText("Carlos Ramirez")).not.toBeInTheDocument();
+    expect(await screen.findByText("Mario Salas")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("Carlos Ramirez")).not.toBeInTheDocument();
+    });
 
     fireEvent.click(screen.getByTestId("pie-activos"));
 
-    expect(screen.getByText("Carlos Ramirez")).toBeInTheDocument();
+    expect(await screen.findByText("Carlos Ramirez")).toBeInTheDocument();
     expect(screen.getByText("Lucia Torres")).toBeInTheDocument();
-    expect(screen.queryByText("Rosa Vega")).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("Rosa Vega")).not.toBeInTheDocument();
+    });
   });
 
   it("redirige a la ficha individual HU20 al hacer clic en Ver", async () => {
