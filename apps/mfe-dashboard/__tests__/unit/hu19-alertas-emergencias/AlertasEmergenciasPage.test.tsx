@@ -102,8 +102,8 @@ describe("HU19 - Alertas y Emergencias", () => {
   it("muestra indicadores, banner critico y tablas al cargar", async () => {
     renderPage();
 
-    expect(await screen.findByText("Panel de Alertas y Emergencias")).toBeInTheDocument();
-    expect(screen.getByText("1 alerta(s) activa(s) requieren atencion inmediata.")).toBeInTheDocument();
+    expect(await screen.findByText("1 alerta(s) activa(s) requieren atencion inmediata.")).toBeInTheDocument();
+    expect(screen.getByText("Panel de Alertas y Emergencias")).toBeInTheDocument();
     expect(screen.getByText("Alertas de Panico")).toBeInTheDocument();
     expect(screen.getByText("Auxilios Mecanicos")).toBeInTheDocument();
     expect(screen.getByText("Total Resueltas")).toBeInTheDocument();
