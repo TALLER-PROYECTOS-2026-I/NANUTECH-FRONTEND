@@ -10,7 +10,7 @@ import RegistroContratoPage from './modules/registro-contrato/pages/RegistroCont
 import { GestionContratosPage as ContratosPage } from './modules/gestion-contratos';
 import { DetalleContratoPage } from './modules/detalle-contrato';
 import { DashboardGerencial } from './modules/dashboard-gerencial';
-import SeguimientoJornadas from './modules/seguimiento-jornadas/SeguimientoJornadas';
+import SeguimientoJornadas from './modules/seguimiento-jornadas/pages/SeguimientoJornadas';
 
 type Toast = {
   title: string;
