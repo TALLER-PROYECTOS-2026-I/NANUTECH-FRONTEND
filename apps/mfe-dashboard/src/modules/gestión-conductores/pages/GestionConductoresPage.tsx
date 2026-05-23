@@ -12,7 +12,6 @@ import {
 import { ConductoresFilters } from '../components/ConductoresFilters';
 import { ConductoresTable } from '../components/ConductoresTable';
 import { SummaryCard } from '../components/SummaryCard';
-import { initialPanelConductores } from '../mocks/conductoresMock';
 import type {
   ConductorDashboard,
   DisponibilidadFiltro,
@@ -21,15 +20,75 @@ import type {
 } from '../types';
 import { formatFechaLarga, formatHora } from '../utils/format';
 import { normalizePanelConductores } from '../utils/normalize';
+import { buildPanelConductores } from '../utils/panel';
+
+type DashboardError = {
+  title: string;
+  message: string;
+  detail?: string;
+};
+
+// Estado vacio usado cuando el backend falla o responde sin registros.
+const emptyPanelConductores = buildPanelConductores([]);
+
+// Extrae datos utiles de errores HTTP de Axios sin acoplar el componente a Axios.
+const readHttpError = (error: unknown) => {
+  const candidate = error as {
+    message?: string;
+    response?: {
+      status?: number;
+      data?: {
+        message?: string;
+      };
+    };
+  };
+
+  return {
+    status: candidate.response?.status,
+    apiMessage: candidate.response?.data?.message,
+    message: candidate.message,
+  };
+};
+
+// Convierte errores tecnicos en mensajes visibles para QA y administradores.
+const buildDashboardError = (error: unknown): DashboardError => {
+  const { status, apiMessage, message } = readHttpError(error);
+
+  if (status === 401 || status === 403) {
+    return {
+      title: 'No se pudo cargar el panel de conductores',
+      message: 'La sesion no tiene permisos para consultar la HU10. Inicia sesion con un usuario administrador.',
+      detail: apiMessage ?? `HTTP ${status}`,
+    };
+  }
+
+  if (status) {
+    return {
+      title: 'El backend respondio con error',
+      message: 'La API de conductores no pudo entregar los indicadores o el listado.',
+      detail: apiMessage ?? `HTTP ${status}`,
+    };
+  }
+
+  return {
+    title: 'No se pudo conectar con el backend',
+    message: 'Verifica que SAM/local API este levantado y que VITE_API_URL apunte al puerto correcto.',
+    detail: message,
+  };
+};
 
 // Pantalla principal de HU10: panel centralizado de gestion de conductores.
 function GestionConductoresPage() {
   // Permite navegar hacia la ficha individual HU20 cuando se presiona "Ver".
   const navigate = useNavigate();
   // Guarda KPIs, graficas y conductores normalizados para renderizar toda la vista.
-  const [panel, setPanel] = useState<PanelConductores>(initialPanelConductores);
+  const [panel, setPanel] = useState<PanelConductores>(emptyPanelConductores);
   // Controla el texto de carga mientras se consulta el backend.
   const [loading, setLoading] = useState(true);
+  // Mensaje visible cuando la API falla, no autoriza o no esta disponible.
+  const [error, setError] = useState<DashboardError | null>(null);
+  // Permite reintentar manualmente la consulta sin cambiar filtros.
+  const [reloadKey, setReloadKey] = useState(0);
   // Texto enviado al backend como query param busqueda.
   const [search, setSearch] = useState('');
   // Filtro de estado contractual: TODOS, ACTIVOS o INACTIVOS.
@@ -66,6 +125,7 @@ function GestionConductoresPage() {
     // Consulta el api-client, normaliza la respuesta y actualiza el panel.
     const cargarConductores = async () => {
       setLoading(true);
+      setError(null);
 
       try {
         // El backend real separa /resumen y /listado; esta funcion los une.
@@ -78,9 +138,12 @@ function GestionConductoresPage() {
         });
         // Solo actualiza estado si el componente sigue montado.
         if (mounted) setPanel(normalizePanelConductores(data));
-      } catch {
-        // Si backend no responde, deja mocks para que la pantalla siga usable.
-        if (mounted) setPanel(initialPanelConductores);
+      } catch (requestError) {
+        // Si backend no responde, muestra un error visible en vez de ocultarlo con datos mock.
+        if (mounted) {
+          setPanel(emptyPanelConductores);
+          setError(buildDashboardError(requestError));
+        }
       } finally {
         // Cierra el estado de carga tanto en exito como en error.
         if (mounted) setLoading(false);
@@ -97,7 +160,7 @@ function GestionConductoresPage() {
       mounted = false;
       window.clearInterval(interval);
     };
-  }, [disponibilidad, estado, search]);
+  }, [disponibilidad, estado, reloadKey, search]);
 
   // Drill-down desde la grafica de contratos hacia el filtro Activos/Inactivos.
   const handleContratoClick = (key: string) => {
@@ -119,6 +182,16 @@ function GestionConductoresPage() {
   const handleView = (conductor: ConductorDashboard) => {
     navigate(`/dashboard/admin/conductores/${conductor.id}`);
   };
+
+  // Advierte cuando la API respondio correctamente pero no entrego ningun conductor.
+  const showEmptyBackendNotice =
+    !loading &&
+    !error &&
+    panel.resumen.totalConductores === 0 &&
+    panel.conductores.length === 0 &&
+    search.trim() === '' &&
+    estado === 'TODOS' &&
+    disponibilidad === 'TODOS';
 
   // Layout completo: sidebar, cabecera, KPIs, graficas y tabla.
   return (
@@ -156,6 +229,36 @@ function GestionConductoresPage() {
               </p>
             </div>
           </section>
+
+          {error && (
+            <section className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="font-bold">{error.title}</p>
+                  <p className="mt-1">{error.message}</p>
+                  {error.detail && (
+                    <p className="mt-1 text-xs font-medium text-red-700">Detalle: {error.detail}</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReloadKey((current) => current + 1)}
+                  className="rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-bold text-red-700 transition hover:bg-red-100"
+                >
+                  Reintentar
+                </button>
+              </div>
+            </section>
+          )}
+
+          {showEmptyBackendNotice && (
+            <section className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <p className="font-bold">El backend respondio sin conductores registrados</p>
+              <p className="mt-1">
+                Revisa que la base conectada tenga usuarios con rol CHOFER y registros en la tabla conductores.
+              </p>
+            </section>
+          )}
 
           {/* Tarjetas resumen alimentadas por /conductores/dashboard/resumen. */}
           <section className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">

@@ -49,7 +49,7 @@ const normalizeConductor = (
   return {
     id: toStringValue(read(raw, ['id', 'conductor_id', 'uuid']), `conductor-${index + 1}`),
     nombre: toStringValue(read(raw, ['nombre', 'nombre_completo', 'name']), 'Sin nombre'),
-    email: toStringValue(read(raw, ['email', 'correo']), 'sin-correo@nanutech.com'),
+    email: toStringValue(read(raw, ['email', 'correo']), ''),
     dni: toStringValue(read(raw, ['dni', 'documento', 'numero_documento']), '-'),
     licencia: toStringValue(read(raw, ['licencia', 'numero_licencia']), '-'),
     contacto: toStringValue(read(raw, ['contacto', 'telefono', 'celular']), '-'),
@@ -116,6 +116,13 @@ const chartLabel = (key: string) =>
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
 
+// Alinea estados crudos del backend con los estados visuales de la HU10.
+const normalizeChartKey = (value: unknown) => {
+  const key = toStringValue(value, 'SIN_DATO').toUpperCase();
+  if (key === 'DESCANSO') return 'DESCANSANDO';
+  return key;
+};
+
 // Normaliza arrays de grafica del backend: { estado, cantidad } -> SegmentoGrafica.
 const normalizeChartList = (
   value: unknown,
@@ -127,7 +134,7 @@ const normalizeChartList = (
   return value.map((item) => {
     // Cada item del backend puede usar estado/key y cantidad/value/total.
     const raw = item as Record<string, unknown>;
-    const key = toStringValue(read(raw, ['estado', 'key']), 'SIN_DATO').toUpperCase();
+    const key = normalizeChartKey(read(raw, ['estado', 'key']));
 
     // Devuelve la forma que espera Recharts.
     return {
