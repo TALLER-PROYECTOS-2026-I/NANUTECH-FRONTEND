@@ -56,12 +56,20 @@ type ApiResponse<T> = {
   data?: T;
 } & T;
 
+// Traduce el nombre visual de la UI al valor crudo que filtra el repository.
+const mapDisponibilidadToBackend = (
+  disponibilidad?: DisponibilidadFiltroConductores,
+) => {
+  if (!disponibilidad || disponibilidad === 'TODOS') return undefined;
+  if (disponibilidad === 'DESCANSANDO') return 'DESCANSO';
+  return disponibilidad;
+};
+
 // Limpia filtros antes de enviarlos: no manda TODOS ni busquedas vacias.
 const cleanFilters = (filters: FiltrosDashboardConductores = {}) => ({
   busqueda: filters.busqueda?.trim() || undefined,
   estado: filters.estado === 'TODOS' ? undefined : filters.estado,
-  disponibilidad:
-    filters.disponibilidad === 'TODOS' ? undefined : filters.disponibilidad,
+  disponibilidad: mapDisponibilidadToBackend(filters.disponibilidad),
   page: filters.page ?? 1,
   limit: filters.limit ?? 20,
 });

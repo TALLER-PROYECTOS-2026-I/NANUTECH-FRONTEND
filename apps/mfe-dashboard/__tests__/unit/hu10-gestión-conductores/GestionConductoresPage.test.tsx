@@ -13,6 +13,13 @@ vi.mock("recharts", () => ({
       <button type="button" data-testid="pie-activos" onClick={() => onClick?.({ key: "ACTIVO" })}>
         segmento-activos
       </button>
+      <button
+        type="button"
+        data-testid="pie-activos-payload"
+        onClick={() => onClick?.({ payload: { key: "ACTIVOS" } })}
+      >
+        segmento-activos-payload
+      </button>
       {children}
     </div>
   ),
@@ -208,6 +215,37 @@ describe("HU10 - Gestion de conductores", () => {
     expect(await screen.findByText("No se encontraron conductores")).toBeInTheDocument();
   });
 
+  it("muestra un error visible cuando la API no responde", async () => {
+    vi.mocked(getDashboardConductores).mockRejectedValueOnce(new Error("Network Error"));
+
+    renderPage();
+
+    expect(await screen.findByText("No se pudo conectar con el backend")).toBeInTheDocument();
+    expect(screen.getByText(/VITE_API_URL/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Reintentar/i })).toBeInTheDocument();
+  });
+
+  it("advierte cuando el backend responde sin conductores", async () => {
+    vi.mocked(getDashboardConductores).mockResolvedValueOnce({
+      indicadores: {
+        total_conductores: 0,
+        conductores_activos: 0,
+        disponibles: 0,
+        en_ruta: 0,
+      },
+      graficos: {
+        distribucionContrato: [],
+        estadoOperacional: [],
+      },
+      conductores: [],
+    });
+
+    renderPage();
+
+    expect(await screen.findByText("El backend respondio sin conductores registrados")).toBeInTheDocument();
+    expect(screen.getByText(/usuarios con rol CHOFER/i)).toBeInTheDocument();
+  });
+
   it("permite drill-down desde las graficas y actualiza la tabla", async () => {
     renderPage();
 
@@ -220,6 +258,19 @@ describe("HU10 - Gestion de conductores", () => {
     });
 
     fireEvent.click(screen.getByTestId("pie-activos"));
+
+    expect(await screen.findByText("Carlos Ramirez")).toBeInTheDocument();
+    expect(screen.getByText("Lucia Torres")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("Rosa Vega")).not.toBeInTheDocument();
+    });
+  });
+
+  it("filtra la tabla cuando Recharts envia la key del PieChart dentro de payload", async () => {
+    renderPage();
+
+    await screen.findByText("Rosa Vega");
+    fireEvent.click(screen.getByTestId("pie-activos-payload"));
 
     expect(await screen.findByText("Carlos Ramirez")).toBeInTheDocument();
     expect(screen.getByText("Lucia Torres")).toBeInTheDocument();
