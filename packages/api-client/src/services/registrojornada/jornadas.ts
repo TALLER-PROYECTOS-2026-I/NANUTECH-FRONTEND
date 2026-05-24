@@ -2,6 +2,7 @@ import apiClient from '../../../index';
 
 export type Jornada = {
   id: string;
+  conductor_id?: string;
   fecha?: string;
   fecha_jornada?: string;
   conductor: string;
@@ -9,6 +10,7 @@ export type Jornada = {
   contrato: string;
   horario: string;
   km: number | string;
+  km_recorridos?: number | string;
   estado: string;
   observaciones?: string | null;
 };
@@ -33,12 +35,22 @@ type ApiResponse<T> = {
   data: T;
 };
 
+export type JornadasFilters = {
+  q?: string;
+  conductor_id?: string;
+  fecha_desde?: string;
+  fecha_hasta?: string;
+};
 
-
-export const getJornadas = async (): Promise<Jornada[]> => {
+export const getJornadas = async (filters: JornadasFilters = {}): Promise<Jornada[]> => {
   try {
-    const response = await apiClient.get<ApiResponse<Jornada[]>>('/jornadas');
-    return response.data?.data || [];
+    const response = await apiClient.get<ApiResponse<Jornada[]>>('/jornadas', {
+      params: filters,
+    });
+    return (response.data?.data || []).map((jornada) => ({
+      ...jornada,
+      km: jornada.km ?? jornada.km_recorridos ?? 0,
+    }));
   } catch (error) {
     console.warn('⚠️ Error obteniendo jornadas del backend:', error);
     throw new Error('Error al obtener jornadas');

@@ -19,10 +19,21 @@ type ConductoresChartsProps = {
   onOperacionalClick: (key: string) => void;
 };
 
-const getSegmentKey = (entry: unknown) =>
-  typeof entry === 'object' && entry !== null && 'key' in entry
-    ? String((entry as { key: unknown }).key)
-    : '';
+const getSegmentKey = (entry: unknown) => {
+  if (typeof entry !== 'object' || entry === null) return '';
+
+  const segment = entry as {
+    key?: unknown;
+    payload?: {
+      key?: unknown;
+    };
+  };
+
+  if (segment.key) return String(segment.key);
+  if (segment.payload?.key) return String(segment.payload.key);
+
+  return '';
+};
 
 const getActivePayloadKey = (state: unknown) => {
   const activePayload = (state as { activePayload?: Array<{ payload?: { key?: unknown } }> })

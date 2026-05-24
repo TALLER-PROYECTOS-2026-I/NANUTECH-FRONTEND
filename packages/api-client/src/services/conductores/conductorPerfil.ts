@@ -21,7 +21,7 @@ export const getEstadisticasConductor = async (
   conductorId: string,
 ): Promise<EstadisticasConductorApi> => {
   const response = await apiClient.get<ApiResponse<EstadisticasConductorApi>>(
-    `/conductores/${conductorId}`,
+    `/conductores/${conductorId}/estadisticas`,
   );
   return response.data.data;
 };

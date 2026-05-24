@@ -21,7 +21,7 @@ export function usePerfilConductor(conductorId: string) {
 
         const [statsRaw, todasJornadas] = await Promise.all([
           getEstadisticasConductor(conductorId),
-          getJornadas(),
+          getJornadas({ conductor_id: conductorId }),
         ]);
 
         if (!mounted) return;
@@ -29,7 +29,6 @@ export function usePerfilConductor(conductorId: string) {
         setEstadisticas(normalizeEstadisticas(statsRaw));
 
         const jornadasConductor = todasJornadas
-          .filter((j) => j.conductor === conductorId)
           .map((j): JornadaHistorial => ({
             id: j.id,
             estado: normalizarEstadoJornada(j.estado),
