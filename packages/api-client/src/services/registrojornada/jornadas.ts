@@ -9,6 +9,7 @@ export type Jornada = {
   contrato: string;
   horario: string;
   km: number | string;
+  km_recorridos?: number | string;
   estado: string;
   observaciones?: string | null;
 };
@@ -38,7 +39,10 @@ type ApiResponse<T> = {
 export const getJornadas = async (): Promise<Jornada[]> => {
   try {
     const response = await apiClient.get<ApiResponse<Jornada[]>>('/jornadas');
-    return response.data?.data || [];
+    return (response.data?.data || []).map((jornada) => ({
+      ...jornada,
+      km: jornada.km ?? jornada.km_recorridos ?? 0,
+    }));
   } catch (error) {
     console.warn('⚠️ Error obteniendo jornadas del backend:', error);
     throw new Error('Error al obtener jornadas');

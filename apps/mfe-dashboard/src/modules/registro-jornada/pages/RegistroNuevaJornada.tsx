@@ -19,6 +19,14 @@ type Jornada = {
   observaciones?: string;
 };
 
+const ACTIVE_JOURNEY_STATES = new Set(["ACTIVA", "REGISTRADA", "PENDIENTE", "EN_PROCESO"]);
+
+const normalizeJourneyState = (estado?: string) => (estado || "").toUpperCase();
+
+const isActiveJourney = (estado?: string) => ACTIVE_JOURNEY_STATES.has(normalizeJourneyState(estado));
+
+const isCompletedJourney = (estado?: string) => normalizeJourneyState(estado) === "COMPLETADA";
+
 function RegistroNuevaJornada() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -74,14 +82,15 @@ function RegistroNuevaJornada() {
 }, []);
 
   const total = jornadas.length;
-  const activas = jornadas.filter((j) => (j.estado || "").toLowerCase() === "activa").length;
-  const completadas = jornadas.filter((j) => (j.estado || "").toLowerCase() === "completada").length;
+  const activas = jornadas.filter((j) => isActiveJourney(j.estado)).length;
+  const completadas = jornadas.filter((j) => isCompletedJourney(j.estado)).length;
   const totalKm = jornadas.reduce((acc, j) => acc + Number(j.km || 0), 0);
 
   const jornadasFiltradas = jornadas.filter((j) => {
     const estadoOk =
       filtroEstado === "todas" ||
-      (j.estado || "").toLowerCase() === filtroEstado;
+      (filtroEstado === "activa" && isActiveJourney(j.estado)) ||
+      (filtroEstado === "completada" && isCompletedJourney(j.estado));
 
     const obsOk =
       filtroObs === "todas" ||
@@ -421,7 +430,7 @@ function RegistroNuevaJornada() {
                       <td className="py-3 pr-4">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                            (j.estado || "").toLowerCase() === "activa"
+                            isActiveJourney(j.estado)
                               ? "bg-blue-100 text-blue-700"
                               : "bg-green-100 text-green-700"
                           }`}
