@@ -10,6 +10,7 @@ import RegistroContratoPage from './modules/registro-contrato/pages/RegistroCont
 import { GestionContratosPage as ContratosPage } from './modules/gestion-contratos';
 import { DetalleContratoPage } from './modules/detalle-contrato';
 import { DashboardGerencial } from './modules/dashboard-gerencial';
+import HistorialJornadasPage from './modules/historial-jornadas';
 import SeguimientoJornadas from './modules/seguimiento-jornadas/pages/SeguimientoJornadas';
 
 type Toast = {
@@ -239,7 +240,7 @@ export function AppRoutes() {
         />
 
         <Route path="dashboard" element={<DashboardGerencial />} />
-        <Route path="historial" element={<div>Historial de Jornadas</div>} />
+        <Route path="historial" element={<HistorialJornadasPage />} />
         <Route path="seguimiento-jornadas" element={<SeguimientoJornadas />} />
         <Route path="*" element={<Navigate to="." replace />} />
       </Routes>
