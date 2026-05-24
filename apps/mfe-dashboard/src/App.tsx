@@ -6,6 +6,7 @@ import MonitoreoCamionesPage from "./modules/monitoreo-camiones";
 import GpsIntegrationPage from "./modules/gps-integration/pages/GpsIntegrationPage";
 import AlertasEmergenciasPage from "./modules/alertas-emergencias";
 import GestionConductoresPage from "./modules/gestión-conductores";
+import { PerfilConductorPage } from "./modules/perfil-conductor";
 import AuditoriaAccesosPage from "./modules/auditoría-accesos";
 
 export function AppRoutes() {
@@ -19,7 +20,7 @@ export function AppRoutes() {
       <Route path="registro-jornada/nueva" element={<RegistroNuevaJornada />} />
       <Route path="camiones" element={<MonitoreoCamionesPage />} />
       <Route path="conductores" element={<GestionConductoresPage />} />
-      <Route path="conductores/:id" element={<GestionConductoresPage />} />
+      <Route path="conductores/:id" element={<PerfilConductorPage />} />
       <Route path="alertas" element={<AlertasEmergenciasPage />} />
       <Route path="auditoria" element={<AuditoriaAccesosPage />} />
 
@@ -32,7 +33,7 @@ export function AppRoutes() {
       <Route path="/dashboard/admin/registro-jornada/nueva" element={<RegistroNuevaJornada />} />
       <Route path="/dashboard/admin/camiones" element={<MonitoreoCamionesPage />} />
       <Route path="/dashboard/admin/conductores" element={<GestionConductoresPage />} />
-      <Route path="/dashboard/admin/conductores/:id" element={<GestionConductoresPage />} />
+      <Route path="/dashboard/admin/conductores/:id" element={<PerfilConductorPage />} />
       <Route path="/dashboard/admin/alertas" element={<AlertasEmergenciasPage />} />
       <Route path="/dashboard/admin/auditoria" element={<AuditoriaAccesosPage />} />
       <Route path="/gps" element={<Navigate to="/dashboard/admin/gps" replace />} />
