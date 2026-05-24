@@ -16,25 +16,31 @@ type Props = {
 
 export function ConductorHeader({ nombre, licencia, estadoOperacional }: Props) {
   const badge = BADGE[estadoOperacional] ?? BADGE.SIN_ASIGNAR;
+  const isWorking = estadoOperacional === 'EN_RUTA';
 
   return (
-    <div className="mb-6 flex items-center justify-between rounded-xl bg-blue-600 px-8 py-5 text-white shadow">
+    <div className="mb-6 flex items-center justify-between rounded-sm bg-blue-600 px-5 py-4 text-white shadow">
       <div className="flex items-center gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/20">
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md bg-white/20">
           <svg className="h-8 w-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
             <circle cx="12" cy="7" r="4" />
           </svg>
         </div>
         <div>
-          <h2 className="text-2xl font-bold leading-tight">{nombre}</h2>
+          <h2 className="text-2xl font-extrabold leading-tight">{nombre}</h2>
           <p className="text-sm text-blue-100">Licencia: {licencia}</p>
         </div>
       </div>
-      <span className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-bold shadow ${badge.className}`}>
-        <span className="h-2 w-2 rounded-full bg-current opacity-70" />
-        {badge.label}
-      </span>
+      <div className="text-right">
+        <span className={`inline-flex items-center gap-1.5 rounded px-3 py-1 text-xs font-bold shadow ${badge.className}`}>
+          <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
+          {badge.label}
+        </span>
+        <p className="mt-2 text-xs font-semibold text-blue-100">
+          {isWorking ? 'Conductor actualmente en jornada' : 'Conductor sin jornada activa'}
+        </p>
+      </div>
     </div>
   );
 }

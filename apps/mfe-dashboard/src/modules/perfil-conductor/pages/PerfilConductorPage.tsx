@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { MonitoreoSidebar } from '../../monitoreo-camiones/components/MonitoreoSidebar';
 import type { ConductorDashboard } from '../../gestión-conductores/types';
@@ -104,6 +105,32 @@ function formatFechaCorta(fechaIso: string | undefined): string {
 
 // ── Página ───────────────────────────────────────────────────────────────────
 
+function formatFechaLarga(fecha: Date): string {
+  return new Intl.DateTimeFormat('es-PE', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(fecha);
+}
+
+function formatHora(fecha: Date): string {
+  return new Intl.DateTimeFormat('es-PE', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(fecha);
+}
+
+function formatEstado(value: string | undefined): string {
+  const key = (value ?? '').toUpperCase();
+  if (key === 'EN_RUTA') return 'En Ruta';
+  if (key === 'DISPONIBLE') return 'Disponible';
+  if (key === 'DESCANSANDO' || key === 'DESCANSO') return 'Descansando';
+  if (key === 'DE_PERMISO') return 'De Permiso';
+  if (key === 'SIN_ASIGNAR') return 'Sin Asignar';
+  return value ?? '-';
+}
+
 export function PerfilConductorPage() {
   // Lee el ID de conductor desde /dashboard/admin/conductores/:id.
   const { id } = useParams<{ id: string }>();
@@ -120,6 +147,20 @@ export function PerfilConductorPage() {
   // Controla filtros locales del historial ya cargado.
   const { filtro, setFiltro, busqueda, setBusqueda, jornadasFiltradas, totales } =
     useFiltroJornadas(jornadas);
+  const [fechaActual, setFechaActual] = useState('');
+  const [horaActual, setHoraActual] = useState('');
+
+  useEffect(() => {
+    const actualizarReloj = () => {
+      const ahora = new Date();
+      setFechaActual(formatFechaLarga(ahora));
+      setHoraActual(formatHora(ahora));
+    };
+
+    actualizarReloj();
+    const interval = window.setInterval(actualizarReloj, 1000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   // Regresa al panel centralizado de conductores HU10.
   const handleBack = () => navigate('/dashboard/admin/conductores');
@@ -137,7 +178,7 @@ export function PerfilConductorPage() {
               onClick={handleBack}
               className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
             >
-              Volver al listado
+              Volver al Listado
             </button>
           </div>
         </div>
@@ -151,27 +192,34 @@ export function PerfilConductorPage() {
 
       <div className="ml-52 flex min-h-screen flex-1 flex-col">
         {/* Header */}
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-8 py-4">
+        <header className="sticky top-0 z-10 flex items-start justify-between border-b border-gray-200 bg-white px-8 py-4">
           <div>
             <h1 className="text-lg font-bold text-gray-900">Conductores</h1>
+            <p className="text-sm text-gray-500">{fechaActual}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-gray-400">Ultima actualizacion</p>
+            <p className="text-sm font-semibold text-gray-800">{horaActual}</p>
           </div>
         </header>
 
         <main className="flex-1 px-8 py-6">
           {/* Breadcrumb + título */}
-          <div className="mb-6">
+          <div className="mb-5 flex items-start gap-4">
             <button
               type="button"
               onClick={handleBack}
-              className="mb-1 flex items-center gap-1 text-sm font-semibold text-blue-600 hover:underline"
+              className="mt-1 flex items-center gap-1 rounded border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M19 12H5M12 5l-7 7 7 7" />
               </svg>
-              Volver al listado
+              Volver al Listado
             </button>
-            <h2 className="text-2xl font-bold text-gray-900">Perfil del Conductor</h2>
-            <p className="text-sm text-gray-400">Vista completa del historial y estadísticas</p>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Perfil del Conductor</h2>
+              <p className="text-sm text-gray-400">Vista completa del historial y estadisticas</p>
+            </div>
           </div>
 
           {/* Header azul del conductor */}
@@ -218,7 +266,15 @@ export function PerfilConductorPage() {
           </div>
 
           {/* Camión asignado */}
-          <CamionAsignadoCard placa={conductor.camionAsignado} />
+          <CamionAsignadoCard
+            placa={conductor.camionAsignado}
+            marcaModelo={(conductor as ConductorDashboard & { marcaModelo?: string; camionMarcaModelo?: string }).marcaModelo
+              ?? (conductor as ConductorDashboard & { camionMarcaModelo?: string }).camionMarcaModelo}
+            anio={(conductor as ConductorDashboard & { anio?: string; camionAnio?: string }).anio
+              ?? (conductor as ConductorDashboard & { camionAnio?: string }).camionAnio}
+            capacidad={(conductor as ConductorDashboard & { capacidad?: string; camionCapacidad?: string }).capacidad
+              ?? (conductor as ConductorDashboard & { camionCapacidad?: string }).camionCapacidad}
+          />
 
           {/* Estadísticas */}
           {loading ? (
@@ -257,7 +313,7 @@ export function PerfilConductorPage() {
               />
               <StatCard
                 label="Estado Actual"
-                value={estadisticas.estadoActual}
+                value={formatEstado(estadisticas.estadoActual)}
                 sublabel={
                   estadisticas.jornadasActivas > 0
                     ? 'Conductor actualmente en jornada'

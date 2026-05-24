@@ -2,16 +2,19 @@ import { useNavigate } from 'react-router-dom';
 
 type Props = {
   placa: string | null;
+  marcaModelo?: string;
+  anio?: string;
+  capacidad?: string;
 };
 
-export function CamionAsignadoCard({ placa }: Props) {
+export function CamionAsignadoCard({ placa, marcaModelo, anio, capacidad }: Props) {
   const navigate = useNavigate();
 
   return (
-    <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-      <div className="mb-4 flex items-start justify-between">
+    <div className="mb-6 rounded-lg border border-gray-200 border-l-blue-500 bg-white p-5 shadow-sm">
+      <div className="mb-5 flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-100">
             <svg className="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="1" y="3" width="15" height="13" rx="1" />
               <path d="M16 8h4l3 5v4h-7V8z" />
@@ -24,11 +27,12 @@ export function CamionAsignadoCard({ placa }: Props) {
             <p className="text-xs text-gray-400">Unidad operativa del conductor</p>
           </div>
         </div>
+
         {placa && (
           <button
             type="button"
             onClick={() => navigate('/dashboard/admin/camiones')}
-            className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
+            className="flex items-center gap-1 rounded border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
           >
             Ver Detalle
             <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -39,11 +43,11 @@ export function CamionAsignadoCard({ placa }: Props) {
       </div>
 
       {placa ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-5 sm:grid-cols-4">
           <CamionField label="Placa" value={placa} />
-          <CamionField label="Marca/Modelo" value="—" />
-          <CamionField label="Año" value="—" />
-          <CamionField label="Capacidad" value="—" />
+          <CamionField label="Marca/Modelo" value={marcaModelo || 'No disponible'} />
+          <CamionField label="Año" value={anio || 'No disponible'} />
+          <CamionField label="Capacidad" value={capacidad || 'No disponible'} />
         </div>
       ) : (
         <p className="text-sm text-gray-400">Este conductor no tiene un camión asignado actualmente.</p>
@@ -55,8 +59,8 @@ export function CamionAsignadoCard({ placa }: Props) {
 function CamionField({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</p>
-      <p className="mt-0.5 text-sm font-bold text-gray-900">{value}</p>
+      <p className="text-xs font-semibold text-gray-400">{label}</p>
+      <p className="mt-1 text-sm font-bold text-gray-900">{value}</p>
     </div>
   );
 }

@@ -14,6 +14,7 @@ export type JornadaHistorial = {
   camion: string;
   contrato: string;
   duracion: number;
+  duracionLabel?: string;
   observaciones?: string;
 };
 

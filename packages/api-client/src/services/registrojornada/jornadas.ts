@@ -11,6 +11,7 @@ export type Jornada = {
   camion: string;
   contrato: string;
   horario: string;
+  duracion_total?: string;
   km: number | string;
   km_recorridos?: number | string;
   estado: string;

@@ -47,6 +47,7 @@ export function usePerfilConductor(conductorId: string) {
             camion: j.camion ?? '',
             contrato: j.contrato ?? '',
             duracion: calcularDuracion(j.horario),
+            duracionLabel: j.duracion_total,
             observaciones: j.observaciones ?? undefined,
           }));
 
