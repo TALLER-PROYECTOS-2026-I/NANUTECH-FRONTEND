@@ -31,5 +31,6 @@ export * from './src/services/conductores/conductorPerfil';
 export * from './src/services/alertas/alertas.service'; 
 export * from './src/services/dashboard/auditoria.service';
 export * from './src/services/seguimiento-jornada/jornadas.service';
+export * from './src/services/historial-jornadas/historialJornadas.service';
 
 export default apiClient; // Exporta la instancia de axios para hacer peticiones HTTP.
