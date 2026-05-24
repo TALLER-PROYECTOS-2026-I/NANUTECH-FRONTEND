@@ -180,7 +180,7 @@ function GestionConductoresPage() {
 
   // Navega a la futura ficha individual del conductor HU20.
   const handleView = (conductor: ConductorDashboard) => {
-    navigate(`/dashboard/admin/conductores/${conductor.id}`);
+    navigate(`/dashboard/admin/conductores/${conductor.id}`, { state: { conductor } });
   };
 
   // Advierte cuando la API respondio correctamente pero no entrego ningun conductor.
