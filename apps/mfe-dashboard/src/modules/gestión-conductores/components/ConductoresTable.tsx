@@ -57,7 +57,9 @@ export function ConductoresTable({ conductores, onView }: ConductoresTableProps)
                     </div>
                     <div>
                       <p className="font-bold text-gray-900">{conductor.nombre}</p>
-                      <p className="text-[11px] text-gray-500">{conductor.email}</p>
+                      {conductor.email && (
+                        <p className="text-[11px] text-gray-500">{conductor.email}</p>
+                      )}
                     </div>
                   </div>
                 </td>
