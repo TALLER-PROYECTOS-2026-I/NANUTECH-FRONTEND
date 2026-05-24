@@ -105,18 +105,26 @@ function formatFechaCorta(fechaIso: string | undefined): string {
 // ── Página ───────────────────────────────────────────────────────────────────
 
 export function PerfilConductorPage() {
+  // Lee el ID de conductor desde /dashboard/admin/conductores/:id.
   const { id } = useParams<{ id: string }>();
+  // Permite volver al listado HU10 o navegar a otros modulos desde tarjetas.
   const navigate = useNavigate();
+  // Recibe desde HU10 los datos base del conductor para pintar la ficha inmediatamente.
   const location = useLocation();
 
+  // La tabla HU10 envia el conductor seleccionado en location.state.
   const conductor = (location.state as { conductor?: ConductorDashboard } | null)?.conductor;
 
+  // Carga datos asincronos del backend: estadisticas e historial filtrado por conductor.
   const { estadisticas, jornadas, loading, error } = usePerfilConductor(id ?? '');
+  // Controla filtros locales del historial ya cargado.
   const { filtro, setFiltro, busqueda, setBusqueda, jornadasFiltradas, totales } =
     useFiltroJornadas(jornadas);
 
+  // Regresa al panel centralizado de conductores HU10.
   const handleBack = () => navigate('/dashboard/admin/conductores');
 
+  // Si el usuario abre la URL directa sin pasar por HU10, se muestra una salida segura.
   if (!conductor) {
     return (
       <div className="flex min-h-screen bg-gray-50 font-sans">
