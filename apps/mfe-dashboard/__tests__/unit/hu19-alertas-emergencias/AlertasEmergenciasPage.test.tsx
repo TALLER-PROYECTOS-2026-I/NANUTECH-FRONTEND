@@ -34,8 +34,8 @@ const panicoActivo = {
   severidad: "CRITICA",
   detalle: "Emergencia reportada",
   tipo_falla_mecanica: null,
-  latitud: -12.0264,
-  longitud: -76.9916,
+  latitud: "-12.0264",
+  longitud: "-76.9916",
   direccion: null,
   fecha_hora: "2026-04-07T16:53:30.000Z",
   bloqueo_sos_activo: true,
@@ -108,6 +108,7 @@ describe("HU19 - Alertas y Emergencias", () => {
     expect(screen.getByText("Auxilios Mecanicos")).toBeInTheDocument();
     expect(screen.getByText("Total Resueltas")).toBeInTheDocument();
     expect(screen.getByText("Carlos Rodriguez")).toBeInTheDocument();
+    expect(screen.getByText("-12.026400, -76.991600")).toBeInTheDocument();
     expect(screen.getByText("Problema de motor")).toBeInTheDocument();
   });
 
