@@ -33,10 +33,12 @@ jobs:
             eslint-plugin-security@^3 \
             eslint-plugin-no-unsanitized@^4
 
+      # ── FIX: la config se escribe en el repo (no en /tmp) para que
+      # ESLint pueda resolver @eslint/js desde node_modules del proyecto.
       - name: Crear config ESLint security standalone
         run: |
           mkdir -p security-reports/sast
-          cat > /tmp/eslint-security.config.mjs << 'EOF'
+          cat > eslint-security.config.mjs << 'EOF'
           import js from '@eslint/js';
           import security from 'eslint-plugin-security';
           import noUnsanitized from 'eslint-plugin-no-unsanitized';
@@ -47,15 +49,20 @@ jobs:
             {
               plugins: { 'no-unsanitized': noUnsanitized },
               rules: {
-                'no-unsanitized/method':                       'error',
-                'no-unsanitized/property':                     'error',
-                'security/detect-object-injection':            'warn',
-                'security/detect-non-literal-regexp':          'warn',
-                'security/detect-unsafe-regex':                'error',
-                'security/detect-eval-with-expression':        'error',
-                'security/detect-possible-timing-attacks':     'warn',
+                'no-unsanitized/method':                   'error',
+                'no-unsanitized/property':                 'error',
+                'security/detect-object-injection':        'warn',
+                'security/detect-non-literal-regexp':      'warn',
+                'security/detect-unsafe-regex':            'error',
+                'security/detect-eval-with-expression':    'error',
+                'security/detect-possible-timing-attacks': 'warn',
               },
-              ignores: ['**/dist/**','**/node_modules/**','**/coverage/**','**/*.d.ts'],
+              ignores: [
+                '**/dist/**',
+                '**/node_modules/**',
+                '**/coverage/**',
+                '**/*.d.ts',
+              ],
             },
           ];
           EOF
@@ -63,7 +70,7 @@ jobs:
       - name: ESLint — Escaneo de seguridad
         run: |
           npx eslint \
-            --config /tmp/eslint-security.config.mjs \
+            --config eslint-security.config.mjs \
             --ext .js,.jsx,.ts,.tsx \
             --format json \
             apps/ packages/ \
@@ -71,6 +78,10 @@ jobs:
 
       - name: ESLint — Parsear resultados
         run: python3 .github/scripts/parse_eslint.py
+
+      - name: Limpiar config ESLint temporal
+        if: always()
+        run: rm -f eslint-security.config.mjs
 
       - name: Setup Python (para Semgrep)
         uses: actions/setup-python@v5
@@ -104,7 +115,7 @@ jobs:
         run: python3 .github/scripts/parse_semgrep.py
 
       - name: Subir SARIF a GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: security-reports/sast/semgrep.sarif
@@ -122,10 +133,13 @@ jobs:
             --report-format json \
             --report-path security-reports/sast/gitleaks-report.json \
             --exit-code 0 || true
-        continue-on-error: true
+        # exit-code 0 → gitleaks nunca falla el step, el script decide
 
       - name: Gitleaks — Parsear resultados
         run: python3 .github/scripts/parse_gitleaks.py
+        # FIX: continue-on-error porque parse_gitleaks.py sale con exit 1
+        # cuando hay leaks (correcto para visibilidad) pero no debe
+        # bloquear el upload de artifacts que viene después.
         continue-on-error: true
 
       - name: Upload SAST artifacts
