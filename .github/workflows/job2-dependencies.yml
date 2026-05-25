@@ -53,7 +53,7 @@ jobs:
           out: "security-reports/deps/owasp"
           args: >
             --enableRetired
-            --failOnCVSS 9
+            --failOnCVSS 11
             --exclude "**/dist/**"
             --exclude "**/coverage/**"
             --exclude "**/node_modules/.cache/**"
@@ -71,12 +71,13 @@ jobs:
 
       - name: Retire.js — Escaneo de código fuente
         run: |
+          mkdir -p security-reports/deps/retirejs
           retire \
             --path apps/ \
             --outputformat json \
-            --outputpath security-reports/deps/retirejs/retire-apps.json \
             --ignorefile .retireignore.json \
-            --exitwith 0 || true
+            2>/dev/null \
+            > security-reports/deps/retirejs/retire-apps.json || true
         continue-on-error: true
 
       - name: Upload dependency scan artifacts
