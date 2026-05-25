@@ -31,10 +31,9 @@ jobs:
         run: |
           npm install --no-save \
             eslint-plugin-security@^3 \
-            eslint-plugin-no-unsanitized@^4
+            eslint-plugin-no-unsanitized@^4 \
+            typescript-eslint
 
-      # ── FIX: la config se escribe en el repo (no en /tmp) para que
-      # ESLint pueda resolver @eslint/js desde node_modules del proyecto.
       - name: Crear config ESLint security standalone
         run: |
           mkdir -p security-reports/sast
@@ -42,10 +41,24 @@ jobs:
           import js from '@eslint/js';
           import security from 'eslint-plugin-security';
           import noUnsanitized from 'eslint-plugin-no-unsanitized';
+          import tseslint from 'typescript-eslint';
 
           export default [
             js.configs.recommended,
             security.configs.recommended,
+
+            {
+              files: ['**/*.ts', '**/*.tsx'],
+              extends: [...tseslint.configs.recommended],
+              languageOptions: {
+                parser: tseslint.parser,
+                parserOptions: {
+                  project: false,
+                  ecmaFeatures: { jsx: true },
+                },
+              },
+            },
+
             {
               plugins: { 'no-unsanitized': noUnsanitized },
               rules: {
@@ -133,13 +146,9 @@ jobs:
             --report-format json \
             --report-path security-reports/sast/gitleaks-report.json \
             --exit-code 0 || true
-        # exit-code 0 → gitleaks nunca falla el step, el script decide
 
       - name: Gitleaks — Parsear resultados
         run: python3 .github/scripts/parse_gitleaks.py
-        # FIX: continue-on-error porque parse_gitleaks.py sale con exit 1
-        # cuando hay leaks (correcto para visibilidad) pero no debe
-        # bloquear el upload de artifacts que viene después.
         continue-on-error: true
 
       - name: Upload SAST artifacts
