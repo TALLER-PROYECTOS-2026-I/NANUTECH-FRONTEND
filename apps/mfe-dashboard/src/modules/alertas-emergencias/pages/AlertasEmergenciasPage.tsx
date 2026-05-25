@@ -14,11 +14,18 @@ import { IncidentDetailModal } from '../components/IncidentDetailModal';
 import { PanicAlertsTable } from '../components/PanicAlertsTable';
 import { SuccessToast } from '../components/SuccessToast';
 import { SummaryCard } from '../components/SummaryCard';
-import { incidentesMock, indicadoresMock } from '../mocks/alertasMock';
 import type { Incidente, IndicadoresHu19, ToastHu19 } from '../types';
 import { formatFechaActual, formatHoraActual } from '../utils/format';
 import { normalizeIncidente, normalizeIndicadores } from '../utils/normalize';
 import { replaceIncidente, sortIncidentes } from '../utils/panel';
+
+// Estado inicial vacio para no mostrar informacion ficticia si el backend aun no responde.
+const EMPTY_INDICADORES: IndicadoresHu19 = {
+  panicoActivas: 0,
+  auxilioPendientes: 0,
+  totalResueltas: 0,
+  tienePanicoActivo: false,
+};
 
 // Actualiza los contadores locales cuando un incidente cambia de estado.
 function updateIndicadoresAfterChange(
@@ -46,27 +53,9 @@ function updateIndicadoresAfterChange(
   };
 }
 
-// Crea una version local resuelta cuando el backend no esta disponible.
-function buildResolvedIncident(incidente: Incidente): Incidente {
-  return {
-    ...incidente,
-    estado: 'RESUELTA',
-    bloqueoSosActivo: false,
-    detalleResolucion: incidente.detalleResolucion ?? 'Incidente resuelto desde el panel.',
-  };
-}
-
-// Crea una version local en proceso cuando el PATCH de auxilio falla.
-function buildInProgressIncident(incidente: Incidente): Incidente {
-  return {
-    ...incidente,
-    estado: 'EN_PROCESO',
-  };
-}
-
 function AlertasEmergenciasPage() {
-  const [incidentes, setIncidentes] = useState<Incidente[]>(incidentesMock);
-  const [indicadores, setIndicadores] = useState<IndicadoresHu19>(indicadoresMock);
+  const [incidentes, setIncidentes] = useState<Incidente[]>([]);
+  const [indicadores, setIndicadores] = useState<IndicadoresHu19>(EMPTY_INDICADORES);
   const [selected, setSelected] = useState<Incidente | null>(null);
   const [toast, setToast] = useState<ToastHu19 | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,7 +77,7 @@ function AlertasEmergenciasPage() {
     return () => window.clearInterval(interval);
   }, []);
 
-  // Carga indicadores y alertas activas desde backend; usa mocks si falla.
+  // Carga indicadores y alertas activas desde backend sin usar datos ficticios.
   useEffect(() => {
     let mounted = true;
 
@@ -103,11 +92,12 @@ function AlertasEmergenciasPage() {
 
         setIndicadores(normalizeIndicadores(indicadoresData));
         setIncidentes(sortIncidentes(alertasData.map((alerta: AlertaApi) => normalizeIncidente(alerta))));
-      } catch {
+      } catch (error) {
         if (!mounted) return;
 
-        setIndicadores(indicadoresMock);
-        setIncidentes(incidentesMock);
+        console.error('Error cargando alertas y emergencias:', error);
+        setIndicadores(EMPTY_INDICADORES);
+        setIncidentes([]);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -158,16 +148,15 @@ function AlertasEmergenciasPage() {
         }),
       );
       applyIncidentUpdate(incidente, updated);
-    } catch {
-      applyIncidentUpdate(incidente, buildResolvedIncident(incidente));
+      showToast({
+        title: incidente.tipo === 'PANICO' ? 'Alerta de panico resuelta' : 'Auxilio mecanico resuelto',
+        message: 'El estado del incidente fue actualizado.',
+      });
+    } catch (error) {
+      console.error('Error resolviendo incidente:', error);
     } finally {
       setResolving(false);
     }
-
-    showToast({
-      title: incidente.tipo === 'PANICO' ? 'Alerta de panico resuelta' : 'Auxilio mecanico resuelto',
-      message: 'El estado del incidente fue actualizado.',
-    });
   };
 
   // Cambia un auxilio activo a en proceso cuando se asigna soporte.
@@ -179,16 +168,15 @@ function AlertasEmergenciasPage() {
         await actualizarEstadoAuxilio(incidente.id, { estado: 'EN_PROCESO' }),
       );
       applyIncidentUpdate(incidente, updated);
-    } catch {
-      applyIncidentUpdate(incidente, buildInProgressIncident(incidente));
+      showToast({
+        title: 'Auxilio en proceso',
+        message: 'El estado del auxilio fue actualizado.',
+      });
+    } catch (error) {
+      console.error('Error actualizando auxilio mecanico:', error);
     } finally {
       setUpdating(false);
     }
-
-    showToast({
-      title: 'Auxilio en proceso',
-      message: 'El estado del auxilio fue actualizado.',
-    });
   };
 
   return (

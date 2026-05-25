@@ -14,7 +14,7 @@ export const TIPO_LABEL: Record<TipoIncidente, string> = {
   OBSERVACION: 'Observacion',
 };
 
-// Orden local para mantener incidentes urgentes arriba incluso con mocks.
+// Orden local para mantener incidentes urgentes arriba al renderizar la respuesta del backend.
 export const ESTADO_ORDER: Record<EstadoIncidente, number> = {
   ACTIVA: 0,
   EN_PROCESO: 1,
