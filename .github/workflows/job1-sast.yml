@@ -1,0 +1,137 @@
+name: 🔍 JOB 1 — SAST (Semgrep + ESLint + Gitleaks)
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  sast:
+    name: "SAST — Análisis estático"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout (historial completo para Gitleaks)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Instalar dependencias del proyecto
+        run: npm ci
+
+      - name: Instalar plugins ESLint de seguridad
+        run: |
+          npm install --no-save \
+            eslint-plugin-security@^3 \
+            eslint-plugin-no-unsanitized@^4
+
+      - name: Crear config ESLint security standalone
+        run: |
+          mkdir -p security-reports/sast
+          cat > /tmp/eslint-security.config.mjs << 'EOF'
+          import js from '@eslint/js';
+          import security from 'eslint-plugin-security';
+          import noUnsanitized from 'eslint-plugin-no-unsanitized';
+
+          export default [
+            js.configs.recommended,
+            security.configs.recommended,
+            {
+              plugins: { 'no-unsanitized': noUnsanitized },
+              rules: {
+                'no-unsanitized/method':                       'error',
+                'no-unsanitized/property':                     'error',
+                'security/detect-object-injection':            'warn',
+                'security/detect-non-literal-regexp':          'warn',
+                'security/detect-unsafe-regex':                'error',
+                'security/detect-eval-with-expression':        'error',
+                'security/detect-possible-timing-attacks':     'warn',
+              },
+              ignores: ['**/dist/**','**/node_modules/**','**/coverage/**','**/*.d.ts'],
+            },
+          ];
+          EOF
+
+      - name: ESLint — Escaneo de seguridad
+        run: |
+          npx eslint \
+            --config /tmp/eslint-security.config.mjs \
+            --ext .js,.jsx,.ts,.tsx \
+            --format json \
+            apps/ packages/ \
+            > security-reports/sast/eslint-security.json || true
+
+      - name: ESLint — Parsear resultados
+        run: python3 .github/scripts/parse_eslint.py
+
+      - name: Setup Python (para Semgrep)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar Semgrep
+        run: pip install semgrep
+
+      - name: Semgrep — Escaneo React + OWASP
+        run: |
+          semgrep scan \
+            --config p/react \
+            --config p/javascript \
+            --config p/typescript \
+            --config p/owasp-top-ten \
+            --json \
+            --output security-reports/sast/semgrep-results.json \
+            apps/ packages/ || true
+
+          semgrep scan \
+            --config p/react \
+            --config p/javascript \
+            --config p/typescript \
+            --config p/owasp-top-ten \
+            --sarif \
+            --output security-reports/sast/semgrep.sarif \
+            apps/ packages/ || true
+
+      - name: Semgrep — Parsear resultados
+        run: python3 .github/scripts/parse_semgrep.py
+
+      - name: Subir SARIF a GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: security-reports/sast/semgrep.sarif
+        continue-on-error: true
+
+      - name: Instalar Gitleaks
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.27.2/gitleaks_8.27.2_linux_x64.tar.gz \
+            | tar xz -C /usr/local/bin gitleaks
+
+      - name: Gitleaks — Detectar secretos en historial git
+        run: |
+          gitleaks detect \
+            --source . \
+            --report-format json \
+            --report-path security-reports/sast/gitleaks-report.json \
+            --exit-code 0 || true
+        continue-on-error: true
+
+      - name: Gitleaks — Parsear resultados
+        run: python3 .github/scripts/parse_gitleaks.py
+        continue-on-error: true
+
+      - name: Upload SAST artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sast-results
+          path: security-reports/sast/
+          retention-days: 30
