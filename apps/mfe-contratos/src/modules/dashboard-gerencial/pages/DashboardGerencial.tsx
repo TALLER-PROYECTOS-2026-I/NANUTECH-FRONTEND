@@ -95,6 +95,7 @@ function DashboardGerencial() {
   useEffect(() => {
     getDashboardGerencial({ tiempo: 'todas' })
       .then((res) => setData(res))
+
       .catch(() => {
         setData(dashboardGerencialFallback);
         setError('No se pudo conectar con /dashboard/gerencial. Se muestran datos referenciales.');
@@ -103,6 +104,7 @@ function DashboardGerencial() {
   }, []);
 
   if (loading) return <div className="p-8 text-blue-700 animate-pulse">Cargando dashboard gerencial...</div>;
+
   if (!data) return <div className="p-8 text-red-500">No hay datos disponibles para el dashboard gerencial</div>;
 
   const { resumen_general, graficas, operaciones, rendimiento, historial, estado_sistema } = data;

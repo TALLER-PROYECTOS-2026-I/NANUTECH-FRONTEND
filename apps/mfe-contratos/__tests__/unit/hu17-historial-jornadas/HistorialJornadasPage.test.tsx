@@ -179,7 +179,7 @@ describe('HU17 - Historial de Jornadas Gerencial', () => {
 
     expect(await screen.findByText('Detalle de Alertas de Emergencia')).toBeTruthy();
     expect(screen.getByText('ALERTA DE PANICO')).toBeTruthy();
-    expect(screen.getByText(/Prioridad Critica/i)).toBeTruthy();
+    expect(await screen.findByText(/Prioridad Critica/i)).toBeTruthy();
     expect(getAlertDetailMock).toHaveBeenCalledWith('jor-2');
   });
 

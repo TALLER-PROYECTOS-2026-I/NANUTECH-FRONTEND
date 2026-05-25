@@ -25,7 +25,7 @@ describe("Dashboard Microfrontend", () => {
     render(
       <MemoryRouter>
         <AppRoutes />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     await waitFor(() => {
