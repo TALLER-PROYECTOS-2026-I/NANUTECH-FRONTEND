@@ -142,6 +142,29 @@ describe('HU20 - Perfil tecnico del conductor', () => {
     });
   });
 
+  it('deduplica jornadas repetidas y no muestra EN_PROCESO al filtrar completadas', async () => {
+    vi.mocked(getJornadas).mockResolvedValueOnce([
+      ...jornadasBackend,
+      {
+        ...jornadasBackend[1],
+        id: 'jor-2',
+      },
+    ]);
+
+    renderPerfil();
+
+    expect(await screen.findByText('CONT-001')).toBeInTheDocument();
+    expect(screen.getAllByText('CONT-002')).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole('button', { name: /Completadas/i }));
+
+    expect(screen.getByText('CONT-001')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText('CONT-002')).not.toBeInTheDocument();
+      expect(screen.queryByText('EN_PROCESO')).not.toBeInTheDocument();
+    });
+  });
+
   it('muestra salida segura cuando se abre la URL sin conductor enviado desde HU10', async () => {
     renderPerfil(null);
 

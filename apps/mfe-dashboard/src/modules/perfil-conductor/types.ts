@@ -9,7 +9,7 @@ export type EstadisticasConductor = {
 
 export type JornadaHistorial = {
   id: string;
-  estado: string;
+  estado: 'Completada' | 'Activa';
   fecha: string;
   camion: string;
   contrato: string;

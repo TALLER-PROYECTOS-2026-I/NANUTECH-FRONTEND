@@ -89,8 +89,8 @@ export function HistorialJornadas({
         <p className="py-8 text-center text-sm text-gray-400">No se encontraron jornadas.</p>
       ) : (
         <div className="flex flex-col gap-3">
-          {jornadasFiltradas.map((j) => (
-            <JornadaCard key={j.id} jornada={j} />
+          {jornadasFiltradas.map((j, index) => (
+            <JornadaCard key={`${j.id}-${j.estado}-${index}`} jornada={j} />
           ))}
         </div>
       )}
