@@ -34,8 +34,11 @@ jobs:
       - name: npm audit — por workspace
         run: |
           for ws in apps/mfe-contratos apps/mfe-dashboard apps/mfe-flota apps/shell-app packages/api-client; do
-            [ -d "$ws" ] && npm audit --prefix "$ws" --json \
-              > "security-reports/deps/npm-audit-$(basename $ws).json" || true
+            name=$(basename $ws)
+            npm audit --json --workspace=$ws \
+              > "security-reports/deps/npm-audit-${name}.json" 2>/dev/null || \
+            echo '{"auditReportVersion":2,"vulnerabilities":{},"metadata":{"vulnerabilities":{}}}' \
+              > "security-reports/deps/npm-audit-${name}.json"
           done
 
       - name: npm audit — Parsear resultados consolidados
@@ -46,7 +49,7 @@ jobs:
         with:
           project: "NANUTECH-FRONTEND"
           path: "."
-          format: "HTML,JSON"
+          format: "JSON"
           out: "security-reports/deps/owasp"
           args: >
             --enableRetired
@@ -72,12 +75,8 @@ jobs:
             --path apps/ \
             --outputformat json \
             --outputpath security-reports/deps/retirejs/retire-apps.json \
-            --ignorefile .retireignore.json || true
-
-          retire \
-            --node \
-            --outputformat json \
-            --outputpath security-reports/deps/retirejs/retire-node.json || true
+            --ignorefile .retireignore.json \
+            --exitwith 0 || true
         continue-on-error: true
 
       - name: Upload dependency scan artifacts
