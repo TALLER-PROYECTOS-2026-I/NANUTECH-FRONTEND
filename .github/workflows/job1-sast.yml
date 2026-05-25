@@ -47,9 +47,10 @@ jobs:
             js.configs.recommended,
             security.configs.recommended,
 
+            ...tseslint.configs.recommended,
+
             {
               files: ['**/*.ts', '**/*.tsx'],
-              extends: [...tseslint.configs.recommended],
               languageOptions: {
                 parser: tseslint.parser,
                 parserOptions: {
@@ -70,6 +71,9 @@ jobs:
                 'security/detect-eval-with-expression':    'error',
                 'security/detect-possible-timing-attacks': 'warn',
               },
+            },
+
+            {
               ignores: [
                 '**/dist/**',
                 '**/node_modules/**',
