@@ -39,7 +39,7 @@ export function usePerfilConductor(conductorId: string) {
         setEstadisticas(normalizeEstadisticas(statsRaw));
 
         // Convierte cada jornada enriquecida del backend al formato compacto de las tarjetas.
-        const jornadasConductor = todasJornadas
+        const jornadasConductor = Array.from(new Map(todasJornadas
           .map((j): JornadaHistorial => ({
             id: j.id,
             estado: normalizarEstadoJornada(j.estado),
@@ -49,7 +49,8 @@ export function usePerfilConductor(conductorId: string) {
             duracion: calcularDuracion(j.horario),
             duracionLabel: j.duracion_total,
             observaciones: j.observaciones ?? undefined,
-          }));
+          }))
+          .map((jornada) => [jornada.id, jornada] as const)).values());
 
         setJornadas(jornadasConductor);
       } catch {
@@ -73,11 +74,10 @@ export function usePerfilConductor(conductorId: string) {
 }
 
 // Traduce los estados tecnicos del backend al texto esperado por la interfaz.
-function normalizarEstadoJornada(estado: string): string {
+function normalizarEstadoJornada(estado: string): JornadaHistorial['estado'] {
   const upper = (estado ?? '').toUpperCase();
-  if (upper.includes('COMPLET') || upper === 'FINALIZADO') return 'Completada';
-  if (upper.includes('PROGRESO') || upper === 'EN_PROGRESO' || upper === 'ACTIVA') return 'Activa';
-  return estado;
+  if (upper.includes('COMPLET') || upper.includes('FINALIZ')) return 'Completada';
+  return 'Activa';
 }
 
 // Calcula horas desde un rango "HH:mm - HH:mm"; si no hay rango completo retorna 0.
