@@ -48,8 +48,8 @@ export type AlertaApi = {
   severidad: SeveridadAlertaApi;
   detalle: string;
   tipo_falla_mecanica: string | null;
-  latitud: number | null;
-  longitud: number | null;
+  latitud: number | string | null;
+  longitud: number | string | null;
   direccion: string | null;
   fecha_hora: string;
   bloqueo_sos_activo: boolean;

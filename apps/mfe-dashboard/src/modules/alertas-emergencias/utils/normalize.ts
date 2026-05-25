@@ -1,6 +1,14 @@
 import type { AlertaApi, IndicadoresAlertas } from '@nanutech/api-client';
 import type { Incidente, IndicadoresHu19 } from '../types';
 
+// Convierte coordenadas del backend a number; PostgreSQL numeric puede llegar como string.
+const normalizeCoordinate = (value: number | string | null | undefined): number | null => {
+  if (value === null || value === undefined || value === '') return null;
+
+  const coordinate = Number(value);
+  return Number.isFinite(coordinate) ? coordinate : null;
+};
+
 // Convierte indicadores snake_case del backend a camelCase para la UI.
 export const normalizeIndicadores = (indicadores: IndicadoresAlertas): IndicadoresHu19 => ({
   panicoActivas: indicadores.panico_activas,
@@ -18,8 +26,8 @@ export const normalizeIncidente = (alerta: AlertaApi): Incidente => ({
   severidad: alerta.severidad,
   detalle: alerta.detalle,
   tipoFallaMecanica: alerta.tipo_falla_mecanica,
-  latitud: alerta.latitud,
-  longitud: alerta.longitud,
+  latitud: normalizeCoordinate(alerta.latitud),
+  longitud: normalizeCoordinate(alerta.longitud),
   direccion: alerta.direccion,
   fechaHora: alerta.fecha_hora,
   bloqueoSosActivo: alerta.bloqueo_sos_activo,
