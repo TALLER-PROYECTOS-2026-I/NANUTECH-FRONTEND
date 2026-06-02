@@ -1,19 +1,5 @@
 name: 🛡️ Security Frontend — Orquestador
 
-# ─────────────────────────────────────────────────────────────────
-# MODO MANUAL (workflow_dispatch):
-#   Actions → Run workflow → seleccionar jobs con checkboxes.
-#
-# SEMI-AUTOMÁTICO en PRs a develop/main:
-#   Solo corren JOB 1 (SAST) y JOB 2 (Dependencies) porque no
-#   necesitan la URL de Amplify activa y son seguros en PRs.
-#
-#   JOBs 3-5 son solo manuales porque:
-#     · Necesitan Amplify deployado
-#     · ZAP/Nikto generan tráfico que puede activar rate limiting
-#     · Los headers los configura Amplify/CloudFront, no el código
-# ─────────────────────────────────────────────────────────────────
-
 on:
   workflow_dispatch:
     inputs:
@@ -26,15 +12,19 @@ on:
         type: boolean
         default: true
       run_dast:
-        description: "JOB 3 — DAST (ZAP + Nikto) — requiere Amplify activo"
+        description: "JOB 3 — DAST (ZAP + Nikto)"
         type: boolean
         default: false
       run_browser:
-        description: "JOB 4 — Browser Analysis (Playwright) — requiere Amplify activo"
+        description: "JOB 4 — Browser Analysis (Playwright)"
         type: boolean
         default: false
       run_headers:
-        description: "JOB 5 — Headers Scan (Observatory + curl) — requiere Amplify activo"
+        description: "JOB 5 — Headers Scan"
+        type: boolean
+        default: false
+      run_nuclei:
+        description: "JOB 7 — Nuclei Scan (Rápido y moderno)"
         type: boolean
         default: false
       run_report:
@@ -62,25 +52,19 @@ concurrency:
 jobs:
   sast-scan:
     name: "🔍 JOB 1 — SAST"
-    if: |
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.run_sast == 'true')
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.run_sast == 'true')
     uses: ./.github/workflows/job1-sast.yml
     secrets: inherit
 
   dependency-scan:
     name: "📦 JOB 2 — Dependencies"
-    if: |
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.run_deps == 'true')
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.run_deps == 'true')
     uses: ./.github/workflows/job2-dependencies.yml
     secrets: inherit
 
   dynamic-scan:
     name: "🕷️ JOB 3 — DAST"
-    if: |
-      github.event_name == 'workflow_dispatch' &&
-      github.event.inputs.run_dast == 'true'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_dast == 'true'
     uses: ./.github/workflows/job3-dast.yml
     with:
       target_url: ${{ github.event.inputs.target_url || 'https://testing.dcoqassfbrwx2.amplifyapp.com' }}
@@ -88,9 +72,7 @@ jobs:
 
   browser-analysis:
     name: "🌐 JOB 4 — Browser Analysis"
-    if: |
-      github.event_name == 'workflow_dispatch' &&
-      github.event.inputs.run_browser == 'true'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_browser == 'true'
     uses: ./.github/workflows/job4-browser.yml
     with:
       target_url: ${{ github.event.inputs.target_url || 'https://testing.dcoqassfbrwx2.amplifyapp.com' }}
@@ -98,20 +80,31 @@ jobs:
 
   headers-scan:
     name: "🔒 JOB 5 — Headers"
-    if: |
-      github.event_name == 'workflow_dispatch' &&
-      github.event.inputs.run_headers == 'true'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_headers == 'true'
     uses: ./.github/workflows/job5-headers.yml
+    with:
+      target_url: ${{ github.event.inputs.target_url || 'https://testing.dcoqassfbrwx2.amplifyapp.com' }}
+    secrets: inherit
+
+  nuclei-scan:
+    name: "🚀 JOB 7 — Nuclei"
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_nuclei == 'true'
+    uses: ./.github/workflows/job7-nuclei.yml
     with:
       target_url: ${{ github.event.inputs.target_url || 'https://testing.dcoqassfbrwx2.amplifyapp.com' }}
     secrets: inherit
 
   publish-report:
     name: "📊 JOB 6 — Publish Report"
-    needs: [sast-scan, dependency-scan, dynamic-scan, browser-analysis, headers-scan]
-    if: |
-      always() &&
-      github.event_name == 'workflow_dispatch' &&
-      github.event.inputs.run_report == 'true'
+    needs:
+      [
+        sast-scan,
+        dependency-scan,
+        dynamic-scan,
+        browser-analysis,
+        headers-scan,
+        nuclei-scan,
+      ]
+    if: always() && github.event_name == 'workflow_dispatch' && github.event.inputs.run_report == 'true'
     uses: ./.github/workflows/job6-report.yml
     secrets: inherit
