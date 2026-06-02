@@ -7,8 +7,6 @@ on:
 # --- AÑADE ESTO EN CADA ARCHIVO HIJO ---
 permissions:
   contents: read
-  security-events: write
-  actions: read
 # ---------------------------------------
 
 jobs:
