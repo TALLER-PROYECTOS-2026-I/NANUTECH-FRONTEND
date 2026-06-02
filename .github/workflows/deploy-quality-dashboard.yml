@@ -45,16 +45,21 @@ jobs:
           format: openapi
           fail_action: false
           allow_issue_writing: false
-          cmd_options: '-I'
+          cmd_options: '-I -r zap-report.html'
 
       - name: Mover reporte ZAP a docs
+        if: always()
         run: |
           mkdir -p docs/reports/zap
-          ZAP_REPORT=$(find . -name "*.html" ! -path "./docs/*" ! -path "./.git/*" 2>/dev/null | head -1)
-          echo "Reporte encontrado: $ZAP_REPORT"
-          if [ -n "$ZAP_REPORT" ]; then
-            cp "$ZAP_REPORT" docs/reports/zap/report.html
+          if [ -f "/github/workspace/zap-report.html" ]; then
+            cp /github/workspace/zap-report.html docs/reports/zap/report.html
+            echo "✅ Reporte copiado desde /github/workspace"
+          elif [ -f "zap-report.html" ]; then
+            cp zap-report.html docs/reports/zap/report.html
+            echo "✅ Reporte copiado desde raíz"
           else
+            echo "⚠️ Buscando en todo el sistema..."
+            find / -name "zap-report.html" 2>/dev/null
             echo "<h1>Reporte ZAP no disponible</h1>" > docs/reports/zap/report.html
           fi
 
