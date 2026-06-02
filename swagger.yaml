@@ -1,0 +1,73 @@
+openapi: 3.0.3
+info:
+  title: NANUTECH Frontend API
+  description: Documentación de endpoints consumidos por el frontend de NANUTECH
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:4010
+    description: Mock server (Prism)
+
+paths:
+  /auth/login:
+    post:
+      summary: Autenticación de usuario
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login exitoso
+        '401':
+          description: Credenciales inválidas
+
+  /flota:
+    get:
+      summary: Listar vehículos de la flota
+      tags: [Flota]
+      responses:
+        '200':
+          description: Lista de vehículos
+
+  /contratos:
+    get:
+      summary: Listar contratos
+      tags: [Contratos]
+      responses:
+        '200':
+          description: Lista de contratos
+    post:
+      summary: Crear contrato
+      tags: [Contratos]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre:
+                  type: string
+                fechaInicio:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: Contrato creado
+
+  /dashboard:
+    get:
+      summary: Datos del dashboard principal
+      tags: [Dashboard]
+      responses:
+        '200':
+          description: Métricas del dashboard
