@@ -45,22 +45,29 @@ jobs:
           format: openapi
           fail_action: false
           allow_issue_writing: false
-          cmd_options: '-I -r zap-report.html'
+          report_html: report_html.html
+          cmd_options: '-I'
 
       - name: Mover reporte ZAP a docs
         if: always()
         run: |
           mkdir -p docs/reports/zap
-          if [ -f "/github/workspace/zap-report.html" ]; then
-            cp /github/workspace/zap-report.html docs/reports/zap/report.html
-            echo "✅ Reporte copiado desde /github/workspace"
-          elif [ -f "zap-report.html" ]; then
-            cp zap-report.html docs/reports/zap/report.html
-            echo "✅ Reporte copiado desde raíz"
+          WORKSPACE="/home/runner/work/NANUTECH-FRONTEND/NANUTECH-FRONTEND"
+          if [ -f "$WORKSPACE/report_html.html" ]; then
+            cp "$WORKSPACE/report_html.html" docs/reports/zap/report.html
+            echo "✅ Reporte copiado"
           else
-            echo "⚠️ Buscando en todo el sistema..."
-            find / -name "zap-report.html" 2>/dev/null
-            echo "<h1>Reporte ZAP no disponible</h1>" > docs/reports/zap/report.html
+            echo "⚠️ Reporte no encontrado, usando placeholder"
+            cat > docs/reports/zap/report.html << 'EOF'
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>ZAP Report</title>
+<style>body{background:#0d1117;color:#e6edf3;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
+.box{text-align:center;padding:40px;border:1px solid #30363d;border-radius:12px;}</style>
+</head>
+<body><div class="box"><h1>🔐 OWASP ZAP</h1><p>Reporte no disponible en este ciclo de CI.</p></div></body>
+</html>
+EOF
           fi
 
       - name: Generar Swagger UI
