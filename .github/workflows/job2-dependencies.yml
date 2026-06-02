@@ -4,6 +4,13 @@ on:
   workflow_call:
   workflow_dispatch:
 
+# --- AÑADE ESTO EN CADA ARCHIVO HIJO ---
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+# ---------------------------------------
+
 jobs:
   dependency-scan:
     name: "Dependencies — CVE y librerías vulnerables"

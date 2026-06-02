@@ -1,5 +1,12 @@
 name: 🛡️ Security Frontend — Orquestador
 
+# --- AÑADE ESTO AQUÍ ---
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+# -----------------------
+
 on:
   workflow_dispatch:
     inputs:

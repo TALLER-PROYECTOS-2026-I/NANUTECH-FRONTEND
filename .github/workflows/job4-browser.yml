@@ -16,6 +16,13 @@ on:
         default: "https://testing.dcoqassfbrwx2.amplifyapp.com"
         type: string
 
+# --- AÑADE ESTO EN CADA ARCHIVO HIJO ---
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+# ---------------------------------------
+
 jobs:
   browser-analysis:
     name: "Browser — Playwright security analysis"
