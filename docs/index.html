@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NANUTECH FRONTEND — Quality Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    header h1 {
+      font-size: 2rem;
+      color: #58a6ff;
+      margin-bottom: 8px;
+    }
+    header p {
+      color: #8b949e;
+      font-size: 0.95rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 28px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover {
+      border-color: #58a6ff;
+      transform: translateY(-4px);
+    }
+    .card-icon { font-size: 2.2rem; margin-bottom: 16px; }
+    .card h2 { font-size: 1.1rem; margin-bottom: 8px; color: #f0f6fc; }
+    .card p { font-size: 0.85rem; color: #8b949e; line-height: 1.5; }
+    .badge {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-blue  { background: #1f3a5f; color: #58a6ff; }
+    .badge-green { background: #1a3a2a; color: #3fb950; }
+    .badge-orange{ background: #3a2a1a; color: #f0883e; }
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      color: #484f58;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🛡️ NANUTECH FRONTEND</h1>
+    <p>Quality & Security Dashboard — generado automáticamente por CI/CD</p>
+  </header>
+
+  <div class="grid">
+    <a class="card" href="./reports/swagger/index.html">
+      <div class="card-icon">📄</div>
+      <h2>API Documentation</h2>
+      <p>Documentación OpenAPI generada con Swagger UI. Endpoints del frontend validados con Spectral.</p>
+      <span class="badge badge-blue">Swagger + Spectral</span>
+    </a>
+
+    <a class="card" href="./reports/zap/report.html">
+      <div class="card-icon">🔐</div>
+      <h2>Security Scan (OWASP ZAP)</h2>
+      <p>Escaneo de seguridad automatizado sobre los endpoints del API mock (Prism). Alertas clasificadas por severidad.</p>
+      <span class="badge badge-orange">OWASP ZAP</span>
+    </a>
+
+    <a class="card" href="./reports/coverage/index.html">
+      <div class="card-icon">🧪</div>
+      <h2>Test Coverage</h2>
+      <p>Cobertura de tests unitarios por microfrontend: mfe-contratos, mfe-dashboard, mfe-flota, shell-app.</p>
+      <span class="badge badge-green">Vitest</span>
+    </a>
+  </div>
+
+  <footer>
+    <p>NANUTECH FRONTEND · Taller de Proyectos 2026-I · USMP</p>
+  </footer>
+</body>
+</html>
