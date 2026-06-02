@@ -55,48 +55,17 @@ jobs:
           WORKSPACE="/home/runner/work/NANUTECH-FRONTEND/NANUTECH-FRONTEND"
           if [ -f "$WORKSPACE/report_html.html" ]; then
             cp "$WORKSPACE/report_html.html" docs/reports/zap/report.html
-            echo "✅ Reporte copiado"
+            echo "Reporte copiado correctamente"
           else
-            echo "⚠️ Reporte no encontrado, usando placeholder"
-            cat > docs/reports/zap/report.html << 'EOF'
-<!DOCTYPE html>
-<html lang="es">
-<head><meta charset="UTF-8"><title>ZAP Report</title>
-<style>body{background:#0d1117;color:#e6edf3;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
-.box{text-align:center;padding:40px;border:1px solid #30363d;border-radius:12px;}</style>
-</head>
-<body><div class="box"><h1>🔐 OWASP ZAP</h1><p>Reporte no disponible en este ciclo de CI.</p></div></body>
-</html>
-EOF
+            echo "Reporte no encontrado, usando placeholder"
+            echo '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>ZAP Report</title><style>body{background:#0d1117;color:#e6edf3;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}.box{text-align:center;padding:40px;border:1px solid #30363d;border-radius:12px}</style></head><body><div class="box"><h1>OWASP ZAP</h1><p>Reporte no disponible en este ciclo de CI.</p></div></body></html>' > docs/reports/zap/report.html
           fi
 
       - name: Generar Swagger UI
         run: |
           mkdir -p docs/reports/swagger
           cp swagger.yaml docs/swagger.yaml
-          cat > docs/reports/swagger/index.html << 'SWAGGEREOF'
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>NANUTECH API Docs</title>
-            <meta charset="utf-8"/>
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
-          </head>
-          <body>
-          <div id="swagger-ui"></div>
-          <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
-          <script>
-            SwaggerUIBundle({
-              url: "../../swagger.yaml",
-              dom_id: '#swagger-ui',
-              presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
-              layout: "BaseLayout"
-            })
-          </script>
-          </body>
-          </html>
-          SWAGGEREOF
+          echo '<!DOCTYPE html><html><head><title>NANUTECH API Docs</title><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css"></head><body><div id="swagger-ui"></div><script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script><script>SwaggerUIBundle({url:"../../swagger.yaml",dom_id:"#swagger-ui",presets:[SwaggerUIBundle.presets.apis,SwaggerUIBundle.SwaggerUIStandalonePreset],layout:"BaseLayout"})</script></body></html>' > docs/reports/swagger/index.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
