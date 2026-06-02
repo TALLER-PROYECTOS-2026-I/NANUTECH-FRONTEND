@@ -50,8 +50,17 @@ jobs:
 
       - name: Mover reporte ZAP a docs
         run: |
-          mkdir -p docs/reports/zap
-          cp zap-report.html docs/reports/zap/report.html
+            mkdir -p docs/reports/zap
+          ZAP_REPORT=$(find . -name "*.html" -path "*/zap*" 2>/dev/null | head -1)
+          if [ -z "$ZAP_REPORT" ]; then
+            ZAP_REPORT=$(find . -name "report_html.html" -o -name "zap-report.html" 2>/dev/null | head -1)
+          fi
+          echo "Reporte encontrado: $ZAP_REPORT"
+          if [ -n "$ZAP_REPORT" ]; then
+            cp "$ZAP_REPORT" docs/reports/zap/report.html
+          else
+            echo "<h1>Reporte ZAP no disponible</h1>" > docs/reports/zap/report.html
+          fi
 
       - name: Generar Swagger UI estático
         run: |
