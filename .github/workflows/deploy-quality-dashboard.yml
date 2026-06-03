@@ -67,40 +67,36 @@ jobs:
 
           echo "JSON report: $JSON_REPORT"
 
+          HIGH=0; MEDIUM=0; LOW=0; INFO=0; TOTAL=0
+          ALERTS_ROWS='<tr><td colspan="6" style="color:#8b949e;text-align:center;padding:20px">Reporte JSON no disponible</td></tr>'
+
           if [ -f "$JSON_REPORT" ]; then
-            HIGH=$(python3 -c "import json,sys; d=json.load(open('$JSON_REPORT')); print(len([a for s in d.get('site',[]) for a in s.get('alerts',[]) if a.get('riskcode')=='3']))" 2>/dev/null || echo "0")
-            MEDIUM=$(python3 -c "import json,sys; d=json.load(open('$JSON_REPORT')); print(len([a for s in d.get('site',[]) for a in s.get('alerts',[]) if a.get('riskcode')=='2']))" 2>/dev/null || echo "0")
-            LOW=$(python3 -c "import json,sys; d=json.load(open('$JSON_REPORT')); print(len([a for s in d.get('site',[]) for a in s.get('alerts',[]) if a.get('riskcode')=='1']))" 2>/dev/null || echo "0")
-            INFO=$(python3 -c "import json,sys; d=json.load(open('$JSON_REPORT')); print(len([a for s in d.get('site',[]) for a in s.get('alerts',[]) if a.get('riskcode')=='0']))" 2>/dev/null || echo "0")
+            HIGH=$(python3 -c "import json; d=json.load(open('$JSON_REPORT')); print(len([a for s in d.get('site',[]) for a in s.get('alerts',[]) if a.get('riskcode')=='3']))" 2>/dev/null || echo "0")
+            MEDIUM=$(python3 -c "import json; d=json.load(open('$JSON_REPORT')); print(len([a for s in d.get('site',[]) for a in s.get('alerts',[]) if a.get('riskcode')=='2']))" 2>/dev/null || echo "0")
+            LOW=$(python3 -c "import json; d=json.load(open('$JSON_REPORT')); print(len([a for s in d.get('site',[]) for a in s.get('alerts',[]) if a.get('riskcode')=='1']))" 2>/dev/null || echo "0")
+            INFO=$(python3 -c "import json; d=json.load(open('$JSON_REPORT')); print(len([a for s in d.get('site',[]) for a in s.get('alerts',[]) if a.get('riskcode')=='0']))" 2>/dev/null || echo "0")
             TOTAL=$((HIGH + MEDIUM + LOW + INFO))
-            ALERTS_ROWS=$(python3 << 'PYEOF'
+
+            python3 -c "
 import json
-risk_labels={"3":"HIGH","2":"MEDIUM","1":"LOW","0":"INFO"}
-risk_classes={"3":"b-red","2":"b-warn","1":"b-warn","0":"b-info"}
-try:
-  import os
-  path=os.environ.get('JSON_REPORT','')
-  d=json.load(open(path))
-  rows=[]
-  for site in d.get('site',[]):
-    for alert in site.get('alerts',[]):
-      rcode=alert.get('riskcode','0')
-      rlabel=risk_labels.get(rcode,'INFO')
-      rclass=risk_classes.get(rcode,'b-info')
-      name=alert.get('name','').replace('<','&lt;').replace('>','&gt;')
-      desc=alert.get('desc','')[:150].replace('<','&lt;').replace('>','&gt;')
-      cweid=alert.get('cweid','-')
-      instances=len(alert.get('instances',[]))
-      solution=alert.get('solution','')[:100].replace('<','&lt;').replace('>','&gt;')
-      rows.append(f'<tr><td><span class="badge {rclass}">{rlabel}</span></td><td>{name}</td><td><span class="badge b-info">CWE-{cweid}</span></td><td style="color:#8b949e;font-size:.82rem">{desc}</td><td style="color:#8b949e;font-size:.82rem">{solution}</td><td style="color:#8b949e">{instances}</td></tr>')
-  print(''.join(rows) if rows else '<tr><td colspan="6" style="color:#3fb950;text-align:center;padding:20px">✅ Sin alertas de riesgo</td></tr>')
-except Exception as e:
-  print(f'<tr><td colspan="6" style="color:#8b949e;text-align:center">Error leyendo JSON: {e}</td></tr>')
-PYEOF
-)
-          else
-            HIGH="0"; MEDIUM="0"; LOW="0"; INFO="0"; TOTAL="0"
-            ALERTS_ROWS='<tr><td colspan="6" style="color:#8b949e;text-align:center;padding:20px">Reporte JSON no disponible</td></tr>'
+risk_labels={'3':'HIGH','2':'MEDIUM','1':'LOW','0':'INFO'}
+risk_classes={'3':'b-red','2':'b-warn','1':'b-warn','0':'b-info'}
+d=json.load(open('$JSON_REPORT'))
+rows=[]
+for site in d.get('site',[]):
+  for alert in site.get('alerts',[]):
+    rcode=alert.get('riskcode','0')
+    name=alert.get('name','').replace('<','&lt;').replace('>','&gt;')
+    desc=alert.get('desc','')[:150].replace('<','&lt;').replace('>','&gt;')
+    cweid=alert.get('cweid','-')
+    instances=len(alert.get('instances',[]))
+    solution=alert.get('solution','')[:100].replace('<','&lt;').replace('>','&gt;')
+    rlabel=risk_labels.get(rcode,'INFO')
+    rclass=risk_classes.get(rcode,'b-info')
+    rows.append('<tr><td><span class=\"badge ' + rclass + '\">' + rlabel + '</span></td><td>' + name + '</td><td><span class=\"badge b-info\">CWE-' + str(cweid) + '</span></td><td style=\"color:#8b949e;font-size:.82rem\">' + desc + '</td><td style=\"color:#8b949e;font-size:.82rem\">' + solution + '</td><td style=\"color:#8b949e\">' + str(instances) + '</td></tr>')
+print(''.join(rows) if rows else '<tr><td colspan=\"6\" style=\"color:#3fb950;text-align:center;padding:20px\">Sin alertas de riesgo</td></tr>')
+" > /tmp/alerts_rows.html 2>/dev/null || echo '<tr><td colspan="6" style="color:#8b949e;text-align:center">Error procesando alertas</td></tr>' > /tmp/alerts_rows.html
+            ALERTS_ROWS=$(cat /tmp/alerts_rows.html)
           fi
 
           if [ "$HIGH" -gt "0" ]; then
@@ -131,7 +127,7 @@ header h1{color:#58a6ff;font-size:1.4rem}
 header p{color:#8b949e;font-size:.82rem;margin-top:4px}
 .status-badge{padding:6px 16px;border-radius:20px;font-weight:700;font-size:.85rem;${STATUS_COLOR}}
 nav{background:#161b22;border-bottom:1px solid #21262d;padding:0 40px;display:flex;gap:4px;flex-wrap:wrap}
-nav button{background:none;border:none;color:#8b949e;padding:14px 16px;cursor:pointer;font-size:.9rem;border-bottom:2px solid transparent;transition:color .2s}
+nav button{background:none;border:none;color:#8b949e;padding:14px 16px;cursor:pointer;font-size:.9rem;border-bottom:2px solid transparent}
 nav button.active{color:#58a6ff;border-bottom-color:#58a6ff}
 .container{max-width:1100px;margin:32px auto;padding:0 24px 60px}
 .meta{color:#8b949e;font-size:.82rem;margin-bottom:28px}
@@ -180,12 +176,10 @@ code{background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace;
 </nav>
 <div class="container">
   <p class="meta">
-    <span>🕐 Generado: ${FECHA}</span>
+    <span>🕐 ${FECHA}</span>
     <span>🎯 24 URLs escaneadas</span>
     <span>🔖 ZAP 2.17.0</span>
-    <span>🌐 Prism Mock :4010</span>
   </p>
-
   <div id="tab-resumen" class="tab-content active">
     <div class="cards">
       <div class="card red"><div class="num">0</div><div class="lbl">🚨 Critical</div></div>
@@ -195,7 +189,6 @@ code{background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace;
       <div class="card blue"><div class="num">${INFO}</div><div class="lbl">🔵 Info</div></div>
       <div class="card green"><div class="num">118</div><div class="lbl">✅ Pass</div></div>
     </div>
-
     <div class="section">
       <h2>📈 Cobertura de seguridad por categoría</h2>
       <table>
@@ -208,7 +201,6 @@ code{background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace;
         <tr><td>Remote Code Execution (Log4Shell, Spring4Shell)</td><td><span class="badge b-pass">PASS</span></td><td><div class="progress"><div class="fill-green" style="width:100%"></div></div></td></tr>
       </table>
     </div>
-
     <div class="section">
       <h2>🏗️ Endpoints escaneados por MFE</h2>
       <table>
@@ -220,7 +212,6 @@ code{background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace;
       </table>
     </div>
   </div>
-
   <div id="tab-endpoints" class="tab-content">
     <div class="section">
       <h2>🔗 Detalle de endpoints</h2>
@@ -236,7 +227,6 @@ code{background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace;
       </table>
     </div>
   </div>
-
   <div id="tab-alertas" class="tab-content">
     <div class="section">
       <h2>⚠️ Alertas detectadas — datos reales del escaneo ZAP</h2>
@@ -246,7 +236,6 @@ code{background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace;
       </table>
     </div>
   </div>
-
   <div id="tab-checks" class="tab-content">
     <div class="section">
       <h2>✅ Checks pasados (118)</h2>
