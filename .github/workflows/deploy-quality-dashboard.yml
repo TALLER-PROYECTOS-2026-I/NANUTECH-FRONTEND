@@ -29,6 +29,12 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Ejecutar tests con cobertura
+        run: npm run test:coverage:all || true
+
       - name: Instalar Prism
         run: npm install -g @stoplight/prism-cli
 
@@ -66,6 +72,23 @@ jobs:
           mkdir -p docs/reports/swagger
           cp swagger.yaml docs/swagger.yaml
           echo '<!DOCTYPE html><html><head><title>NANUTECH API Docs</title><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css"></head><body><div id="swagger-ui"></div><script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script><script>SwaggerUIBundle({url:"../../swagger.yaml",dom_id:"#swagger-ui",presets:[SwaggerUIBundle.presets.apis,SwaggerUIBundle.SwaggerUIStandalonePreset],layout:"BaseLayout"})</script></body></html>' > docs/reports/swagger/index.html
+
+      - name: Generar reporte de cobertura
+        if: always()
+        run: |
+          mkdir -p docs/reports/coverage
+          for MFE in mfe-contratos mfe-dashboard mfe-flota shell-app; do
+            mkdir -p docs/reports/coverage/$MFE
+            SUMMARY="apps/$MFE/coverage/coverage-summary.json"
+            if [ -f "$SUMMARY" ]; then
+              cp "$SUMMARY" docs/reports/coverage/$MFE/coverage-summary.json
+              echo "✅ $MFE coverage copiado"
+            else
+              echo "⚠️ $MFE sin datos"
+              echo '{"total":{"statements":{"pct":0},"branches":{"pct":0},"functions":{"pct":0},"lines":{"pct":0}}}' > docs/reports/coverage/$MFE/coverage-summary.json
+            fi
+          done
+          echo '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Coverage - NANUTECH</title><style>body{background:#0d1117;color:#e6edf3;font-family:sans-serif;padding:40px 20px}h1{color:#58a6ff;text-align:center;margin-bottom:8px}p.sub{text-align:center;color:#8b949e;margin-bottom:40px}table{width:100%;max-width:900px;margin:0 auto;border-collapse:collapse}th{background:#161b22;padding:12px 16px;text-align:left;color:#8b949e;font-size:.85rem;border-bottom:1px solid #30363d}td{padding:12px 16px;border-bottom:1px solid #21262d;font-size:.9rem}.bar{background:#21262d;border-radius:4px;height:8px;width:100%;margin-top:4px}.fill{height:8px;border-radius:4px}.green{background:#3fb950}.yellow{background:#d29922}.red{background:#f85149}.pct{font-weight:600}</style></head><body><h1>🧪 Test Coverage</h1><p class="sub">Cobertura por microfrontend — generado por CI/CD</p><table><thead><tr><th>MFE</th><th>Statements</th><th>Branches</th><th>Functions</th><th>Lines</th></tr></thead><tbody id="tbody"></tbody></table><script>const mfes=["mfe-contratos","mfe-dashboard","mfe-flota","shell-app"];const tbody=document.getElementById("tbody");const color=p=>p>=80?"green":p>=50?"yellow":"red";const bar=p=>`<div class="bar"><div class="fill ${color(p)}" style="width:${Math.min(p,100)}%"></div></div>`;const cell=p=>`<td><span class="pct">${p}%</span>${bar(p)}</td>`;Promise.all(mfes.map(m=>fetch(m+"/coverage-summary.json").then(r=>r.json()).catch(()=>null))).then(results=>{results.forEach((data,i)=>{const tr=document.createElement("tr");if(!data){tr.innerHTML=`<td>${mfes[i]}</td><td colspan="4" style="color:#8b949e">Sin datos</td>`;}else{const t=data.total;tr.innerHTML=`<td><strong>${mfes[i]}</strong></td>${cell(t.statements.pct)}${cell(t.branches.pct)}${cell(t.functions.pct)}${cell(t.lines.pct)}`;}tbody.appendChild(tr);});});</script></body></html>' > docs/reports/coverage/index.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
