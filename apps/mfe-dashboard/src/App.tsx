@@ -9,6 +9,7 @@ import TrackingGpsPage from "./modules/tracking-gps";
 import GestionConductoresPage from "./modules/gestión-conductores";
 import { PerfilConductorPage } from "./modules/perfil-conductor";
 import AuditoriaAccesosPage from "./modules/auditoría-accesos";
+import DarDeAltaConductorPage from "./modules/gestión-conductores/pages/DarDeAltaConductorPage";
 
 export function AppRoutes() {
   return (
@@ -23,6 +24,7 @@ export function AppRoutes() {
       <Route path="registro-jornada/nueva" element={<RegistroNuevaJornada />} />
       <Route path="camiones" element={<MonitoreoCamionesPage />} />
       <Route path="conductores" element={<GestionConductoresPage />} />
+      <Route path="conductores/dar-de-alta" element={<DarDeAltaConductorPage />} />
       <Route path="conductores/:id" element={<PerfilConductorPage />} />
       <Route path="alertas" element={<AlertasEmergenciasPage />} />
       <Route path="auditoria" element={<AuditoriaAccesosPage />} />
@@ -38,6 +40,7 @@ export function AppRoutes() {
       <Route path="/dashboard/admin/registro-jornada/nueva" element={<RegistroNuevaJornada />} />
       <Route path="/dashboard/admin/camiones" element={<MonitoreoCamionesPage />} />
       <Route path="/dashboard/admin/conductores" element={<GestionConductoresPage />} />
+      <Route path="/dashboard/admin/conductores/dar-de-alta" element={<DarDeAltaConductorPage />} />
       <Route path="/dashboard/admin/conductores/:id" element={<PerfilConductorPage />} />
       <Route path="/dashboard/admin/alertas" element={<AlertasEmergenciasPage />} />
       <Route path="/dashboard/admin/auditoria" element={<AuditoriaAccesosPage />} />
