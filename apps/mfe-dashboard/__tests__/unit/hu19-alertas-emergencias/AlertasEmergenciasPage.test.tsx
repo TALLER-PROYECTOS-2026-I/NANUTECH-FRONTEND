@@ -151,7 +151,9 @@ describe("HU19 - Alertas y Emergencias", () => {
       });
     });
 
-    expect(screen.queryByText("1 alerta(s) activa(s) requieren atencion inmediata.")).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("1 alerta(s) activa(s) requieren atencion inmediata.")).not.toBeInTheDocument();
+    });
     expect(screen.getByText("Alerta de panico resuelta")).toBeInTheDocument();
     expect(screen.getByText("4")).toBeInTheDocument();
   });
