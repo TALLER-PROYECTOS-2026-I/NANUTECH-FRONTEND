@@ -1,17 +1,33 @@
 openapi: 3.0.3
 info:
   title: NANUTECH Frontend API
-  description: Documentación de endpoints consumidos por el frontend de NANUTECH
+  description: |
+    Documentación de los endpoints consumidos por el sistema de gestión de flota NANUTECH.
+    Esta API es consumida por los microfrontends: **shell-app**, **mfe-flota**, **mfe-contratos** y **mfe-dashboard**.
   version: 1.0.0
+  contact:
+    name: Equipo NANUTECH
+    email: soporte@nanutech.com
 
 servers:
   - url: http://localhost:4010
     description: Mock server (Prism)
 
+tags:
+  - name: Auth
+    description: Autenticación y gestión de sesión
+  - name: Flota
+    description: Gestión de vehículos de la flota
+  - name: Contratos
+    description: Gestión de contratos de transporte
+  - name: Dashboard
+    description: Métricas y resumen ejecutivo
+
 paths:
   /auth/login:
     post:
-      summary: Autenticación de usuario
+      summary: Iniciar sesión
+      description: Autentica al usuario con email y contraseña. Retorna un token JWT para usar en requests protegidos.
       tags: [Auth]
       requestBody:
         required: true
@@ -19,34 +35,166 @@ paths:
           application/json:
             schema:
               type: object
+              required: [email, password]
               properties:
                 email:
                   type: string
+                  format: email
+                  example: admin@nanutech.com
+                  description: Correo electrónico del usuario
                 password:
                   type: string
+                  format: password
+                  example: "secret123"
+                  description: Contraseña del usuario
       responses:
         '200':
-          description: Login exitoso
+          description: Login exitoso — retorna token JWT y datos del usuario
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "usr-001"
+                      nombre:
+                        type: string
+                        example: "Hugo Menes"
+                      rol:
+                        type: string
+                        enum: [ADMIN, GERENTE, CHOFER]
+                        example: ADMIN
         '401':
           description: Credenciales inválidas
 
+  /auth/logout:
+    post:
+      summary: Cerrar sesión
+      description: Invalida el token JWT del usuario autenticado.
+      tags: [Auth]
+      responses:
+        '200':
+          description: Sesión cerrada correctamente
+
   /flota:
     get:
-      summary: Listar vehículos de la flota
+      summary: Listar vehículos
+      description: Retorna la lista completa de vehículos registrados en la flota.
       tags: [Flota]
       responses:
         '200':
           description: Lista de vehículos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: "veh-001"
+                    placa:
+                      type: string
+                      example: "ABC-123"
+                    marca:
+                      type: string
+                      example: "Toyota"
+                    modelo:
+                      type: string
+                      example: "Hilux"
+                    estado:
+                      type: string
+                      enum: [ACTIVO, INACTIVO, MANTENIMIENTO]
+                      example: ACTIVO
+    post:
+      summary: Registrar vehículo
+      description: Agrega un nuevo vehículo a la flota.
+      tags: [Flota]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [placa, marca, modelo]
+              properties:
+                placa:
+                  type: string
+                  example: "XYZ-999"
+                marca:
+                  type: string
+                  example: "Volvo"
+                modelo:
+                  type: string
+                  example: "FH16"
+      responses:
+        '201':
+          description: Vehículo registrado exitosamente
+        '400':
+          description: Datos inválidos
+
+  /flota/{id}:
+    get:
+      summary: Obtener vehículo por ID
+      description: Retorna el detalle de un vehículo específico.
+      tags: [Flota]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "veh-001"
+      responses:
+        '200':
+          description: Detalle del vehículo
+        '404':
+          description: Vehículo no encontrado
 
   /contratos:
     get:
       summary: Listar contratos
+      description: Retorna todos los contratos de transporte registrados.
       tags: [Contratos]
       responses:
         '200':
           description: Lista de contratos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: "cnt-001"
+                    nombre:
+                      type: string
+                      example: "Contrato Lima-Arequipa"
+                    fechaInicio:
+                      type: string
+                      format: date
+                      example: "2026-01-15"
+                    fechaFin:
+                      type: string
+                      format: date
+                      example: "2026-12-31"
+                    estado:
+                      type: string
+                      enum: [ACTIVO, VENCIDO, PENDIENTE]
+                      example: ACTIVO
     post:
       summary: Crear contrato
+      description: Registra un nuevo contrato de transporte.
       tags: [Contratos]
       requestBody:
         required: true
@@ -54,20 +202,47 @@ paths:
           application/json:
             schema:
               type: object
+              required: [nombre, fechaInicio, fechaFin]
               properties:
                 nombre:
                   type: string
+                  example: "Contrato Lima-Cusco"
                 fechaInicio:
                   type: string
                   format: date
+                  example: "2026-06-01"
+                fechaFin:
+                  type: string
+                  format: date
+                  example: "2026-12-31"
       responses:
         '201':
-          description: Contrato creado
+          description: Contrato creado exitosamente
+        '400':
+          description: Datos inválidos
 
   /dashboard:
     get:
-      summary: Datos del dashboard principal
+      summary: Métricas del dashboard
+      description: Retorna los indicadores clave para el panel ejecutivo — total de vehículos, contratos activos y alertas.
       tags: [Dashboard]
       responses:
         '200':
           description: Métricas del dashboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalVehiculos:
+                    type: integer
+                    example: 42
+                  contratosActivos:
+                    type: integer
+                    example: 18
+                  vehiculosEnMantenimiento:
+                    type: integer
+                    example: 5
+                  alertas:
+                    type: integer
+                    example: 3
