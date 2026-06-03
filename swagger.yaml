@@ -3,31 +3,35 @@ info:
   title: NANUTECH Frontend API
   description: |
     Documentación de los endpoints consumidos por el sistema de gestión de flota NANUTECH.
-    Esta API es consumida por los microfrontends: **shell-app**, **mfe-flota**, **mfe-contratos** y **mfe-dashboard**.
+    Consumidos por los MFEs: **shell-app**, **mfe-flota**, **mfe-contratos** y **mfe-dashboard**.
   version: 1.0.0
   contact:
     name: Equipo NANUTECH
     email: soporte@nanutech.com
 
 servers:
+  - url: https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage
+    description: Backend AWS API Gateway (producción)
   - url: http://localhost:4010
     description: Mock server (Prism)
 
 tags:
   - name: Auth
     description: Autenticación y gestión de sesión
+  - name: Jornadas
+    description: Gestión de jornadas de conductores (mfe-flota)
+  - name: Auditoría
+    description: Registro de accesos y auditoría (mfe-dashboard)
   - name: Flota
     description: Gestión de vehículos de la flota
   - name: Contratos
     description: Gestión de contratos de transporte
-  - name: Dashboard
-    description: Métricas y resumen ejecutivo
 
 paths:
   /auth/login:
     post:
       summary: Iniciar sesión
-      description: Autentica al usuario con email y contraseña. Retorna un token JWT para usar en requests protegidos.
+      description: Autentica al usuario con email y contraseña. Retorna un token JWT.
       tags: [Auth]
       requestBody:
         required: true
@@ -41,12 +45,10 @@ paths:
                   type: string
                   format: email
                   example: admin@nanutech.com
-                  description: Correo electrónico del usuario
                 password:
                   type: string
                   format: password
                   example: "secret123"
-                  description: Contraseña del usuario
       responses:
         '200':
           description: Login exitoso — retorna token JWT y datos del usuario
@@ -69,28 +71,19 @@ paths:
                         example: "Hugo Menes"
                       rol:
                         type: string
-                        enum: [ADMIN, GERENTE, CHOFER]
-                        example: ADMIN
+                        enum: [Administrador, Gerente, Conductor]
+                        example: Administrador
         '401':
           description: Credenciales inválidas
 
-  /auth/logout:
-    post:
-      summary: Cerrar sesión
-      description: Invalida el token JWT del usuario autenticado.
-      tags: [Auth]
-      responses:
-        '200':
-          description: Sesión cerrada correctamente
-
-  /flota:
+  /jornadas:
     get:
-      summary: Listar vehículos
-      description: Retorna la lista completa de vehículos registrados en la flota.
-      tags: [Flota]
+      summary: Listar todas las jornadas
+      description: Retorna el listado completo de jornadas registradas en el sistema. Consumido por **mfe-flota**.
+      tags: [Jornadas]
       responses:
         '200':
-          description: Lista de vehículos
+          description: Lista de jornadas
           content:
             application/json:
               schema:
@@ -100,64 +93,141 @@ paths:
                   properties:
                     id:
                       type: string
-                      example: "veh-001"
+                      example: "jornada-001"
+                    conductorId:
+                      type: string
+                      example: "CONDUCTOR-001"
+                    fechaInicio:
+                      type: string
+                      format: date-time
+                      example: "2026-06-03T08:00:00Z"
+                    fechaFin:
+                      type: string
+                      format: date-time
+                      example: "2026-06-03T18:00:00Z"
+                    estado:
+                      type: string
+                      enum: [ACTIVA, FINALIZADA, PENDIENTE]
+                      example: ACTIVA
+        '401':
+          description: No autorizado
+
+  /jornadas/actual/{conductorId}:
+    get:
+      summary: Obtener jornada actual del conductor
+      description: Retorna la jornada activa actual para un conductor específico. Consumido por **mfe-flota**.
+      tags: [Jornadas]
+      parameters:
+        - name: conductorId
+          in: path
+          required: true
+          description: ID único del conductor
+          schema:
+            type: string
+          example: "CONDUCTOR-001"
+      responses:
+        '200':
+          description: Jornada actual del conductor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: "jornada-001"
+                  conductorId:
+                    type: string
+                    example: "CONDUCTOR-001"
+                  estado:
+                    type: string
+                    enum: [ACTIVA, FINALIZADA]
+                    example: ACTIVA
+                  fechaInicio:
+                    type: string
+                    format: date-time
+                    example: "2026-06-03T08:00:00Z"
+        '404':
+          description: No hay jornada activa para este conductor
+        '401':
+          description: No autorizado
+
+  /auditoria/accesos:
+    get:
+      summary: Obtener registros de auditoría de accesos
+      description: Retorna el historial inmutable de inicios de sesión. Consumido por **mfe-dashboard**.
+      tags: [Auditoría]
+      responses:
+        '200':
+          description: Lista de registros de auditoría
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: "audit-001"
+                    usuario:
+                      type: string
+                      example: "Hugo Menes"
+                    email:
+                      type: string
+                      example: "hugo@nanutech.com"
+                    rol:
+                      type: string
+                      enum: [Administrador, Gerente, Conductor]
+                      example: Administrador
+                    fecha:
+                      type: string
+                      example: "03/06/2026"
+                    hora:
+                      type: string
+                      example: "08:30:00"
+                    ip:
+                      type: string
+                      example: "192.168.1.100"
+                    navegador:
+                      type: string
+                      example: "Chrome 120 / Windows 10"
+        '401':
+          description: No autorizado
+
+  /flota/camiones:
+    get:
+      summary: Listar camiones de la flota
+      description: Retorna todos los vehículos registrados en el sistema de gestión de flota.
+      tags: [Flota]
+      responses:
+        '200':
+          description: Lista de camiones
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: "cam-001"
                     placa:
                       type: string
                       example: "ABC-123"
                     marca:
                       type: string
-                      example: "Toyota"
+                      example: "Volvo"
                     modelo:
                       type: string
-                      example: "Hilux"
+                      example: "FH16"
                     estado:
                       type: string
                       enum: [ACTIVO, INACTIVO, MANTENIMIENTO]
                       example: ACTIVO
-    post:
-      summary: Registrar vehículo
-      description: Agrega un nuevo vehículo a la flota.
-      tags: [Flota]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [placa, marca, modelo]
-              properties:
-                placa:
-                  type: string
-                  example: "XYZ-999"
-                marca:
-                  type: string
-                  example: "Volvo"
-                modelo:
-                  type: string
-                  example: "FH16"
-      responses:
-        '201':
-          description: Vehículo registrado exitosamente
-        '400':
-          description: Datos inválidos
-
-  /flota/{id}:
-    get:
-      summary: Obtener vehículo por ID
-      description: Retorna el detalle de un vehículo específico.
-      tags: [Flota]
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-          example: "veh-001"
-      responses:
-        '200':
-          description: Detalle del vehículo
-        '404':
-          description: Vehículo no encontrado
+        '401':
+          description: No autorizado
 
   /contratos:
     get:
@@ -192,6 +262,8 @@ paths:
                       type: string
                       enum: [ACTIVO, VENCIDO, PENDIENTE]
                       example: ACTIVO
+        '401':
+          description: No autorizado
     post:
       summary: Crear contrato
       description: Registra un nuevo contrato de transporte.
@@ -220,29 +292,3 @@ paths:
           description: Contrato creado exitosamente
         '400':
           description: Datos inválidos
-
-  /dashboard:
-    get:
-      summary: Métricas del dashboard
-      description: Retorna los indicadores clave para el panel ejecutivo — total de vehículos, contratos activos y alertas.
-      tags: [Dashboard]
-      responses:
-        '200':
-          description: Métricas del dashboard
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  totalVehiculos:
-                    type: integer
-                    example: 42
-                  contratosActivos:
-                    type: integer
-                    example: 18
-                  vehiculosEnMantenimiento:
-                    type: integer
-                    example: 5
-                  alertas:
-                    type: integer
-                    example: 3
