@@ -54,18 +54,11 @@ jobs:
           report_html: report_html.html
           cmd_options: '-I'
 
-      - name: Mover reporte ZAP a docs
+      - name: Preparar reporte ZAP
         if: always()
         run: |
           mkdir -p docs/reports/zap
-          WORKSPACE="/home/runner/work/NANUTECH-FRONTEND/NANUTECH-FRONTEND"
-          if [ -f "$WORKSPACE/report_html.html" ]; then
-            cp "$WORKSPACE/report_html.html" docs/reports/zap/report.html
-            echo "Reporte copiado correctamente"
-          else
-            echo "Reporte no encontrado, usando template"
-            cp docs/reports/zap/report.html docs/reports/zap/report.html || true
-          fi
+          echo "Reporte ZAP personalizado ya esta en docs/reports/zap/report.html"
 
       - name: Generar Swagger UI
         run: |
