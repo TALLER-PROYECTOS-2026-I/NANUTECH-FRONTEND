@@ -51,8 +51,7 @@ jobs:
           fi
 
       - name: Preparar swagger con URL real de AWS
-        run: |
-          cp swagger.yaml swagger-zap.yaml
+        run: cp swagger.yaml swagger-zap.yaml
 
       - name: OWASP ZAP API Scan
         uses: zaproxy/action-api-scan@v0.9.0
@@ -65,9 +64,11 @@ jobs:
 
       - name: Preparar reporte ZAP
         if: always()
+        env:
+          WORKSPACE: /home/runner/work/NANUTECH-FRONTEND/NANUTECH-FRONTEND
         run: |
           mkdir -p docs/reports/zap
-          echo "Reporte ZAP personalizado ya esta en docs/reports/zap/report.html"
+          python3 .github/scripts/zap_report.py
 
       - name: Generar Swagger UI
         run: |
