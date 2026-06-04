@@ -18,7 +18,7 @@ tags:
     description: Autenticación y gestión de sesión
   - name: Jornadas
     description: Gestión de jornadas de conductores (mfe-flota)
-  - name: Flota
+  - name: Camiones
     description: Gestión de vehículos de la flota (mfe-flota)
   - name: Conductores
     description: Gestión de conductores (mfe-flota)
@@ -39,7 +39,7 @@ paths:
   /auth/login:
     post:
       summary: Iniciar sesión
-      description: Autentica con AWS Cognito. Retorna token JWT.
+      description: Autentica con AWS Cognito. Retorna token JWT para acceder a los endpoints protegidos.
       tags: [Auth]
       requestBody:
         required: true
@@ -107,7 +107,7 @@ paths:
   /jornadas:
     get:
       summary: Listar todas las jornadas
-      description: Retorna jornadas registradas. Consumido por **mfe-flota**.
+      description: Retorna jornadas registradas en el sistema. Consumido por **mfe-flota**.
       tags: [Jornadas]
       security:
         - bearerAuth: []
@@ -152,6 +152,9 @@ paths:
                         km_recorridos:
                           type: string
                           example: "525.40"
+                        duracion_total:
+                          type: string
+                          example: "10:15"
         '401':
           description: No autorizado
 
@@ -171,7 +174,33 @@ paths:
           example: "22222222-2222-2222-2222-222222222222"
       responses:
         '200':
-          description: Jornada actual
+          description: Jornada actual del conductor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "cccc0002-0000-0000-0000-000000000002"
+                      conductor:
+                        type: string
+                        example: "Luis Ramirez"
+                      camion:
+                        type: string
+                        example: "DEF-456 - Scania R450"
+                      estado:
+                        type: string
+                        example: "EN_PROCESO"
+                      km_recorridos:
+                        type: string
+                        example: "120.80"
         '404':
           description: Sin jornada activa
         '401':
@@ -181,7 +210,7 @@ paths:
     get:
       summary: Listar camiones
       description: Retorna todos los camiones de la flota. Consumido por **mfe-flota**.
-      tags: [Flota]
+      tags: [Camiones]
       security:
         - bearerAuth: []
       responses:
@@ -229,7 +258,7 @@ paths:
     get:
       summary: Panel de camiones
       description: Retorna resumen y métricas de la flota. Consumido por **mfe-flota**.
-      tags: [Flota]
+      tags: [Camiones]
       security:
         - bearerAuth: []
       responses:
@@ -470,6 +499,12 @@ paths:
                           ingresos:
                             type: integer
                             example: 37300
+                          jornadasCompletadas:
+                            type: integer
+                            example: 4
+                          jornadasActivas:
+                            type: integer
+                            example: 1
         '401':
           description: No autorizado
 
@@ -510,6 +545,9 @@ paths:
                             type: string
                             example: "66.7%"
                           contratos_activos:
+                            type: integer
+                            example: 3
+                          flota_activa:
                             type: integer
                             example: 3
         '401':
