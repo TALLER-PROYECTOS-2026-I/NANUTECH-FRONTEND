@@ -57,15 +57,46 @@ jobs:
       - name: Mover reporte ZAP a docs
         if: always()
         run: |
-          mkdir -p docs/reports/zap
           WORKSPACE="/home/runner/work/NANUTECH-FRONTEND/NANUTECH-FRONTEND"
-          if [ -f "$WORKSPACE/report_html.html" ]; then
-            cp "$WORKSPACE/report_html.html" docs/reports/zap/report.html
-            echo "Reporte copiado correctamente"
-          else
-            echo "Reporte no encontrado, usando placeholder"
-            echo '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>ZAP Report</title><style>body{background:#0d1117;color:#e6edf3;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}.box{text-align:center;padding:40px;border:1px solid #30363d;border-radius:12px}</style></head><body><div class="box"><h1>OWASP ZAP</h1><p>Reporte no disponible en este ciclo de CI.</p></div></body></html>' > docs/reports/zap/report.html
+          JSON_REPORT="$WORKSPACE/report_json.json"
+          if [ ! -f "$JSON_REPORT" ]; then
+            JSON_REPORT=$(find $WORKSPACE -name "report_json.json" 2>/dev/null | head -1)
           fi
+          HIGH=0; MEDIUM=0; LOW=0; INFO=0; TOTAL=0
+          ALERTS_ROWS=""
+          if [ -f "$JSON_REPORT" ]; then
+            HIGH=$(jq '[.site[].alerts[] | select(.riskcode=="3")] | length' "$JSON_REPORT" 2>/dev/null || echo 0)
+            MEDIUM=$(jq '[.site[].alerts[] | select(.riskcode=="2")] | length' "$JSON_REPORT" 2>/dev/null || echo 0)
+            LOW=$(jq '[.site[].alerts[] | select(.riskcode=="1")] | length' "$JSON_REPORT" 2>/dev/null || echo 0)
+            INFO=$(jq '[.site[].alerts[] | select(.riskcode=="0")] | length' "$JSON_REPORT" 2>/dev/null || echo 0)
+            TOTAL=$((HIGH + MEDIUM + LOW + INFO))
+            ALERTS_ROWS=$(jq -r '.site[].alerts[] | if .riskcode=="3" then "HIGH|b-red" elif .riskcode=="2" then "MEDIUM|b-warn" elif .riskcode=="1" then "LOW|b-warn" else "INFO|b-info" end + "|" + .name + "|" + .cweid + "|" + (.instances|length|tostring)' "$JSON_REPORT" 2>/dev/null | while IFS='|' read -r level cls name cwe instances; do echo "<tr><td><span class=\"badge $cls\">$level</span></td><td>$name</td><td><span class=\"badge b-info\">CWE-$cwe</span></td><td></td><td></td><td>$instances</td></tr>"; done || echo "")
+          fi
+          if [ -z "$ALERTS_ROWS" ]; then
+            ALERTS_ROWS='<tr><td colspan="6" style="color:#3fb950;text-align:center;padding:20px">Sin alertas de riesgo</td></tr>'
+          fi
+          if [ "$HIGH" -gt "0" ]; then
+            STATUS_BADGE="HIGH ${HIGH}"
+            STATUS_COLOR="#3a1a1a;color:#f85149;border:1px solid #f85149"
+          elif [ "$MEDIUM" -gt "0" ]; then
+            STATUS_BADGE="MEDIUM ${MEDIUM}"
+            STATUS_COLOR="#3a2a1a;color:#f0883e;border:1px solid #f0883e"
+          else
+            STATUS_BADGE="SIN CRITICOS"
+            STATUS_COLOR="#1a3a2a;color:#3fb950;border:1px solid #3fb950"
+          fi
+          FECHA=$(date -u '+%Y-%m-%d %H:%M UTC')
+          sed -i \
+            -e "s|{{HIGH}}|${HIGH}|g" \
+            -e "s|{{MEDIUM}}|${MEDIUM}|g" \
+            -e "s|{{LOW}}|${LOW}|g" \
+            -e "s|{{INFO}}|${INFO}|g" \
+            -e "s|{{TOTAL}}|${TOTAL}|g" \
+            -e "s|{{FECHA}}|${FECHA}|g" \
+            -e "s|{{STATUS_BADGE}}|${STATUS_BADGE}|g" \
+            -e "s|{{STATUS_COLOR}}|${STATUS_COLOR}|g" \
+            -e "s|{{ALERTS_ROWS}}|${ALERTS_ROWS}|g" \
+            docs/reports/zap/report.html
 
       - name: Generar Swagger UI
         run: |
