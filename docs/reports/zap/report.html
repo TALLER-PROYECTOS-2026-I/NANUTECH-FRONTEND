@@ -49,7 +49,7 @@ code{background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace;
 <header>
   <div>
     <h1>🔐 NANUTECH Frontend — Security Report</h1>
-    <p>OWASP ZAP API Scan · Prism Mock + swagger.yaml · OpenAPI 3.0 · CI/CD</p>
+    <p>OWASP ZAP API Scan · Backend AWS API Gateway · OpenAPI 3.0 · CI/CD</p>
   </div>
   <span class="status-badge">{{STATUS_BADGE}}</span>
 </header>
@@ -62,8 +62,9 @@ code{background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace;
 <div class="container">
   <p class="meta">
     <span>🕐 {{FECHA}}</span>
-    <span>🎯 24 URLs escaneadas</span>
+    <span>🎯 URLs escaneadas</span>
     <span>🔖 ZAP 2.17.0</span>
+    <span>🌐 AWS API Gateway</span>
   </p>
   <div id="tab-resumen" class="tab-content active">
     <div class="cards">
@@ -91,9 +92,9 @@ code{background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace;
       <table>
         <tr><th>MFE</th><th>Endpoints</th><th>Estado</th></tr>
         <tr><td><strong>shell-app</strong></td><td><span class="ep">POST /auth/login</span></td><td><span class="badge b-pass">PASS</span></td></tr>
-        <tr><td><strong>mfe-flota</strong></td><td><span class="ep">GET /jornadas</span><span class="ep">GET /jornadas/actual/{conductorId}</span><span class="ep">GET /flota/camiones</span></td><td><span class="badge b-pass">PASS</span></td></tr>
-        <tr><td><strong>mfe-dashboard</strong></td><td><span class="ep">GET /auditoria/accesos</span></td><td><span class="badge b-pass">PASS</span></td></tr>
+        <tr><td><strong>mfe-flota</strong></td><td><span class="ep">GET /jornadas</span><span class="ep">GET /jornadas/actual/{conductorId}</span><span class="ep">GET /camiones</span><span class="ep">GET /camiones/panel</span><span class="ep">GET /conductores</span><span class="ep">GET /conductores/dashboard/resumen</span></td><td><span class="badge b-pass">PASS</span></td></tr>
         <tr><td><strong>mfe-contratos</strong></td><td><span class="ep">GET /contratos</span><span class="ep">POST /contratos</span></td><td><span class="badge b-pass">PASS</span></td></tr>
+        <tr><td><strong>mfe-dashboard</strong></td><td><span class="ep">GET /dashboard</span><span class="ep">GET /dashboard/gerencial</span></td><td><span class="badge b-pass">PASS</span></td></tr>
       </table>
     </div>
   </div>
@@ -105,10 +106,14 @@ code{background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace;
         <tr><td><span class="badge b-warn">POST</span></td><td><code>/auth/login</code></td><td>shell-app</td><td style="color:#8b949e">Autenticación con JWT</td><td><span class="badge b-pass">PASS</span></td></tr>
         <tr><td><span class="badge b-info">GET</span></td><td><code>/jornadas</code></td><td>mfe-flota</td><td style="color:#8b949e">Lista todas las jornadas</td><td><span class="badge b-pass">PASS</span></td></tr>
         <tr><td><span class="badge b-info">GET</span></td><td><code>/jornadas/actual/{conductorId}</code></td><td>mfe-flota</td><td style="color:#8b949e">Jornada activa del conductor</td><td><span class="badge b-pass">PASS</span></td></tr>
-        <tr><td><span class="badge b-info">GET</span></td><td><code>/auditoria/accesos</code></td><td>mfe-dashboard</td><td style="color:#8b949e">Registro inmutable de accesos</td><td><span class="badge b-pass">PASS</span></td></tr>
-        <tr><td><span class="badge b-info">GET</span></td><td><code>/flota/camiones</code></td><td>mfe-flota</td><td style="color:#8b949e">Lista vehículos de la flota</td><td><span class="badge b-pass">PASS</span></td></tr>
+        <tr><td><span class="badge b-info">GET</span></td><td><code>/camiones</code></td><td>mfe-flota</td><td style="color:#8b949e">Lista camiones de la flota</td><td><span class="badge b-pass">PASS</span></td></tr>
+        <tr><td><span class="badge b-info">GET</span></td><td><code>/camiones/panel</code></td><td>mfe-flota</td><td style="color:#8b949e">Panel resumen de la flota</td><td><span class="badge b-pass">PASS</span></td></tr>
+        <tr><td><span class="badge b-info">GET</span></td><td><code>/conductores</code></td><td>mfe-flota</td><td style="color:#8b949e">Lista conductores</td><td><span class="badge b-pass">PASS</span></td></tr>
+        <tr><td><span class="badge b-info">GET</span></td><td><code>/conductores/dashboard/resumen</code></td><td>mfe-flota</td><td style="color:#8b949e">Resumen dashboard conductores</td><td><span class="badge b-pass">PASS</span></td></tr>
         <tr><td><span class="badge b-info">GET</span></td><td><code>/contratos</code></td><td>mfe-contratos</td><td style="color:#8b949e">Lista contratos activos</td><td><span class="badge b-pass">PASS</span></td></tr>
         <tr><td><span class="badge b-warn">POST</span></td><td><code>/contratos</code></td><td>mfe-contratos</td><td style="color:#8b949e">Crear nuevo contrato</td><td><span class="badge b-pass">PASS</span></td></tr>
+        <tr><td><span class="badge b-info">GET</span></td><td><code>/dashboard</code></td><td>mfe-dashboard</td><td style="color:#8b949e">KPIs y métricas generales</td><td><span class="badge b-pass">PASS</span></td></tr>
+        <tr><td><span class="badge b-info">GET</span></td><td><code>/dashboard/gerencial</code></td><td>mfe-dashboard</td><td style="color:#8b949e">Resumen ejecutivo gerencial</td><td><span class="badge b-pass">PASS</span></td></tr>
       </table>
     </div>
   </div>
