@@ -86,17 +86,30 @@ jobs:
             STATUS_COLOR="#1a3a2a;color:#3fb950;border:1px solid #3fb950"
           fi
           FECHA=$(date -u '+%Y-%m-%d %H:%M UTC')
-          sed -i \
-            -e "s|{{HIGH}}|${HIGH}|g" \
-            -e "s|{{MEDIUM}}|${MEDIUM}|g" \
-            -e "s|{{LOW}}|${LOW}|g" \
-            -e "s|{{INFO}}|${INFO}|g" \
-            -e "s|{{TOTAL}}|${TOTAL}|g" \
-            -e "s|{{FECHA}}|${FECHA}|g" \
-            -e "s|{{STATUS_BADGE}}|${STATUS_BADGE}|g" \
-            -e "s|{{STATUS_COLOR}}|${STATUS_COLOR}|g" \
-            -e "s|{{ALERTS_ROWS}}|${ALERTS_ROWS}|g" \
-            docs/reports/zap/report.html
+          python3 -c "
+import sys
+HIGH = sys.argv[1]
+MEDIUM = sys.argv[2]
+LOW = sys.argv[3]
+INFO = sys.argv[4]
+TOTAL = sys.argv[5]
+FECHA = sys.argv[6]
+STATUS_BADGE = sys.argv[7]
+STATUS_COLOR = sys.argv[8]
+ALERTS_ROWS = sys.argv[9]
+content = open('docs/reports/zap/report.html').read()
+content = content.replace('{{HIGH}}', HIGH)
+content = content.replace('{{MEDIUM}}', MEDIUM)
+content = content.replace('{{LOW}}', LOW)
+content = content.replace('{{INFO}}', INFO)
+content = content.replace('{{TOTAL}}', TOTAL)
+content = content.replace('{{FECHA}}', FECHA)
+content = content.replace('{{STATUS_BADGE}}', STATUS_BADGE)
+content = content.replace('{{STATUS_COLOR}}', STATUS_COLOR)
+content = content.replace('{{ALERTS_ROWS}}', ALERTS_ROWS)
+open('docs/reports/zap/report.html', 'w').write(content)
+print('Reporte generado correctamente')
+" "$HIGH" "$MEDIUM" "$LOW" "$INFO" "$TOTAL" "$FECHA" "$STATUS_BADGE" "$STATUS_COLOR" "$ALERTS_ROWS"
 
       - name: Generar Swagger UI
         run: |
