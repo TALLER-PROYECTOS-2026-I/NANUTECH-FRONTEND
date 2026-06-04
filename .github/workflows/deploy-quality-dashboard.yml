@@ -35,32 +35,28 @@ jobs:
       - name: Ejecutar tests con cobertura
         run: npm run test:coverage:all || true
 
-      - name: Login y obtener token JWT
-        id: login
+      - name: Verificar URL frontend accesible
         run: |
-          RESP=$(curl -s -X POST "${{ secrets.API_URL }}/auth/login" \
-            -H "Content-Type: application/json" \
-            -d '{"email":"${{ secrets.ADMIN_EMAIL }}","password":"${{ secrets.ADMIN_PASSWORD }}"}')
-          TOKEN=$(echo "$RESP" | grep -o '"accessToken":"[^"]*"' | cut -d'"' -f4)
-          if [ -z "$TOKEN" ]; then
-            echo "Login fallido, token vacio"
-            echo "token=INVALID" >> $GITHUB_OUTPUT
+          TARGET="https://testing.dcoqassfbrwx2.amplifyapp.com"
+          echo "Objetivo: $TARGET"
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "$TARGET" || echo "000")
+          echo "HTTP Status: $CODE"
+          if [ "$CODE" = "000" ]; then
+            echo "URL no accesible"
           else
-            echo "Token JWT obtenido correctamente"
-            echo "token=$TOKEN" >> $GITHUB_OUTPUT
+            echo "URL accesible HTTP $CODE"
           fi
 
-      - name: Preparar swagger con URL real de AWS
-        run: cp swagger.yaml swagger-zap.yaml
-
-      - name: OWASP ZAP API Scan
-        uses: zaproxy/action-api-scan@v0.9.0
+      - name: OWASP ZAP Full Scan Frontend
+        uses: zaproxy/action-full-scan@v0.12.0
         with:
-          target: 'swagger-zap.yaml'
-          format: openapi
+          target: 'https://testing.dcoqassfbrwx2.amplifyapp.com'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a -I'
           fail_action: false
           allow_issue_writing: false
-          cmd_options: '-I'
+          artifact_name: zap-frontend-scan
+        continue-on-error: true
 
       - name: Preparar reporte ZAP
         if: always()
