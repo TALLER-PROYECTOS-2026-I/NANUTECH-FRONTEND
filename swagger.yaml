@@ -12,26 +12,34 @@ info:
 servers:
   - url: https://q26dwk17da.execute-api.us-east-1.amazonaws.com/Stage
     description: Backend AWS API Gateway (producción)
-  - url: http://localhost:4010
-    description: Mock server (Prism)
 
 tags:
   - name: Auth
     description: Autenticación y gestión de sesión
   - name: Jornadas
     description: Gestión de jornadas de conductores (mfe-flota)
-  - name: Auditoría
-    description: Registro de accesos y auditoría (mfe-dashboard)
   - name: Flota
-    description: Gestión de vehículos de la flota
+    description: Gestión de vehículos de la flota (mfe-flota)
+  - name: Conductores
+    description: Gestión de conductores (mfe-flota)
   - name: Contratos
-    description: Gestión de contratos de transporte
+    description: Gestión de contratos de transporte (mfe-contratos)
+  - name: Dashboard
+    description: Métricas y resumen ejecutivo (mfe-dashboard)
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtenido del endpoint /auth/login (AWS Cognito)
 
 paths:
   /auth/login:
     post:
       summary: Iniciar sesión
-      description: Autentica al usuario con email y contraseña. Retorna un token JWT.
+      description: Autentica con AWS Cognito. Retorna token JWT.
       tags: [Auth]
       requestBody:
         required: true
@@ -47,227 +55,358 @@ paths:
                   example: admin@nanutech.com
                 password:
                   type: string
-                  format: password
-                  example: "secret123"
+                  example: "Admin123!"
       responses:
         '200':
-          description: Login exitoso — retorna token JWT y datos del usuario
+          description: Login exitoso
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  token:
-                    type: string
-                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                  user:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
                     type: object
                     properties:
-                      id:
-                        type: string
-                        example: "usr-001"
-                      nombre:
-                        type: string
-                        example: "Hugo Menes"
-                      rol:
-                        type: string
-                        enum: [Administrador, Gerente, Conductor]
-                        example: Administrador
+                      user:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            example: "11111111-1111-1111-1111-111111111111"
+                          email:
+                            type: string
+                            example: "admin@nanutech.com"
+                          nombres:
+                            type: string
+                            example: "Jimena"
+                          apellidos:
+                            type: string
+                            example: "Rodriguez"
+                          role:
+                            type: string
+                            enum: [admin, gerente, chofer]
+                            example: admin
+                      session:
+                        type: object
+                        properties:
+                          accessToken:
+                            type: string
+                            example: "eyJraWQiOiJXNGF0aW1HbVZIZFVr..."
+                          tokenType:
+                            type: string
+                            example: "Bearer"
+                          expiresIn:
+                            type: integer
+                            example: 3600
         '401':
           description: Credenciales inválidas
 
   /jornadas:
     get:
       summary: Listar todas las jornadas
-      description: Retorna el listado completo de jornadas registradas en el sistema. Consumido por **mfe-flota**.
+      description: Retorna jornadas registradas. Consumido por **mfe-flota**.
       tags: [Jornadas]
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: Lista de jornadas
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      example: "jornada-001"
-                    conductorId:
-                      type: string
-                      example: "CONDUCTOR-001"
-                    fechaInicio:
-                      type: string
-                      format: date-time
-                      example: "2026-06-03T08:00:00Z"
-                    fechaFin:
-                      type: string
-                      format: date-time
-                      example: "2026-06-03T18:00:00Z"
-                    estado:
-                      type: string
-                      enum: [ACTIVA, FINALIZADA, PENDIENTE]
-                      example: ACTIVA
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "cccc0001-0000-0000-0000-000000000001"
+                        fecha:
+                          type: string
+                          example: "2026-04-24T00:00:00.000Z"
+                        conductor:
+                          type: string
+                          example: "Carlos Mendoza"
+                        camion:
+                          type: string
+                          example: "ABC-123 - Volvo FH16"
+                        contrato:
+                          type: string
+                          example: "CONT-2026-001"
+                        estado:
+                          type: string
+                          enum: [REGISTRADA, EN_PROCESO, COMPLETADA, CANCELADA]
+                          example: COMPLETADA
+                        km_estimados:
+                          type: string
+                          example: "520.00"
+                        km_recorridos:
+                          type: string
+                          example: "525.40"
         '401':
           description: No autorizado
 
   /jornadas/actual/{conductorId}:
     get:
-      summary: Obtener jornada actual del conductor
-      description: Retorna la jornada activa actual para un conductor específico. Consumido por **mfe-flota**.
+      summary: Jornada actual del conductor
+      description: Retorna la jornada activa de un conductor. Consumido por **mfe-flota**.
       tags: [Jornadas]
+      security:
+        - bearerAuth: []
       parameters:
         - name: conductorId
           in: path
           required: true
-          description: ID único del conductor
           schema:
             type: string
-          example: "CONDUCTOR-001"
+          example: "22222222-2222-2222-2222-222222222222"
       responses:
         '200':
-          description: Jornada actual del conductor
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    example: "jornada-001"
-                  conductorId:
-                    type: string
-                    example: "CONDUCTOR-001"
-                  estado:
-                    type: string
-                    enum: [ACTIVA, FINALIZADA]
-                    example: ACTIVA
-                  fechaInicio:
-                    type: string
-                    format: date-time
-                    example: "2026-06-03T08:00:00Z"
+          description: Jornada actual
         '404':
-          description: No hay jornada activa para este conductor
+          description: Sin jornada activa
         '401':
           description: No autorizado
 
-  /auditoria/accesos:
+  /camiones:
     get:
-      summary: Obtener registros de auditoría de accesos
-      description: Retorna el historial inmutable de inicios de sesión. Consumido por **mfe-dashboard**.
-      tags: [Auditoría]
-      responses:
-        '200':
-          description: Lista de registros de auditoría
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      example: "audit-001"
-                    usuario:
-                      type: string
-                      example: "Hugo Menes"
-                    email:
-                      type: string
-                      example: "hugo@nanutech.com"
-                    rol:
-                      type: string
-                      enum: [Administrador, Gerente, Conductor]
-                      example: Administrador
-                    fecha:
-                      type: string
-                      example: "03/06/2026"
-                    hora:
-                      type: string
-                      example: "08:30:00"
-                    ip:
-                      type: string
-                      example: "192.168.1.100"
-                    navegador:
-                      type: string
-                      example: "Chrome 120 / Windows 10"
-        '401':
-          description: No autorizado
-
-  /flota/camiones:
-    get:
-      summary: Listar camiones de la flota
-      description: Retorna todos los vehículos registrados en el sistema de gestión de flota.
+      summary: Listar camiones
+      description: Retorna todos los camiones de la flota. Consumido por **mfe-flota**.
       tags: [Flota]
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: Lista de camiones
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      example: "cam-001"
-                    placa:
-                      type: string
-                      example: "ABC-123"
-                    marca:
-                      type: string
-                      example: "Volvo"
-                    modelo:
-                      type: string
-                      example: "FH16"
-                    estado:
-                      type: string
-                      enum: [ACTIVO, INACTIVO, MANTENIMIENTO]
-                      example: ACTIVO
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "aaaa0001-0000-0000-0000-000000000001"
+                        placa:
+                          type: string
+                          example: "ABC-123"
+                        marca:
+                          type: string
+                          example: "Volvo"
+                        modelo:
+                          type: string
+                          example: "FH16"
+                        anio:
+                          type: integer
+                          example: 2020
+                        capacidad_ton:
+                          type: integer
+                          example: 20
+                        estado:
+                          type: string
+                          enum: [DISPONIBLE, EN_JORNADA, MANTENIMIENTO]
+                          example: DISPONIBLE
+        '401':
+          description: No autorizado
+
+  /camiones/panel:
+    get:
+      summary: Panel de camiones
+      description: Retorna resumen y métricas de la flota. Consumido por **mfe-flota**.
+      tags: [Flota]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Panel de camiones
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      resumen:
+                        type: object
+                        properties:
+                          total_camiones:
+                            type: integer
+                            example: 3
+                          en_uso:
+                            type: integer
+                            example: 1
+                          disponibles:
+                            type: integer
+                            example: 1
+                          mantenimiento:
+                            type: integer
+                            example: 1
+        '401':
+          description: No autorizado
+
+  /conductores:
+    get:
+      summary: Listar conductores
+      description: Retorna todos los conductores registrados. Consumido por **mfe-flota**.
+      tags: [Conductores]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de conductores
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "22222222-2222-2222-2222-222222222222"
+                        correo:
+                          type: string
+                          example: "chofer@nanutech.com"
+                        nombres:
+                          type: string
+                          example: "Carlos"
+                        apellidos:
+                          type: string
+                          example: "Mendoza"
+                        rol:
+                          type: string
+                          example: "CHOFER"
+        '401':
+          description: No autorizado
+
+  /conductores/dashboard/resumen:
+    get:
+      summary: Resumen dashboard de conductores
+      description: Indicadores y gráficos del panel de conductores. Consumido por **mfe-flota**.
+      tags: [Conductores]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Resumen dashboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      indicadores:
+                        type: object
+                        properties:
+                          total_conductores:
+                            type: integer
+                            example: 3
+                          conductores_activos:
+                            type: integer
+                            example: 3
+                          disponibles:
+                            type: integer
+                            example: 0
+                          en_ruta:
+                            type: integer
+                            example: 1
         '401':
           description: No autorizado
 
   /contratos:
     get:
       summary: Listar contratos
-      description: Retorna todos los contratos de transporte registrados.
+      description: Retorna contratos de transporte. Consumido por **mfe-contratos**.
       tags: [Contratos]
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: Lista de contratos
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      example: "cnt-001"
-                    nombre:
-                      type: string
-                      example: "Contrato Lima-Arequipa"
-                    fechaInicio:
-                      type: string
-                      format: date
-                      example: "2026-01-15"
-                    fechaFin:
-                      type: string
-                      format: date
-                      example: "2026-12-31"
-                    estado:
-                      type: string
-                      enum: [ACTIVO, VENCIDO, PENDIENTE]
-                      example: ACTIVO
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              example: "bbbb0001-0000-0000-0000-000000000001"
+                            codigo:
+                              type: string
+                              example: "CONT-2026-001"
+                            cliente:
+                              type: string
+                              example: "Minera del Sur"
+                            ruc:
+                              type: string
+                              example: "20123456789"
+                            tipo_servicio:
+                              type: string
+                              enum: [POR_VIAJE, POR_HORA, POR_TONELADA]
+                              example: POR_VIAJE
+                            tarifa:
+                              type: string
+                              example: "15000.00"
+                            moneda:
+                              type: string
+                              example: "PEN"
+                            estado:
+                              type: string
+                              enum: [VIGENTE, VENCIDO, PENDIENTE]
+                              example: VIGENTE
+                            dias_para_vencer:
+                              type: integer
+                              example: 210
         '401':
           description: No autorizado
     post:
       summary: Crear contrato
       description: Registra un nuevo contrato de transporte.
       tags: [Contratos]
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -289,6 +428,89 @@ paths:
                   example: "2026-12-31"
       responses:
         '201':
-          description: Contrato creado exitosamente
+          description: Contrato creado
         '400':
           description: Datos inválidos
+        '401':
+          description: No autorizado
+
+  /dashboard:
+    get:
+      summary: Dashboard principal
+      description: KPIs y métricas generales. Consumido por **mfe-dashboard**.
+      tags: [Dashboard]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dashboard principal
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      kpis:
+                        type: object
+                        properties:
+                          totalCamiones:
+                            type: integer
+                            example: 3
+                          contratosActivos:
+                            type: integer
+                            example: 3
+                          alertasActivas:
+                            type: integer
+                            example: 1
+                          ingresos:
+                            type: integer
+                            example: 37300
+        '401':
+          description: No autorizado
+
+  /dashboard/gerencial:
+    get:
+      summary: Dashboard gerencial
+      description: Resumen ejecutivo para el rol GERENTE. Consumido por **mfe-dashboard**.
+      tags: [Dashboard]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dashboard gerencial
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      resumen_general:
+                        type: object
+                        properties:
+                          jornadas:
+                            type: integer
+                            example: 6
+                          jornadas_completadas:
+                            type: integer
+                            example: 4
+                          km_totales:
+                            type: number
+                            example: 756.2
+                          eficiencia:
+                            type: string
+                            example: "66.7%"
+                          contratos_activos:
+                            type: integer
+                            example: 3
+        '401':
+          description: No autorizado
