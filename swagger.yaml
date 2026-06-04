@@ -3,7 +3,35 @@ info:
   title: NANUTECH Frontend API
   description: |
     Documentación de los endpoints consumidos por el sistema de gestión de flota NANUTECH.
-    Consumidos por los MFEs: **shell-app**, **mfe-flota**, **mfe-contratos** y **mfe-dashboard**.
+    
+    ## Arquitectura MFE
+    El frontend está compuesto por 4 microfrontends:
+    - **shell-app**: Autenticación y enrutamiento principal
+    - **mfe-flota**: Gestión de jornadas, camiones y conductores
+    - **mfe-contratos**: Gestión de contratos y dashboard gerencial
+    - **mfe-dashboard**: Panel administrativo, monitoreo y auditoría
+    
+    ## Rutas del Frontend
+    | Ruta | MFE | Descripción |
+    |------|-----|-------------|
+    | `/login` | shell-app | Página de inicio de sesión |
+    | `/recuperar` | shell-app | Recuperar contraseña |
+    | `/recuperar/confirmar` | shell-app | Confirmar nueva contraseña |
+    | `/dashboard/admin/dashboard` | mfe-dashboard | Panel principal administrador |
+    | `/dashboard/admin/camiones` | mfe-dashboard | Monitoreo de camiones |
+    | `/dashboard/admin/conductores` | mfe-dashboard | Gestión de conductores |
+    | `/dashboard/admin/registro-jornada` | mfe-dashboard | Registro de jornadas |
+    | `/dashboard/admin/alertas` | mfe-dashboard | Alertas y emergencias |
+    | `/dashboard/admin/auditoria` | mfe-dashboard | Auditoría de accesos |
+    | `/dashboard/admin/gps` | mfe-dashboard | Integración GPS |
+    | `/dashboard/admin/tracking-gps` | mfe-dashboard | Tracking GPS en tiempo real |
+    | `/dashboard/chofer/*` | mfe-flota | Panel del conductor |
+    | `/dashboard/contratos` | mfe-contratos | Gestión de contratos |
+    | `/dashboard/contratos/dashboard` | mfe-contratos | Dashboard gerencial |
+    | `/dashboard/contratos/historial` | mfe-contratos | Historial de jornadas |
+    | `/dashboard/contratos/seguimiento-jornadas` | mfe-contratos | Seguimiento de jornadas |
+    | `/dashboard/gerencial` | mfe-contratos | Vista gerencial |
+
   version: 1.0.0
   contact:
     name: Equipo NANUTECH
@@ -15,17 +43,17 @@ servers:
 
 tags:
   - name: Auth
-    description: Autenticación y gestión de sesión
+    description: Autenticación y gestión de sesión · shell-app (/login)
   - name: Jornadas
-    description: Gestión de jornadas de conductores (mfe-flota)
+    description: Gestión de jornadas · mfe-flota (/dashboard/chofer)
   - name: Camiones
-    description: Gestión de vehículos de la flota (mfe-flota)
+    description: Gestión de vehículos · mfe-dashboard (/dashboard/admin/camiones)
   - name: Conductores
-    description: Gestión de conductores (mfe-flota)
+    description: Gestión de conductores · mfe-dashboard (/dashboard/admin/conductores)
   - name: Contratos
-    description: Gestión de contratos de transporte (mfe-contratos)
+    description: Gestión de contratos · mfe-contratos (/dashboard/contratos)
   - name: Dashboard
-    description: Métricas y resumen ejecutivo (mfe-dashboard)
+    description: Métricas y KPIs · mfe-dashboard (/dashboard/admin/dashboard) y mfe-contratos (/dashboard/contratos/dashboard)
 
 components:
   securitySchemes:
@@ -39,7 +67,9 @@ paths:
   /auth/login:
     post:
       summary: Iniciar sesión
-      description: Autentica con AWS Cognito. Retorna token JWT para acceder a los endpoints protegidos.
+      description: |
+        Autentica con AWS Cognito. Retorna token JWT.
+        **Usado en:** `/login` (shell-app)
       tags: [Auth]
       requestBody:
         required: true
@@ -89,6 +119,9 @@ paths:
                             type: string
                             enum: [admin, gerente, chofer]
                             example: admin
+                          nextRoute:
+                            type: string
+                            example: "/dashboard/admin"
                       session:
                         type: object
                         properties:
@@ -107,7 +140,9 @@ paths:
   /jornadas:
     get:
       summary: Listar todas las jornadas
-      description: Retorna jornadas registradas en el sistema. Consumido por **mfe-flota**.
+      description: |
+        Retorna jornadas registradas en el sistema.
+        **Usado en:** `/dashboard/chofer` (mfe-flota)
       tags: [Jornadas]
       security:
         - bearerAuth: []
@@ -161,7 +196,9 @@ paths:
   /jornadas/actual/{conductorId}:
     get:
       summary: Jornada actual del conductor
-      description: Retorna la jornada activa de un conductor. Consumido por **mfe-flota**.
+      description: |
+        Retorna la jornada activa de un conductor.
+        **Usado en:** `/dashboard/chofer` (mfe-flota)
       tags: [Jornadas]
       security:
         - bearerAuth: []
@@ -209,7 +246,9 @@ paths:
   /camiones:
     get:
       summary: Listar camiones
-      description: Retorna todos los camiones de la flota. Consumido por **mfe-flota**.
+      description: |
+        Retorna todos los camiones de la flota.
+        **Usado en:** `/dashboard/admin/camiones` (mfe-dashboard)
       tags: [Camiones]
       security:
         - bearerAuth: []
@@ -257,7 +296,9 @@ paths:
   /camiones/panel:
     get:
       summary: Panel de camiones
-      description: Retorna resumen y métricas de la flota. Consumido por **mfe-flota**.
+      description: |
+        Retorna resumen y métricas de la flota.
+        **Usado en:** `/dashboard/admin/camiones` (mfe-dashboard)
       tags: [Camiones]
       security:
         - bearerAuth: []
@@ -296,7 +337,9 @@ paths:
   /conductores:
     get:
       summary: Listar conductores
-      description: Retorna todos los conductores registrados. Consumido por **mfe-flota**.
+      description: |
+        Retorna todos los conductores registrados.
+        **Usado en:** `/dashboard/admin/conductores` (mfe-dashboard)
       tags: [Conductores]
       security:
         - bearerAuth: []
@@ -337,7 +380,9 @@ paths:
   /conductores/dashboard/resumen:
     get:
       summary: Resumen dashboard de conductores
-      description: Indicadores y gráficos del panel de conductores. Consumido por **mfe-flota**.
+      description: |
+        Indicadores y gráficos del panel de conductores.
+        **Usado en:** `/dashboard/admin/conductores` (mfe-dashboard)
       tags: [Conductores]
       security:
         - bearerAuth: []
@@ -376,7 +421,9 @@ paths:
   /contratos:
     get:
       summary: Listar contratos
-      description: Retorna contratos de transporte. Consumido por **mfe-contratos**.
+      description: |
+        Retorna contratos de transporte.
+        **Usado en:** `/dashboard/contratos` (mfe-contratos)
       tags: [Contratos]
       security:
         - bearerAuth: []
@@ -432,7 +479,9 @@ paths:
           description: No autorizado
     post:
       summary: Crear contrato
-      description: Registra un nuevo contrato de transporte.
+      description: |
+        Registra un nuevo contrato de transporte.
+        **Usado en:** `/dashboard/contratos` → Nuevo Contrato (mfe-contratos)
       tags: [Contratos]
       security:
         - bearerAuth: []
@@ -466,7 +515,9 @@ paths:
   /dashboard:
     get:
       summary: Dashboard principal
-      description: KPIs y métricas generales. Consumido por **mfe-dashboard**.
+      description: |
+        KPIs y métricas generales del sistema.
+        **Usado en:** `/dashboard/admin/dashboard` (mfe-dashboard)
       tags: [Dashboard]
       security:
         - bearerAuth: []
@@ -511,7 +562,9 @@ paths:
   /dashboard/gerencial:
     get:
       summary: Dashboard gerencial
-      description: Resumen ejecutivo para el rol GERENTE. Consumido por **mfe-dashboard**.
+      description: |
+        Resumen ejecutivo para el rol GERENTE.
+        **Usado en:** `/dashboard/contratos/dashboard` y `/dashboard/gerencial` (mfe-contratos)
       tags: [Dashboard]
       security:
         - bearerAuth: []
