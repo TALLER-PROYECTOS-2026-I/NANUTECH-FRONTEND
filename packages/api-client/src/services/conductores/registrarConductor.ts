@@ -1,14 +1,14 @@
 import apiClient from '../../../index';
 
-// ─── Payload enviado al backend POST /conductores/registro ────────────────────
+// ─── Payload enviado al backend POST /conductores ─────────────────────────────
 export type RegistrarConductorPayload = {
-  nombre: string;
+  nombreCompleto: string;
   email: string;
   dni: string;
   telefono: string;
   numeroLicencia: string;
-  categoriaVehicular: string;
-  fechaVencimientoLicencia: string;
+  categoria: string;
+  fechaVencimiento: string;
 };
 
 // ─── Respuesta del backend ────────────────────────────────────────────────────
@@ -30,7 +30,7 @@ export const registrarConductor = async (
 ): Promise<RegistrarConductorResponse> => {
   // El backend serverless espera los datos de registro en este endpoint.
   const response = await apiClient.post<RegistrarConductorResponse>(
-    '/conductores/registro',
+    '/conductores',
     payload,
   );
   return response.data;

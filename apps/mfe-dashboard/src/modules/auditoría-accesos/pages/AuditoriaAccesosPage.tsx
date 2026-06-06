@@ -110,41 +110,6 @@ function RoleProgress({
   );
 }
 
-const buildResumenFromLogs = (logs: AuditLogItem[]): AuditoriaResumen => {
-  const today = formatDate(new Date());
-  const oneWeekAgo = new Date();
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
-  const parseFecha = (fecha: string) => {
-    const [day, month, year] = fecha.split('/').map(Number);
-    return new Date(year, month - 1, day);
-  };
-
-  const progresoRoles = logs.reduce(
-    (acc, log) => {
-      if (log.rol === 'Administrador') acc.ADMINISTRADOR += 1;
-      if (log.rol === 'Gerente') acc.GERENTE += 1;
-      if (log.rol === 'Conductor') acc.CHOFER += 1;
-      return acc;
-    },
-    { ADMINISTRADOR: 0, GERENTE: 0, CHOFER: 0 },
-  );
-
-  return {
-    metricas: {
-      total_accesos: logs.length,
-      accesos_hoy: logs.filter((log) => log.fecha === today).length,
-      accesos_semana: logs.filter((log) => {
-        const date = parseFecha(log.fecha);
-        return !Number.isNaN(date.getTime()) && date >= oneWeekAgo;
-      }).length,
-      usuarios_unicos: new Set(logs.map((log) => log.email.toLowerCase())).size,
-      ips_unicas: new Set(logs.map((log) => log.ip)).size,
-    },
-    progreso_roles: progresoRoles,
-  };
-};
-
 export default function AuditoriaAccesosPage() {
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
   const [resumen, setResumen] = useState<AuditoriaResumen>(EMPTY_RESUMEN);
@@ -182,18 +147,9 @@ export default function AuditoriaAccesosPage() {
       setLogs(registrosData);
     } catch (err) {
       console.error('Error al consultar auditoria de accesos:', err);
-
-      try {
-        const registrosData = await getAuditoriaAccesos();
-        setLogs(registrosData);
-        setResumen(buildResumenFromLogs(registrosData));
-        setErrorMessage('Se cargo auditoria con el endpoint legacy, pero no se pudo consultar el resumen nuevo.');
-      } catch (fallbackError) {
-        console.error('Error al consultar auditoria legacy:', fallbackError);
-        setResumen(EMPTY_RESUMEN);
-        setLogs([]);
-        setErrorMessage('No se pudo cargar la auditoria de accesos desde el servidor.');
-      }
+      setResumen(EMPTY_RESUMEN);
+      setLogs([]);
+      setErrorMessage('No se pudo cargar la auditoria de accesos desde el servidor.');
     } finally {
       setLoading(false);
       setRefreshing(false);
