@@ -8,14 +8,12 @@ import {
 } from "@nanutech/api-client";
 import AuditoriaAccesosPage from "../../../src/modules/auditoría-accesos";
 
-// Simula el api-client compartido para validar que HU13 consuma endpoints reales sin archivos mock locales.
 vi.mock("@nanutech/api-client", () => ({
   exportAuditoriaAccesosCsv: vi.fn(),
   getAuditoriaAccesos: vi.fn(),
   getAuditoriaResumen: vi.fn(),
 }));
 
-// Resumen equivalente al contrato GET /auditoria/resumen.
 const resumenResponse = {
   metricas: {
     total_accesos: 7,
@@ -31,7 +29,6 @@ const resumenResponse = {
   },
 };
 
-// Registros equivalentes al contrato GET /auditoria/registros.
 const registrosResponse = [
   {
     id: "AUDIT-177542",
@@ -65,7 +62,6 @@ const registrosResponse = [
   },
 ];
 
-// Monta la pagina dentro de Router para mantener el mismo contexto que la app.
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={["/dashboard/admin/auditoria"]}>

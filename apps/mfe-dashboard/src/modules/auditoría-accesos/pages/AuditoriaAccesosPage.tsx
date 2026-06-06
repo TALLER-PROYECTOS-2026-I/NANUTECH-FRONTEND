@@ -8,7 +8,6 @@ import {
 import type { AuditLogItem, AuditoriaResumen } from '@nanutech/api-client';
 import { MonitoreoSidebar } from '../../monitoreo-camiones/components/MonitoreoSidebar';
 
-// Estado base sin datos mockeados para que la HU13 dependa solo del backend.
 const EMPTY_RESUMEN: AuditoriaResumen = {
   metricas: {
     total_accesos: 0,
@@ -24,7 +23,6 @@ const EMPTY_RESUMEN: AuditoriaResumen = {
   },
 };
 
-// Formatea la fecha de cabecera del modulo en formato DD/MM/YYYY.
 const formatDate = (date: Date) => {
   const dd = String(date.getDate()).padStart(2, '0');
   const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -32,7 +30,6 @@ const formatDate = (date: Date) => {
   return `${dd}/${mm}/${yyyy}`;
 };
 
-// Formatea la hora de cabecera en formato 24 horas HH:MM:SS.
 const formatTime = (date: Date) => {
   const hh = String(date.getHours()).padStart(2, '0');
   const min = String(date.getMinutes()).padStart(2, '0');
@@ -40,7 +37,6 @@ const formatTime = (date: Date) => {
   return `${hh}:${min}:${ss}`;
 };
 
-// Descarga un Blob como archivo local desde el navegador.
 const downloadBlob = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -52,7 +48,6 @@ const downloadBlob = (blob: Blob, filename: string) => {
   URL.revokeObjectURL(url);
 };
 
-// Pinta el color de la etiqueta del rol segun las reglas de negocio de HU13.
 const roleBadgeClass = (rol: AuditLogItem['rol']) => {
   if (rol === 'Administrador') return 'bg-red-50 text-red-700 border-red-200';
   if (rol === 'Gerente') return 'bg-blue-50 text-blue-700 border-blue-200';
@@ -60,7 +55,6 @@ const roleBadgeClass = (rol: AuditLogItem['rol']) => {
   return 'bg-slate-50 text-slate-700 border-slate-200';
 };
 
-// Renderiza una tarjeta de metrica superior del panel de auditoria.
 function MetricCard({
   title,
   value,
@@ -86,7 +80,6 @@ function MetricCard({
   );
 }
 
-// Renderiza una barra de progreso para accesos por rol.
 function RoleProgress({
   label,
   value,
@@ -117,7 +110,41 @@ function RoleProgress({
   );
 }
 
-// Orquesta la HU13: resumen, filtros en backend, tabla cronologica y exportacion CSV.
+const buildResumenFromLogs = (logs: AuditLogItem[]): AuditoriaResumen => {
+  const today = formatDate(new Date());
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+  const parseFecha = (fecha: string) => {
+    const [day, month, year] = fecha.split('/').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const progresoRoles = logs.reduce(
+    (acc, log) => {
+      if (log.rol === 'Administrador') acc.ADMINISTRADOR += 1;
+      if (log.rol === 'Gerente') acc.GERENTE += 1;
+      if (log.rol === 'Conductor') acc.CHOFER += 1;
+      return acc;
+    },
+    { ADMINISTRADOR: 0, GERENTE: 0, CHOFER: 0 },
+  );
+
+  return {
+    metricas: {
+      total_accesos: logs.length,
+      accesos_hoy: logs.filter((log) => log.fecha === today).length,
+      accesos_semana: logs.filter((log) => {
+        const date = parseFecha(log.fecha);
+        return !Number.isNaN(date.getTime()) && date >= oneWeekAgo;
+      }).length,
+      usuarios_unicos: new Set(logs.map((log) => log.email.toLowerCase())).size,
+      ips_unicas: new Set(logs.map((log) => log.ip)).size,
+    },
+    progreso_roles: progresoRoles,
+  };
+};
+
 export default function AuditoriaAccesosPage() {
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
   const [resumen, setResumen] = useState<AuditoriaResumen>(EMPTY_RESUMEN);
@@ -129,7 +156,6 @@ export default function AuditoriaAccesosPage() {
   const [horaActual, setHoraActual] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Mantiene la fecha y hora visible actualizada en la cabecera.
   useEffect(() => {
     const tick = () => {
       const now = new Date();
@@ -142,7 +168,6 @@ export default function AuditoriaAccesosPage() {
     return () => window.clearInterval(interval);
   }, []);
 
-  // Consulta metricas globales y registros filtrados directamente al backend.
   const fetchAuditoria = async (showRefreshing = false) => {
     if (showRefreshing) setRefreshing(true);
     setErrorMessage('');
@@ -157,16 +182,24 @@ export default function AuditoriaAccesosPage() {
       setLogs(registrosData);
     } catch (err) {
       console.error('Error al consultar auditoria de accesos:', err);
-      setResumen(EMPTY_RESUMEN);
-      setLogs([]);
-      setErrorMessage('No se pudo cargar la auditoria de accesos desde el servidor.');
+
+      try {
+        const registrosData = await getAuditoriaAccesos();
+        setLogs(registrosData);
+        setResumen(buildResumenFromLogs(registrosData));
+        setErrorMessage('Se cargo auditoria con el endpoint legacy, pero no se pudo consultar el resumen nuevo.');
+      } catch (fallbackError) {
+        console.error('Error al consultar auditoria legacy:', fallbackError);
+        setResumen(EMPTY_RESUMEN);
+        setLogs([]);
+        setErrorMessage('No se pudo cargar la auditoria de accesos desde el servidor.');
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  // Ejecuta la carga inicial y vuelve a consultar cuando cambian busqueda o rol.
   useEffect(() => {
     const timeout = window.setTimeout(() => {
       fetchAuditoria(false);
@@ -175,14 +208,12 @@ export default function AuditoriaAccesosPage() {
     return () => window.clearTimeout(timeout);
   }, [searchTerm, roleFilter]);
 
-  // Cuenta roles desde el resumen real del backend para las barras de progreso.
   const roleCounts = useMemo(() => ({
     Administrador: resumen.progreso_roles.ADMINISTRADOR || 0,
     Gerente: resumen.progreso_roles.GERENTE || 0,
     Conductor: resumen.progreso_roles.CHOFER || 0,
   }), [resumen.progreso_roles]);
 
-  // Descarga el CSV oficial del backend usando los filtros actuales.
   const handleExport = async () => {
     try {
       const blob = await exportAuditoriaAccesosCsv({ search: searchTerm, rol: roleFilter });

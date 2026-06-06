@@ -74,15 +74,6 @@ function App() {
 
       <Route
         path="/dashboard/gerencial"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/dashboard/gerencial"
         element={<Navigate to="/dashboard/contratos/dashboard" replace />}
       />
 
