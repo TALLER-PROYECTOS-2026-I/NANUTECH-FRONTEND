@@ -112,11 +112,19 @@ export const getAuditoriaResumen = async (): Promise<AuditoriaResumen> => {
 export const getAuditoriaAccesos = async (
   filters: AuditoriaFiltros = {},
 ): Promise<AuditLogItem[]> => {
-  const res = await apiClient.get<ApiResponse<BackendAuditLogItem[]>>('/auditoria/registros', {
-    params: buildParams(filters),
-  });
+  try {
+    const res = await apiClient.get<ApiResponse<BackendAuditLogItem[]>>('/auditoria/registros', {
+      params: buildParams(filters),
+    });
 
-  return (res.data.data || []).map(normalizeAuditLog);
+    return (res.data.data || []).map(normalizeAuditLog);
+  } catch (error) {
+    const hasFilters = Boolean(filters.search?.trim() || toBackendRol(filters.rol));
+    if (hasFilters) throw error;
+
+    const legacyRes = await apiClient.get<ApiResponse<AuditLogItem[]>>('/dashboard/auditoria');
+    return legacyRes.data.data;
+  }
 };
 
 // Descarga el CSV oficial generado por GET /auditoria/exportar/csv con los filtros activos.

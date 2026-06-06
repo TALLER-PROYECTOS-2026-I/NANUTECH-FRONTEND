@@ -1,13 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getDashboardConductores } from "@nanutech/api-client";
 import GestionConductoresPage from "../../../src/modules/gestión-conductores";
 
-// ── Mock de recharts: la nueva GestionConductoresPage no renderiza gráficas,
-//    pero el import transitivo de ConductoresCharts se elimina en el rediseño.
-//    Si el mock no se usa se ignora silenciosamente.
 vi.mock("recharts", () => ({
   ResponsiveContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   PieChart: ({ children }: { children: ReactNode }) => <div data-testid="pie-chart">{children}</div>,
@@ -52,7 +49,6 @@ vi.mock("@nanutech/api-client", () => ({
   getDashboardConductores: vi.fn(),
 }));
 
-// ── Datos de prueba ────────────────────────────────────────────────────────────
 const conductoresBackend = [
   {
     id: "conductor-1",
@@ -137,43 +133,52 @@ describe("HU10 - Gestion de conductores", () => {
       if (filters.busqueda) {
         const search = filters.busqueda.toLowerCase();
         conductores = conductores.filter(
-          (c) =>
-            c.nombre.toLowerCase().includes(search) ||
-            c.licencia.toLowerCase().includes(search),
+          (conductor) =>
+            conductor.nombre.toLowerCase().includes(search) ||
+            conductor.licencia.toLowerCase().includes(search),
+        );
+      }
+
+      if (filters.estado && filters.estado !== "TODOS") {
+        conductores = conductores.filter((conductor) =>
+          filters.estado === "ACTIVOS"
+            ? conductor.estado === "ACTIVO"
+            : conductor.estado === "INACTIVO",
         );
       }
 
       if (filters.disponibilidad && filters.disponibilidad !== "TODOS") {
         conductores = conductores.filter(
-          (c) => c.estadoOperacional === filters.disponibilidad,
+          (conductor) => conductor.estadoOperacional === filters.disponibilidad,
         );
       }
 
-      return { ...backendPayload, conductores };
+      return {
+        ...backendPayload,
+        conductores,
+      };
     });
   });
 
-  it("muestra KPIs y listado de conductores al cargar", async () => {
+  it("muestra KPIs, graficas y listado de conductores al cargar", async () => {
     renderPage();
 
-    // HU10 rediseñado: título principal del panel
-    expect(await screen.findByText("Panel de Gestión de Conductores")).toBeInTheDocument();
+    expect(await screen.findByText("Gestion de Conductores")).toBeInTheDocument();
     expect(screen.getByText("Total Conductores")).toBeInTheDocument();
     expect(screen.getByText("Conductores Activos")).toBeInTheDocument();
     expect(screen.getAllByText("Disponibles").length).toBeGreaterThan(0);
     expect(screen.getAllByText("En Ruta").length).toBeGreaterThan(0);
-    // Conductores en la tabla
+    expect(screen.getByTestId("pie-chart")).toBeInTheDocument();
+    expect(screen.getByTestId("bar-chart")).toBeInTheDocument();
     expect(screen.getByText("Carlos Ramirez")).toBeInTheDocument();
     expect(screen.getByText("ABC-123")).toBeInTheDocument();
   });
 
-  it("filtra por busqueda en el campo de texto", async () => {
+  it("filtra por busqueda, estado y disponibilidad", async () => {
     renderPage();
 
     expect(await screen.findByText("Carlos Ramirez")).toBeInTheDocument();
-
-    // El placeholder del buscador en el nuevo diseño
-    fireEvent.change(screen.getByPlaceholderText("Buscar conductor nuevo..."), {
+    fireEvent.change(screen.getByPlaceholderText("Buscar por nombre, DNI o licencia..."), {
       target: { value: "Lucia" },
     });
 
@@ -181,29 +186,31 @@ describe("HU10 - Gestion de conductores", () => {
     await waitFor(() => {
       expect(screen.queryByText("Carlos Ramirez")).not.toBeInTheDocument();
     });
-  });
 
-  it("limpia la busqueda y muestra todos los conductores de nuevo", async () => {
-    renderPage();
-
-    expect(await screen.findByText("Carlos Ramirez")).toBeInTheDocument();
-
-    fireEvent.change(screen.getByPlaceholderText("Buscar conductor nuevo..."), {
-      target: { value: "Lucia" },
-    });
-    expect(await screen.findByText("Lucia Torres")).toBeInTheDocument();
-
-    fireEvent.change(screen.getByPlaceholderText("Buscar conductor nuevo..."), {
+    fireEvent.change(screen.getByPlaceholderText("Buscar por nombre, DNI o licencia..."), {
       target: { value: "" },
     });
-    expect(await screen.findByText("Carlos Ramirez")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Inactivos/i }));
+
+    expect(await screen.findByText("Rosa Vega")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("Lucia Torres")).not.toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getAllByRole("button", { name: /Todos/i })[0]);
+    fireEvent.click(await screen.findByRole("button", { name: /Descansando \(1\)/i }));
+
+    expect(await screen.findByText("Mario Salas")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("Rosa Vega")).not.toBeInTheDocument();
+    });
   });
 
   it("muestra mensaje sin resultados cuando ningun conductor coincide", async () => {
     renderPage();
 
     await screen.findByText("Carlos Ramirez");
-    fireEvent.change(screen.getByPlaceholderText("Buscar conductor nuevo..."), {
+    fireEvent.change(screen.getByPlaceholderText("Buscar por nombre, DNI o licencia..."), {
       target: { value: "no existe" },
     });
 
@@ -216,28 +223,68 @@ describe("HU10 - Gestion de conductores", () => {
     renderPage();
 
     expect(await screen.findByText("No se pudo conectar con el backend")).toBeInTheDocument();
+    expect(screen.getByText(/VITE_API_URL/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Reintentar/i })).toBeInTheDocument();
   });
 
-  it("filtra por disponibilidad al hacer clic en los tabs", async () => {
+  it("advierte cuando el backend responde sin conductores", async () => {
+    vi.mocked(getDashboardConductores).mockResolvedValueOnce({
+      indicadores: {
+        total_conductores: 0,
+        conductores_activos: 0,
+        disponibles: 0,
+        en_ruta: 0,
+      },
+      graficos: {
+        distribucionContrato: [],
+        estadoOperacional: [],
+      },
+      conductores: [],
+    });
+
+    renderPage();
+
+    expect(await screen.findByText("El backend respondio sin conductores registrados")).toBeInTheDocument();
+    expect(screen.getByText(/usuarios con rol CHOFER/i)).toBeInTheDocument();
+  });
+
+  it("permite drill-down desde las graficas y actualiza la tabla", async () => {
     renderPage();
 
     await screen.findByText("Carlos Ramirez");
+    fireEvent.click(screen.getByTestId("bar-descansando"));
 
-    // Tab "En Ruta" — nuevo diseño usa tabs simples
-    fireEvent.click(screen.getByRole("button", { name: /En Ruta/i }));
-
-    expect(await screen.findByText("Lucia Torres")).toBeInTheDocument();
+    expect(await screen.findByText("Mario Salas")).toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.queryByText("Mario Salas")).not.toBeInTheDocument();
+      expect(screen.queryByText("Carlos Ramirez")).not.toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("pie-activos"));
+
+    expect(await screen.findByText("Carlos Ramirez")).toBeInTheDocument();
+    expect(screen.getByText("Lucia Torres")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("Rosa Vega")).not.toBeInTheDocument();
     });
   });
 
-  it("navega a Dar de Alta al hacer clic en el botón Nuevo Conductor", async () => {
+  it("filtra la tabla cuando Recharts envia la key del PieChart dentro de payload", async () => {
     renderPage();
 
-    await screen.findByText("Panel de Gestión de Conductores");
+    await screen.findByText("Rosa Vega");
+    fireEvent.click(screen.getByTestId("pie-activos-payload"));
 
+    expect(await screen.findByText("Carlos Ramirez")).toBeInTheDocument();
+    expect(screen.getByText("Lucia Torres")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("Rosa Vega")).not.toBeInTheDocument();
+    });
+  });
+
+  it("navega a Dar de Alta al hacer clic en el boton Nuevo Conductor", async () => {
+    renderPage();
+
+    await screen.findByText("Gestion de Conductores");
     fireEvent.click(screen.getByRole("button", { name: /Nuevo Conductor/i }));
 
     await waitFor(() => {
@@ -245,15 +292,14 @@ describe("HU10 - Gestion de conductores", () => {
     });
   });
 
-  it("navega a la ficha individual HU20 al hacer clic en una fila", async () => {
+  it("redirige a la ficha individual HU20 al hacer clic en Ver", async () => {
     renderPage();
 
-    // En el nuevo diseño la fila completa es clickeable (no hay botón "Ver")
     const row = await screen.findByText("Lucia Torres");
     const filaConductor = row.closest("tr");
     expect(filaConductor).not.toBeNull();
 
-    fireEvent.click(filaConductor as HTMLTableRowElement);
+    fireEvent.click(within(filaConductor as HTMLTableRowElement).getByRole("button", { name: /Ver/i }));
 
     await waitFor(() => {
       expect(screen.getByTestId("ficha-conductor")).toBeInTheDocument();
