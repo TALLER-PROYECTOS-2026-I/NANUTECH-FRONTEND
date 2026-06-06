@@ -9,8 +9,8 @@ import { ADMIN_ROUTE_PREFIX } from '../../../navigation/adminNav';
 // Categorías vehiculares (MTC Perú)
 // ────────────────────────────────────────────────────────────────────────────────
 const CATEGORIAS_VEHICULARES = [
-  'A-I', 'A-IIa', 'A-IIb', 'A-IIIa', 'A-IIIb', 'A-IIIc',
-  'B-I', 'B-IIa', 'B-IIb', 'B-IIc', 'C-I', 'C-II',
+  'A-I', 'A-II-a', 'A-II-b', 'A-III-a', 'A-III-b', 'A-III-c',
+  'C', 'D', 'E',
 ];
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -248,13 +248,13 @@ export default function DarDeAltaConductorPage() {
     setApiState({ status: 'loading' });
 
     const payload: RegistrarConductorPayload = {
-      nombre: values.nombreCompleto.trim(),
+      nombreCompleto: values.nombreCompleto.trim(),
       email: values.emailCorporativo.trim().toLowerCase(),
       dni: values.dni.trim(),
       telefono: values.telefono.trim(),
       numeroLicencia: values.numeroLicencia.trim().toUpperCase(),
-      categoriaVehicular: values.categoriaVehicular,
-      fechaVencimientoLicencia: values.fechaVencimiento,
+      categoria: values.categoriaVehicular,
+      fechaVencimiento: values.fechaVencimiento,
     };
 
     try {

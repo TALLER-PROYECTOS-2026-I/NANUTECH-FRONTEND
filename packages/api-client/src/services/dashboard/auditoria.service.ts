@@ -46,12 +46,14 @@ export interface AuditoriaResumen {
 
 // Forma cruda del registro que entrega GET /auditoria/registros.
 interface BackendAuditLogItem {
+  id?: string;
   id_registro?: string;
   usuario?: string;
   email?: string;
   rol?: string;
   fecha?: string;
   hora?: string;
+  ip?: string;
   direccion_ip?: string;
   navegador?: string;
 }
@@ -92,13 +94,13 @@ const buildParams = (filters: AuditoriaFiltros = {}) => ({
 
 // Adapta el DTO del backend al contrato unico que usa la pagina HU13.
 const normalizeAuditLog = (item: BackendAuditLogItem): AuditLogItem => ({
-  id: item.id_registro || 'AUDIT-000000',
+  id: item.id || item.id_registro || '',
   usuario: item.usuario || 'Usuario no identificado',
   email: item.email || 'Sin email',
   rol: normalizeRol(item.rol),
   fecha: item.fecha || '--/--/----',
   hora: item.hora || '--:--:--',
-  ip: item.direccion_ip || 'No disponible',
+  ip: item.ip || item.direccion_ip || 'No disponible',
   navegador: item.navegador || 'No disponible',
 });
 
@@ -112,19 +114,11 @@ export const getAuditoriaResumen = async (): Promise<AuditoriaResumen> => {
 export const getAuditoriaAccesos = async (
   filters: AuditoriaFiltros = {},
 ): Promise<AuditLogItem[]> => {
-  try {
-    const res = await apiClient.get<ApiResponse<BackendAuditLogItem[]>>('/auditoria/registros', {
-      params: buildParams(filters),
-    });
+  const res = await apiClient.get<ApiResponse<BackendAuditLogItem[]>>('/auditoria/registros', {
+    params: buildParams(filters),
+  });
 
-    return (res.data.data || []).map(normalizeAuditLog);
-  } catch (error) {
-    const hasFilters = Boolean(filters.search?.trim() || toBackendRol(filters.rol));
-    if (hasFilters) throw error;
-
-    const legacyRes = await apiClient.get<ApiResponse<AuditLogItem[]>>('/dashboard/auditoria');
-    return legacyRes.data.data;
-  }
+  return (res.data.data || []).map(normalizeAuditLog);
 };
 
 // Descarga el CSV oficial generado por GET /auditoria/exportar/csv con los filtros activos.
