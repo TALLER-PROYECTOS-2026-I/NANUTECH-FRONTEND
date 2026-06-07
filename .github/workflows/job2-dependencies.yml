@@ -1,0 +1,89 @@
+name: 📦 JOB 2 — Dependency Scan (npm audit + OWASP + Retire.js)
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  dependency-scan:
+    name: "Dependencies — CVE y librerías vulnerables"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Crear directorio de reportes
+        run: mkdir -p security-reports/deps/{retirejs,owasp}
+
+      - name: npm audit — workspace raíz
+        run: |
+          npm audit --json > security-reports/deps/npm-audit-root.json || true
+
+      - name: npm audit — por workspace
+        run: |
+          for ws in apps/mfe-contratos apps/mfe-dashboard apps/mfe-flota apps/shell-app packages/api-client; do
+            name=$(basename $ws)
+            npm audit --json --workspace=$ws \
+              > "security-reports/deps/npm-audit-${name}.json" 2>/dev/null || \
+            echo '{"auditReportVersion":2,"vulnerabilities":{},"metadata":{"vulnerabilities":{}}}' \
+              > "security-reports/deps/npm-audit-${name}.json"
+          done
+
+      - name: npm audit — Parsear resultados consolidados
+        run: python3 .github/scripts/parse_npm_audit.py
+
+      - name: OWASP Dependency-Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: "NANUTECH-FRONTEND"
+          path: "."
+          format: "JSON"
+          out: "security-reports/deps/owasp"
+          args: >
+            --enableRetired
+            --failOnCVSS 11
+            --exclude "**/dist/**"
+            --exclude "**/coverage/**"
+            --exclude "**/node_modules/.cache/**"
+        continue-on-error: true
+
+      - name: Instalar Retire.js
+        run: npm install -g retire
+
+      - name: Crear .retireignore.json si no existe
+        run: |
+          [ -f .retireignore.json ] && echo "Ya existe" && exit 0
+          cat > .retireignore.json << 'EOF'
+          { "ignore": { "issues": [], "paths": ["dist/","coverage/","node_modules/.cache/"] } }
+          EOF
+
+      - name: Retire.js — Escaneo de código fuente
+        run: |
+          mkdir -p security-reports/deps/retirejs
+          retire \
+            --path apps/ \
+            --outputformat json \
+            --ignorefile .retireignore.json \
+            2>/dev/null \
+            > security-reports/deps/retirejs/retire-apps.json || true
+        continue-on-error: true
+
+      - name: Upload dependency scan artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-scan-results
+          path: security-reports/deps/
+          retention-days: 30

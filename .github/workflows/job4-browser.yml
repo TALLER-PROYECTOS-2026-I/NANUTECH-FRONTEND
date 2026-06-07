@@ -1,0 +1,78 @@
+name: 🌐 JOB 4 — Browser Analysis (Playwright)
+
+# ⚠️  SOLO MANUAL — ver SECURITY-WORKFLOWS-README.md
+
+on:
+  workflow_call:
+    inputs:
+      target_url:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "URL base a analizar"
+        required: true
+        default: "https://testing.dcoqassfbrwx2.amplifyapp.com"
+        type: string
+
+jobs:
+  browser-analysis:
+    name: "Browser — Playwright security analysis"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    env:
+      TARGET: ${{ inputs.target_url || github.event.inputs.target_url || 'https://testing.dcoqassfbrwx2.amplifyapp.com' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Instalar Playwright
+        run: |
+          npm install --no-save @playwright/test typescript
+          npx playwright install chromium --with-deps
+
+      - name: Crear directorio de reportes
+        run: mkdir -p security-reports/browser
+
+      - name: Ejecutar análisis de seguridad browser
+        run: |
+          TARGET_URL="$TARGET" npx playwright test \
+            .github/scripts/browser-security.spec.ts \
+            --reporter=list \
+            --timeout=60000 || true
+
+      - name: Verificar reporte generado
+        if: always()
+        run: |
+          if [ -f security-reports/browser/browser-analysis.json ]; then
+            python3 -c "
+          import json
+          with open('security-reports/browser/browser-analysis.json') as f:
+            d = json.load(f)
+          print(f'Score: {d[\"score\"]}/100')
+          print(f'Hallazgos: {len(d[\"securityFindings\"])}')
+          for f in d['securityFindings']:
+            icon = '🔴' if f['severity']=='CRITICAL' else '🟠' if f['severity']=='HIGH' else '🟡'
+            print(f'  {icon} [{f[\"severity\"]}] {f[\"category\"]}: {f[\"message\"]}')
+          "
+          else
+            echo "⚠️  Reporte no generado — revisar logs de Playwright"
+          fi
+
+      - name: Upload browser analysis artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-analysis-results
+          path: security-reports/browser/
+          retention-days: 30

@@ -1,0 +1,39 @@
+name: Frontend Security Scan
+
+on:
+  push:
+    branches:
+      - testing
+
+jobs:
+  frontend-security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Wait for Amplify deployment
+        run: sleep 90
+
+      - name: Verify frontend availability
+        run: |
+          curl -I https://testing.dcoqassfbrwx2.amplifyapp.com
+
+      - name: OWASP ZAP Full Scan
+        uses: zaproxy/action-full-scan@v0.12.0
+        with:
+          target: 'https://testing.dcoqassfbrwx2.amplifyapp.com'
+          fail_action: false
+          allow_issue_writing: false
+          artifact_name: zap-frontend-report
+
+      - name: Upload Security Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-security-reports
+          path: |
+            report_html.html
+            report_json.json
+            report_md.md

@@ -82,10 +82,11 @@ export const adminNavItems: AdminNavItem[] = [
       </svg>
     ),
   },
+  // HU09: acceso lateral al panel de tracking GPS en tiempo real.
   {
     label: "Tracking GPS",
-    to: ADMIN_DASHBOARD_HOME,
-    accentWhenActive: false,
+    to: `${ADMIN_ROUTE_PREFIX}/tracking-gps`,
+    accentWhenActive: true,
     icon: (
       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />

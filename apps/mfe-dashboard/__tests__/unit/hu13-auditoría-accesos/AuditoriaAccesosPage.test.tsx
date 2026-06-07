@@ -1,20 +1,66 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getAuditoriaAccesos } from "@nanutech/api-client";
+import {
+  exportAuditoriaAccesosCsv,
+  getAuditoriaAccesos,
+  getAuditoriaResumen,
+} from "@nanutech/api-client";
 import AuditoriaAccesosPage from "../../../src/modules/auditoría-accesos";
-import { exportarAuditoriaCsv } from "../../../src/modules/auditoría-accesos/utils/csv";
-import { auditoriaMock } from "../../../src/modules/auditoría-accesos/mocks/auditoriaMock";
 
-// Mock the API client
 vi.mock("@nanutech/api-client", () => ({
+  exportAuditoriaAccesosCsv: vi.fn(),
   getAuditoriaAccesos: vi.fn(),
+  getAuditoriaResumen: vi.fn(),
 }));
 
-// Mock the CSV utility
-vi.mock("../../../src/modules/auditoría-accesos/utils/csv", () => ({
-  exportarAuditoriaCsv: vi.fn(),
-}));
+const resumenResponse = {
+  metricas: {
+    total_accesos: 7,
+    accesos_hoy: 7,
+    accesos_semana: 7,
+    usuarios_unicos: 5,
+    ips_unicas: 1,
+  },
+  progreso_roles: {
+    ADMINISTRADOR: 2,
+    GERENTE: 1,
+    CHOFER: 4,
+  },
+};
+
+const registrosResponse = [
+  {
+    id: "AUDIT-177542",
+    usuario: "Carlos Administrador",
+    email: "admin@nanutech.com",
+    rol: "Administrador" as const,
+    fecha: "05/04/2026",
+    hora: "17:01:00",
+    ip: "190.237.123.52",
+    navegador: "Chrome - Windows",
+  },
+  {
+    id: "AUDIT-177541",
+    usuario: "Maria Gerente",
+    email: "gerente@nanutech.com",
+    rol: "Gerente" as const,
+    fecha: "05/04/2026",
+    hora: "14:32:15",
+    ip: "190.237.123.52",
+    navegador: "Chrome - Windows",
+  },
+  {
+    id: "AUDIT-177536",
+    usuario: "Juan Perez",
+    email: "juan@nanutech.com",
+    rol: "Conductor" as const,
+    fecha: "05/04/2026",
+    hora: "13:39:23",
+    ip: "190.237.123.52",
+    navegador: "Chrome - Windows",
+  },
+];
 
 function renderPage() {
   return render(
@@ -24,151 +70,83 @@ function renderPage() {
   );
 }
 
-describe("HU13 - Auditoría de Accesos Panel", () => {
+describe("HU13 - Auditoria de Accesos Panel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default success mock returning the 7 items
-    vi.mocked(getAuditoriaAccesos).mockResolvedValue(auditoriaMock);
+    vi.mocked(getAuditoriaResumen).mockResolvedValue(resumenResponse);
+    vi.mocked(getAuditoriaAccesos).mockResolvedValue(registrosResponse);
+    vi.mocked(exportAuditoriaAccesosCsv).mockResolvedValue(new Blob(["csv"], { type: "text/csv" }));
+    URL.createObjectURL = vi.fn(() => "blob:auditoria");
+    URL.revokeObjectURL = vi.fn();
   });
 
-  it("renders correctly with cards, banners and role progress bars", async () => {
+  it("muestra metricas, barras por rol y tabla cronologica desde el backend", async () => {
     renderPage();
 
-    // Wait for data to load and table to render
-    await screen.findByText("AUDIT-177542");
-
-    // Check title & banner
-    expect(screen.getByText("Auditoría de Accesos")).toBeInTheDocument();
+    expect(await screen.findByText("AUDIT-177542")).toBeInTheDocument();
+    expect(screen.getByText("Auditoria de Accesos")).toBeInTheDocument();
     expect(screen.getByText(/Registros Inmutables - Solo Lectura/i)).toBeInTheDocument();
 
-    // Check summary card values
-    // Using getAllByText since values like '7' can appear in different cards/places
-    const totalCardVal = screen.getByText("Total Accesos").closest(".rounded-xl")?.querySelector(".text-3xl");
-    const hoyCardVal = screen.getByText("Accesos Hoy").closest(".rounded-xl")?.querySelector(".text-3xl");
-    const semanaCardVal = screen.getByText("Accesos Esta Semana").closest(".rounded-xl")?.querySelector(".text-3xl");
-    const usersCardVal = screen.getByText("Usuarios Únicos").closest(".rounded-xl")?.querySelector(".text-3xl");
-    const ipsCardVal = screen.getByText("IPs Únicas").closest(".rounded-xl")?.querySelector(".text-3xl");
+    expect(screen.getByText("Total Accesos").closest(".rounded-xl")?.querySelector(".text-3xl")?.textContent).toBe("7");
+    expect(screen.getByText("Accesos Hoy").closest(".rounded-xl")?.querySelector(".text-3xl")?.textContent).toBe("7");
+    expect(screen.getByText("Accesos Esta Semana").closest(".rounded-xl")?.querySelector(".text-3xl")?.textContent).toBe("7");
+    expect(screen.getByText("Usuarios Unicos").closest(".rounded-xl")?.querySelector(".text-3xl")?.textContent).toBe("5");
+    expect(screen.getByText("IPs Unicas").closest(".rounded-xl")?.querySelector(".text-3xl")?.textContent).toBe("1");
 
-    expect(totalCardVal?.textContent).toBe("7");
-    expect(hoyCardVal?.textContent).toBe("7");
-    expect(semanaCardVal?.textContent).toBe("7");
-    expect(usersCardVal?.textContent).toBe("5");
-    expect(ipsCardVal?.textContent).toBe("1");
-
-    // Check role indicators
-    expect(screen.getByText("2 de 7")).toBeInTheDocument(); // Admin count
-    expect(screen.getByText("1 de 7")).toBeInTheDocument(); // Gerente count
-    expect(screen.getByText("4 de 7")).toBeInTheDocument(); // Conductor count
-
-    // Check table headers
-    expect(screen.getByText("ID Registro")).toBeInTheDocument();
-    expect(screen.getByText("Dirección IP")).toBeInTheDocument();
+    expect(screen.getByText("2 de 7")).toBeInTheDocument();
+    expect(screen.getByText("1 de 7")).toBeInTheDocument();
+    expect(screen.getByText("4 de 7")).toBeInTheDocument();
+    expect(screen.getByText("Direccion IP")).toBeInTheDocument();
     expect(screen.getByText("Navegador / SO")).toBeInTheDocument();
-
-    // Check rows count
-    const rows = screen.getAllByText(/AUDIT-\d+/);
-    expect(rows.length).toBe(7);
   });
 
-  it("searches and filters data in the access log table", async () => {
+  it("envia busqueda y rol al backend cuando el usuario usa filtros", async () => {
     renderPage();
+    await screen.findByText("Carlos Administrador");
 
-    // Wait for data to load
-    await screen.findByText("AUDIT-177542");
+    fireEvent.change(screen.getByPlaceholderText(/Buscar por usuario, email o ID/i), {
+      target: { value: "Juan" },
+    });
 
-    // Get search input
-    const searchInput = screen.getByPlaceholderText(/Buscar por usuario, email o ID.../i);
+    await waitFor(() => {
+      expect(getAuditoriaAccesos).toHaveBeenLastCalledWith({ search: "Juan", rol: "Todos" });
+    });
 
-    // Search for "Carlos"
-    fireEvent.change(searchInput, { target: { value: "Carlos" } });
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "Conductor" } });
 
-    // Should only show rows containing Carlos
-    expect(screen.getAllByText("Carlos Administrador").length).toBe(2);
-    expect(screen.queryByText("Pedro Gerente")).not.toBeInTheDocument();
-
-    // Clear search
-    fireEvent.change(searchInput, { target: { value: "" } });
-    expect(screen.getByText("Pedro Gerente")).toBeInTheDocument();
-
-    // Search for ID "177536"
-    fireEvent.change(searchInput, { target: { value: "177536" } });
-    expect(screen.getAllByText(/AUDIT-/).length).toBe(1);
-    expect(screen.getByText("AUDIT-177536")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(getAuditoriaAccesos).toHaveBeenLastCalledWith({ search: "Juan", rol: "Conductor" });
+    });
   });
 
-  it("filters access logs by role using dropdown", async () => {
-    renderPage();
-
-    await screen.findByText("Pedro Gerente");
-
-    const select = screen.getByRole("combobox");
-
-    // Filter for "Gerente"
-    fireEvent.change(select, { target: { value: "Gerente" } });
-
-    // Only Pedro Gerente should show up
-    expect(screen.getByText("Pedro Gerente")).toBeInTheDocument();
-    expect(screen.queryByText("Carlos Administrador")).not.toBeInTheDocument();
-    expect(screen.queryByText("Juan Chofer")).not.toBeInTheDocument();
-
-    // Filter for "Administrador"
-    fireEvent.change(select, { target: { value: "Administrador" } });
-    expect(screen.getAllByText("Carlos Administrador").length).toBe(2);
-    expect(screen.queryByText("Pedro Gerente")).not.toBeInTheDocument();
-
-    // Filter for "Todos"
-    fireEvent.change(select, { target: { value: "Todos" } });
-    expect(screen.getByText("Pedro Gerente")).toBeInTheDocument();
-  });
-
-  it("falls back to local mock data if the API fails", async () => {
+  it("muestra estado vacio si el backend no retorna registros o falla la conexion", async () => {
     vi.mocked(getAuditoriaAccesos).mockRejectedValue(new Error("API Error"));
 
     renderPage();
 
-    // Wait for fallback data to load
-    await screen.findByText("AUDIT-177542");
-
-    // Even if it fails, it should show 7 rows because of fallback to auditoriaMock
-    expect(screen.getByText("Auditoría de Accesos")).toBeInTheDocument();
-    const rows = screen.getAllByText(/AUDIT-\d+/);
-    expect(rows.length).toBe(7);
+    expect(await screen.findByText(/No se pudo cargar la auditoria/i)).toBeInTheDocument();
+    expect(screen.getByText(/No se encontraron registros de auditoria/i)).toBeInTheDocument();
+    expect(screen.queryByText("AUDIT-177542")).not.toBeInTheDocument();
   });
 
-  it("updates data correctly when custom API response is returned", async () => {
-    const customResponse = [
-      {
-        id: "AUDIT-999999",
-        usuario: "Ana Gerente",
-        email: "ana.gerente@nanutech.com",
-        rol: "Gerente" as const,
-        fecha: "05/04/2026",
-        hora: "10:00:00",
-        ip: "192.168.1.1",
-        navegador: "Chrome - Linux"
-      }
-    ];
-    vi.mocked(getAuditoriaAccesos).mockResolvedValue(customResponse);
-
+  it("descarga el CSV oficial desde el endpoint del backend con filtros activos", async () => {
     renderPage();
+    await screen.findByText("Maria Gerente");
 
-    expect(await screen.findByText("Ana Gerente")).toBeInTheDocument();
-    
-    const totalCardVal = screen.getByText("Total Accesos").closest(".rounded-xl")?.querySelector(".text-3xl");
-    expect(totalCardVal?.textContent).toBe("1");
-    expect(screen.queryByText("Carlos Administrador")).not.toBeInTheDocument();
-  });
+    fireEvent.change(screen.getByPlaceholderText(/Buscar por usuario, email o ID/i), {
+      target: { value: "Maria" },
+    });
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "Gerente" } });
 
-  it("calls exportarAuditoriaCsv when clicking export button", async () => {
-    renderPage();
+    await waitFor(() => {
+      expect(getAuditoriaAccesos).toHaveBeenLastCalledWith({ search: "Maria", rol: "Gerente" });
+    });
 
-    await screen.findByText("Pedro Gerente");
+    fireEvent.click(screen.getByRole("button", { name: /Exportar CSV/i }));
 
-    const exportBtn = screen.getByRole("button", { name: /Exportar CSV/i });
-    fireEvent.click(exportBtn);
-
-    expect(exportarAuditoriaCsv).toHaveBeenCalledTimes(1);
-    // Should be called with the logs (which are the default 7 logs)
-    expect(exportarAuditoriaCsv).toHaveBeenCalledWith(expect.any(Array));
+    await waitFor(() => {
+      expect(exportAuditoriaAccesosCsv).toHaveBeenCalledWith({ search: "Maria", rol: "Gerente" });
+    });
+    expect(URL.createObjectURL).toHaveBeenCalled();
   });
 });
