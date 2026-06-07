@@ -28,9 +28,12 @@ export * from './src/services/dashboard/dashboard.service';
 export * from './src/services/monitoreoCamiones/camionesHu11';
 export * from './src/services/conductores/conductoresDashboard';
 export * from './src/services/conductores/conductorPerfil';
+export * from './src/services/conductores/registrarConductor';
 export * from './src/services/alertas/alertas.service'; 
 export * from './src/services/dashboard/auditoria.service';
 export * from './src/services/seguimiento-jornada/jornadas.service';
 export * from './src/services/historial-jornadas/historialJornadas.service';
+// HU09: expone los servicios compartidos para resumen, listado y exportacion de Tracking GPS.
+export * from './src/services/tracking-gps/trackingGps.service';
 
 export default apiClient; // Exporta la instancia de axios para hacer peticiones HTTP.

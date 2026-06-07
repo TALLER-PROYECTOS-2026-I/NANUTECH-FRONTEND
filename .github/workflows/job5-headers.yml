@@ -1,0 +1,109 @@
+name: 🔒 JOB 5 — Headers Scan (Observatory + curl)
+
+# ⚠️  SOLO MANUAL — ver SECURITY-WORKFLOWS-README.md
+
+on:
+  workflow_call:
+    inputs:
+      target_url:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "URL a escanear"
+        required: true
+        default: "https://testing.dcoqassfbrwx2.amplifyapp.com"
+        type: string
+
+jobs:
+  headers-scan:
+    name: "Headers — Observatory + curl"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    env:
+      TARGET: ${{ inputs.target_url || github.event.inputs.target_url || 'https://testing.dcoqassfbrwx2.amplifyapp.com' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (para Observatory CLI)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verificar URL accesible
+        run: |
+          echo "🎯 Analizando: $TARGET"
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "$TARGET" || echo "000")
+          [ "$CODE" = "000" ] && echo "❌ URL no accesible" && exit 1 || echo "✅ HTTP $CODE"
+
+      - name: Crear directorio de reportes
+        run: mkdir -p security-reports/headers
+
+      - name: Capturar headers raw con curl
+        run: |
+          curl -s -I -L --max-time 15 \
+            -H "User-Agent: Mozilla/5.0 SecurityAudit" \
+            "$TARGET" > security-reports/headers/curl-raw.txt || true
+          cat security-reports/headers/curl-raw.txt
+
+      - name: Analizar headers de seguridad
+        run: python3 .github/scripts/check_headers.py "$TARGET"
+
+      - name: Mozilla Observatory CLI
+        run: |
+          npm install -g observatory-cli || true
+          HOST=$(echo "$TARGET" | sed 's|https://||;s|http://||;s|/.*||')
+          observatory "$HOST" --format json \
+            > security-reports/headers/observatory-result.json || true
+          observatory "$HOST" || true
+        continue-on-error: true
+
+      - name: Verificar CORS del API Gateway
+        run: |
+          API="https://wbda73ufn9.execute-api.us-east-2.amazonaws.com/dev"
+          echo "=== CORS preflight check ===" | tee security-reports/headers/cors-check.txt
+          curl -s -X OPTIONS \
+            -H "Origin: $TARGET" \
+            -H "Access-Control-Request-Method: POST" \
+            -H "Access-Control-Request-Headers: Content-Type, Authorization" \
+            --max-time 10 "$API/auth/login" -I \
+            | tee -a security-reports/headers/cors-check.txt || true
+        continue-on-error: true
+
+      - name: Generar recomendaciones para amplify.yml
+        run: |
+          cat > security-reports/headers/amplify-headers-recommendations.yml << 'EOF'
+          # ─────────────────────────────────────────────────────────────
+          # Añadir al final de tu amplify.yml actual
+          # ─────────────────────────────────────────────────────────────
+          customHeaders:
+            - pattern: "**/*"
+              headers:
+                - key: "X-Content-Type-Options"
+                  value: "nosniff"
+                - key: "X-Frame-Options"
+                  value: "DENY"
+                - key: "Strict-Transport-Security"
+                  value: "max-age=31536000; includeSubDomains"
+                - key: "Referrer-Policy"
+                  value: "strict-origin-when-cross-origin"
+                - key: "Permissions-Policy"
+                  value: "camera=(), microphone=(), geolocation=(), payment=()"
+                # ⚠️ Ajustar connect-src con tus dominios reales antes de activar
+                - key: "Content-Security-Policy"
+                  value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://wbda73ufn9.execute-api.us-east-2.amazonaws.com; img-src 'self' data: blob:; frame-ancestors 'none';"
+          EOF
+          echo "✅ Ver security-reports/headers/amplify-headers-recommendations.yml"
+
+      - name: Upload headers scan artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: headers-scan-results
+          path: security-reports/headers/
+          retention-days: 30

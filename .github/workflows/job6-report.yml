@@ -1,0 +1,92 @@
+name: 📊 JOB 6 — Publicar Reporte en GitHub Pages
+
+# REQUISITO PREVIO:
+#   Settings → Pages → Source: GitHub Actions
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  publish-report:
+    name: "Generar y publicar reporte HTML"
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Descargar artifact SAST
+        uses: actions/download-artifact@v4
+        with:
+          name: sast-results
+          path: security-reports/sast/
+        continue-on-error: true
+
+      - name: Descargar artifact Dependencies
+        uses: actions/download-artifact@v4
+        with:
+          name: dependency-scan-results
+          path: security-reports/deps/
+        continue-on-error: true
+
+      - name: Descargar artifact DAST
+        uses: actions/download-artifact@v4
+        with:
+          name: dast-results
+          path: security-reports/dast/
+        continue-on-error: true
+
+      - name: Descargar artifact Browser
+        uses: actions/download-artifact@v4
+        with:
+          name: browser-analysis-results
+          path: security-reports/browser/
+        continue-on-error: true
+
+      - name: Descargar artifact Headers
+        uses: actions/download-artifact@v4
+        with:
+          name: headers-scan-results
+          path: security-reports/headers/
+        continue-on-error: true
+
+      - name: Crear directorios vacíos si los jobs no corrieron
+        run: |
+          mkdir -p security-reports/{sast,deps,dast,browser,headers}
+
+      - name: Generar reporte HTML consolidado
+        run: python3 .github/scripts/generate_report.py
+
+      - name: Verificar reporte generado
+        run: |
+          ls -lh public/index.html
+          echo "✅ Reporte HTML listo para publicar"
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact para GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public/
+
+      - name: Deploy a GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Upload reporte como artifact descargable
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-report-html
+          path: public/
+          retention-days: 90

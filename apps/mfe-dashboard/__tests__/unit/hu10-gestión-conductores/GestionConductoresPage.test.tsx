@@ -103,9 +103,7 @@ const backendPayload = {
       { estado: "DE_PERMISO", cantidad: 0 },
     ],
   },
-  conductores: [
-    ...conductoresBackend,
-  ],
+  conductores: [...conductoresBackend],
 };
 
 function renderPage(initialEntry = "/dashboard/admin/conductores") {
@@ -116,6 +114,10 @@ function renderPage(initialEntry = "/dashboard/admin/conductores") {
         <Route
           path="/dashboard/admin/conductores/:id"
           element={<div data-testid="ficha-conductor">Ficha HU20</div>}
+        />
+        <Route
+          path="/dashboard/admin/conductores/dar-de-alta"
+          element={<div data-testid="dar-de-alta">Dar de Alta</div>}
         />
       </Routes>
     </MemoryRouter>,
@@ -276,6 +278,17 @@ describe("HU10 - Gestion de conductores", () => {
     expect(screen.getByText("Lucia Torres")).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.queryByText("Rosa Vega")).not.toBeInTheDocument();
+    });
+  });
+
+  it("navega a Dar de Alta al hacer clic en el boton Nuevo Conductor", async () => {
+    renderPage();
+
+    await screen.findByText("Gestion de Conductores");
+    fireEvent.click(screen.getByRole("button", { name: /Nuevo Conductor/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("dar-de-alta")).toBeInTheDocument();
     });
   });
 

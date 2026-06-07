@@ -1,43 +1,84 @@
 import apiClient from '../../../index';
 
+// Representa los indicadores superiores que entrega GET /dashboard para el admin.
 export type KPIData = {
   totalCamiones: number;
   contratosActivos: number;
   alertasActivas: number;
   ingresos: number;
+  jornadasCompletadas?: number;
+  jornadasActivas?: number;
+  horasTotales?: number;
+  kilometrosTotales?: number;
 };
 
+// Modela una alerta critica de velocidad para el Centro de Alertas del dashboard.
 export type AlertaItem = {
   id: string;
   tipo: string;
   estado: string;
   severidad: string;
+  placa?: string;
+  velocidad_kmh?: number;
+  fecha_hora?: string;
 };
 
-export type Alertas = {
-  alertasActivas: AlertaItem[];
-  contratosPorExpirar: unknown[];
-};
-
-export type GraficaItem = {
-  tipo_evento?: string;
-  total?: number;
-  estado?: string;
-  total_estados?: number;
-};
-
-export type TopCamion = {
-  unidad: string;
-  km: number;
-};
-
-export type DashboardContrato = {
+// Modela un contrato vigente que vence dentro de los proximos 30 dias.
+export type ContratoPorExpirar = {
   id: string;
   cliente: string;
   tarifa: number;
   fecha_fin: string;
 };
 
+// Agrupa las listas de alertas que el backend devuelve para la HU12.
+export type Alertas = {
+  alertasActivas: AlertaItem[];
+  contratosPorExpirar: ContratoPorExpirar[];
+};
+
+// Representa cada segmento de las graficas de estado GPS y estado operativo.
+export type GraficaItem = {
+  tipo_evento?: string;
+  total?: number;
+  estado?: string;
+  total_estados?: number;
+  porcentaje?: number;
+};
+
+// Representa cada camion del ranking de rendimiento Top 6.
+export type TopCamion = {
+  unidad: string;
+  placa?: string;
+  modelo?: string;
+  km?: number;
+  kilometros?: number;
+  horas?: number;
+  eficiencia?: number;
+};
+
+// Representa una fila de estadisticas detalladas por camion si el backend la expone.
+export type DashboardDetalleCamion = {
+  unidad: string;
+  placa: string;
+  modelo?: string;
+  estado?: string;
+  jornadas: number;
+  horas: number;
+  kilometros: number;
+  eficiencia: number;
+};
+
+// Representa una tarjeta del resumen de contratos activos.
+export type DashboardContrato = {
+  id: string;
+  cliente: string;
+  tarifa: number;
+  fecha_fin: string;
+  camionesAsignados?: number;
+};
+
+// Payload completo esperado por el Dashboard Ejecutivo del Administrador.
 export type DashboardPayload = {
   kpis: KPIData;
   alertas: Alertas;
@@ -46,15 +87,18 @@ export type DashboardPayload = {
     camiones?: GraficaItem[];
   };
   topCamiones?: TopCamion[];
+  detalleCamiones?: DashboardDetalleCamion[];
   contratos?: DashboardContrato[];
 };
 
+// Estructura comun de respuesta usada por los endpoints del backend.
 type ApiResponse<T> = {
   success: boolean;
   message?: string;
   data: T;
 };
 
+// Consulta el dashboard ejecutivo y retorna solo la propiedad data que consume el front.
 export const getDashboard = async (): Promise<DashboardPayload> => {
   try {
     const res = await apiClient.get<ApiResponse<DashboardPayload>>('/dashboard');
