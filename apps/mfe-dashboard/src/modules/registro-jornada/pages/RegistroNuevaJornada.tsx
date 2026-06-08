@@ -180,7 +180,16 @@ function RegistroNuevaJornada() {
               <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
                 <div className="px-4 py-3 border-b border-gray-100">
                   <p className="text-xs text-gray-500 mb-0.5">Sesión iniciada como</p>
-                  <p className="text-sm font-bold text-gray-900">admin1@nanutech.com</p>
+                  <p className="text-sm font-bold text-gray-900 truncate">
+                    {(() => {
+                      try {
+                        const userStr = localStorage.getItem("nanutech_user");
+                        return userStr ? JSON.parse(userStr).email : "admin1@nanutech.com";
+                      } catch {
+                        return "admin1@nanutech.com";
+                      }
+                    })()}
+                  </p>
                 </div>
                 <button
                   onClick={handleLogout}
@@ -197,22 +206,49 @@ function RegistroNuevaJornada() {
             )}
  
             {/* Botón usuario */}
-            <button
-              className="w-full flex items-center gap-2 rounded-lg hover:bg-slate-800 transition-colors p-1 -mx-1"
-              onClick={() => setMenuUsuarioAbierto((prev) => !prev)}
-            >
-              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold shrink-0">C</div>
-              <div className="min-w-0 text-left">
-                <p className="text-white text-xs font-semibold truncate">Carlos Administr...</p>
-                <p className="text-slate-400 text-xs truncate">Administrador Gene...</p>
-              </div>
-              <svg
-                className={`w-4 h-4 ml-auto text-slate-400 shrink-0 transition-transform ${menuUsuarioAbierto ? "rotate-180" : ""}`}
-                viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-              >
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </button>
+            {(() => {
+              let displayName = "Carlos Administr...";
+              let displayRole = "Administrador Gene...";
+              try {
+                const userStr = localStorage.getItem("nanutech_user");
+                const role = localStorage.getItem("nanutech_role");
+                if (userStr) {
+                  const user = JSON.parse(userStr);
+                  const name = user.nombres || user.nombre || "";
+                  const lastname = user.apellidos || "";
+                  displayName = `${name} ${lastname}`.trim() || "Usuario";
+                }
+                if (role) {
+                  const upperRole = role.toUpperCase();
+                  if (upperRole === "ADMIN") displayRole = "Administrador General";
+                  else if (upperRole === "GERENTE" || upperRole === "GERENCIAL") displayRole = "Gerente";
+                  else if (upperRole === "CHOFER") displayRole = "Conductor";
+                  else displayRole = role;
+                }
+              } catch {}
+              const initialLetter = displayName.charAt(0).toUpperCase() || "U";
+
+              return (
+                <button
+                  className="w-full flex items-center gap-2 rounded-lg hover:bg-slate-800 transition-colors p-1 -mx-1"
+                  onClick={() => setMenuUsuarioAbierto((prev) => !prev)}
+                >
+                  <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                    {initialLetter}
+                  </div>
+                  <div className="min-w-0 text-left">
+                    <p className="text-white text-xs font-semibold truncate">{displayName}</p>
+                    <p className="text-slate-400 text-xs truncate">{displayRole}</p>
+                  </div>
+                  <svg
+                    className={`w-4 h-4 ml-auto text-slate-400 shrink-0 transition-transform ${menuUsuarioAbierto ? "rotate-180" : ""}`}
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                  >
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+              );
+            })()}
           </div>
         </div>
       </aside>

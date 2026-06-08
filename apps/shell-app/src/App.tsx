@@ -59,6 +59,8 @@ const ContratosLayout = () => {
 function App() {
   return (
     <Routes>
+      <Route path="/" element={<Navigate to="/dashboard/admin/dashboard" replace />} />
+      <Route path="/dashboard" element={<Navigate to="/dashboard/admin/dashboard" replace />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/recuperar" element={<RecoverPage />} />
       <Route path="/recuperar/confirmar" element={<ResetPasswordPage />} />

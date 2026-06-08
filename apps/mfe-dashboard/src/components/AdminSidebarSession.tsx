@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type AdminSidebarSessionProps = {
   /** Texto mostrado bajo “Sesión activa” (ej. tiempo restante). */
@@ -12,11 +12,45 @@ export function AdminSidebarSession({
   sessionDurationLabel = "1h 58m",
 }: AdminSidebarSessionProps) {
   const [menuUsuarioAbierto, setMenuUsuarioAbierto] = useState(false);
+  const [userEmail, setUserEmail] = useState("admin1@nanutech.com");
+  const [displayName, setDisplayName] = useState("Carlos Administr...");
+  const [displayRole, setDisplayRole] = useState("Administrador Gene...");
+
+  useEffect(() => {
+    try {
+      const userStr = localStorage.getItem("nanutech_user");
+      const role = localStorage.getItem("nanutech_role");
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        setUserEmail(user.email || "admin1@nanutech.com");
+        const name = user.nombres || user.nombre || "";
+        const lastname = user.apellidos || "";
+        const fullName = `${name} ${lastname}`.trim();
+        setDisplayName(fullName || "Usuario");
+      }
+      if (role) {
+        const upperRole = role.toUpperCase();
+        if (upperRole === "ADMIN") {
+          setDisplayRole("Administrador General");
+        } else if (upperRole === "GERENTE" || upperRole === "GERENCIAL") {
+          setDisplayRole("Gerente");
+        } else if (upperRole === "CHOFER") {
+          setDisplayRole("Conductor");
+        } else {
+          setDisplayRole(role);
+        }
+      }
+    } catch (e) {
+      console.error("Error loading user data from localStorage:", e);
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.clear();
     window.location.href = "/login";
   };
+
+  const initialLetter = displayName.charAt(0).toUpperCase() || "U";
 
   return (
     <div className="shrink-0 border-t border-slate-700 px-4 py-3">
@@ -34,7 +68,7 @@ export function AdminSidebarSession({
           <div className="absolute bottom-full left-0 right-0 z-50 mb-2 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-xl">
             <div className="border-b border-gray-100 px-4 py-3">
               <p className="mb-0.5 text-xs text-gray-500">Sesión iniciada como</p>
-              <p className="text-sm font-bold text-gray-900">admin1@nanutech.com</p>
+              <p className="text-sm font-bold text-gray-900 truncate">{userEmail}</p>
             </div>
             <button
               type="button"
@@ -57,11 +91,11 @@ export function AdminSidebarSession({
           onClick={() => setMenuUsuarioAbierto((prev) => !prev)}
         >
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
-            C
+            {initialLetter}
           </div>
           <div className="min-w-0 text-left">
-            <p className="truncate text-xs font-semibold text-white">Carlos Administr...</p>
-            <p className="truncate text-xs text-slate-400">Administrador Gene...</p>
+            <p className="truncate text-xs font-semibold text-white">{displayName}</p>
+            <p className="truncate text-xs text-slate-400">{displayRole}</p>
           </div>
           <svg
             className={`ml-auto h-4 w-4 shrink-0 text-slate-400 transition-transform ${menuUsuarioAbierto ? "rotate-180" : ""}`}
@@ -77,3 +111,4 @@ export function AdminSidebarSession({
     </div>
   );
 }
+

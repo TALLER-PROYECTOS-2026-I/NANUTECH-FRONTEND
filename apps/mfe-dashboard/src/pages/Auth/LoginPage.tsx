@@ -1,51 +1,22 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '@nanutech/api-client';
-import { validarFormatoCorreo } from '@nanutech/utils';
 
-const getDashboardRouteByRole = (role: string) => {
-  switch (role.toUpperCase()) {
-    case 'ADMIN':
-      return '/dashboard/admin/dashboard';
-    case 'GERENTE':
-    case 'GERENCIAL':
-      return '/dashboard/contratos/dashboard';
-    default:
-      return '/dashboard/chofer';
-  }
-};
-
-const normalizeNextRoute = (role: string, nextRoute?: string) => {
-  if (!nextRoute) {
-    return getDashboardRouteByRole(role);
-  }
-
-  if (role.toUpperCase() === 'ADMIN' && nextRoute.startsWith('/dashboard/admin')) {
-    return nextRoute === '/dashboard/admin' ? '/dashboard/admin/dashboard' : nextRoute;
-  }
-
-  if (['GERENTE', 'GERENCIAL'].includes(role.toUpperCase()) && nextRoute.startsWith('/dashboard/contratos')) {
-    return nextRoute === '/dashboard/contratos' ? '/dashboard/contratos/dashboard' : nextRoute;
-  }
-
-  return getDashboardRouteByRole(role);
+const validarFormatoCorreo = (email: string) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
 
 export default function LoginPage() {
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
-
-  // Controla el mensaje visible y el estado de carga del boton.
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
   const navigate = useNavigate();
 
-  // Procesa el submit, valida credenciales y crea la sesion local.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    // Evita llamar al backend si el correo no tiene formato valido.
     if (!validarFormatoCorreo(correo)) {
       return setError('Por favor, ingresa un correo válido.');
     }
@@ -53,10 +24,8 @@ export default function LoginPage() {
     setCargando(true);
 
     try {
-      // Autentica contra el cliente API conectado a Cognito.
       const respuesta = await login(correo, password);
-
-      const { user, session, role, nextRoute } = respuesta.data;
+      const { user, session, role } = respuesta.data;
 
       localStorage.setItem('nanutech_token', session.accessToken);
       localStorage.setItem('nanutech_id_token', session.idToken);
@@ -64,57 +33,13 @@ export default function LoginPage() {
       localStorage.setItem('nanutech_role', role);
       localStorage.setItem('nanutech_expires_at', session.expiresAt);
 
-      navigate(normalizeNextRoute(role, nextRoute));
+      // En port 3001 nos redirigimos al dashboard del administrador
+      navigate('/dashboard/admin/dashboard');
     } catch (err: unknown) {
       const error = err as {
         response?: { data?: { message?: string; mensaje?: string } };
         message?: string;
       };
-
-      const isNetworkOrCorsError = !error.response || error.message?.includes('Network Error');
-      if (isNetworkOrCorsError) {
-        console.warn('Network/CORS error detected. Logging in with local mock session.');
-        let resolvedRole = 'ADMIN';
-        let resolvedUser = {
-          id: '11111111-1111-1111-1111-111111111111',
-          email: 'admin@nanutech.com',
-          nombres: 'Jimena (Mock)',
-          apellidos: 'Rodriguez',
-          role: 'admin',
-          estado: 'ACTIVO',
-        };
-
-        if (correo.includes('chofer')) {
-          resolvedRole = 'CHOFER';
-          resolvedUser = {
-            id: '22222222-2222-2222-2222-222222222222',
-            email: 'chofer@nanutech.com',
-            nombres: 'Carlos (Mock)',
-            apellidos: 'Mendoza',
-            role: 'chofer',
-            estado: 'ACTIVO',
-          };
-        } else if (correo.includes('gerente')) {
-          resolvedRole = 'GERENTE';
-          resolvedUser = {
-            id: '55555555-5555-5555-5555-555555555555',
-            email: 'gerente@nanutech.com',
-            nombres: 'Laura (Mock)',
-            apellidos: 'Vasquez',
-            role: 'gerente',
-            estado: 'ACTIVO',
-          };
-        }
-
-        localStorage.setItem('nanutech_token', 'mock-admin-token');
-        localStorage.setItem('nanutech_user', JSON.stringify(resolvedUser));
-        localStorage.setItem('nanutech_role', resolvedRole);
-        localStorage.setItem('nanutech_expires_at', new Date(Date.now() + 86400000).toISOString());
-
-        navigate(normalizeNextRoute(resolvedRole));
-        return;
-      }
-
       const mensaje =
         error.response?.data?.message ||
         error.response?.data?.mensaje ||
@@ -129,14 +54,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen grid grid-cols-1 md:grid-cols-2">
-
       {/* Panel izquierdo — formulario */}
       <div className="flex flex-col justify-between items-center bg-gray-50 p-8">
         <div className="w-full max-w-md flex flex-col items-center mt-8">
-
           {/* Logo superior */}
           <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-            {/* Ícono de camión SVG */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="w-9 h-9 text-white"
@@ -159,7 +81,7 @@ export default function LoginPage() {
 
           {/* Tarjeta del formulario */}
           <div className="w-full bg-white rounded-2xl shadow-md p-8 border border-gray-100">
-            <h3 className="text-xl font-bold text-gray-900 mb-1">Iniciar Sesión</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-1">Iniciar Sesión (Port 3001)</h3>
             <p className="text-sm text-gray-500 mb-6">
               Ingrese sus credenciales para acceder al sistema
             </p>
@@ -225,28 +147,9 @@ export default function LoginPage() {
                 {cargando ? 'Iniciando...' : 'Iniciar Sesión'}
               </button>
             </form>
-
-            <div className="mt-5 text-center">
-              <a href="/recuperar" className="text-sm text-blue-500 hover:underline">
-                ¿Olvidaste tu contraseña?
-              </a>
-            </div>
-
-            {/* Aviso de bloqueo */}
-            <div className="mt-6 pt-5 border-t border-gray-100 flex items-start gap-2 text-xs text-gray-400">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" x2="12" y1="8" y2="12" />
-                <line x1="12" x2="12.01" y1="16" y2="16" />
-              </svg>
-              <span>
-                Después de 5 intentos fallidos, tu cuenta será bloqueada por 15 minutos.
-              </span>
-            </div>
           </div>
         </div>
 
-        {/* Footer izquierdo */}
         <p className="text-xs text-gray-400 mt-8 mb-2">
           © 2026 NANU TECH. Todos los derechos reservados.
         </p>
@@ -254,8 +157,6 @@ export default function LoginPage() {
 
       {/* Panel derecho — marketing */}
       <div className="hidden md:flex flex-col justify-center items-start bg-slate-900 p-16 text-white relative overflow-hidden">
-
-        {/* Patrón de cruces de fondo */}
         <div
           className="absolute inset-0 opacity-20"
           style={{
@@ -265,7 +166,6 @@ export default function LoginPage() {
         />
 
         <div className="z-10 w-full max-w-lg">
-          {/* Logo panel derecho */}
           <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mb-8 shadow-lg">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -290,51 +190,6 @@ export default function LoginPage() {
           <p className="text-slate-400 text-lg mb-10">
             Control total de tu operación logística en tiempo real
           </p>
-
-          {/* Cards de roles */}
-          <div className="flex flex-col gap-4">
-            {/* Administradores */}
-            <div className="flex items-center gap-4 bg-slate-800 rounded-xl px-5 py-4">
-              <div className="w-11 h-11 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  <path d="m9 12 2 2 4-4" />
-                </svg>
-              </div>
-              <div>
-                <p className="font-bold text-white text-sm">Para Administradores</p>
-                <p className="text-slate-400 text-xs">Gestión completa del sistema, camiones, contratos y operaciones</p>
-              </div>
-            </div>
-
-            {/* Gerentes */}
-            <div className="flex items-center gap-4 bg-slate-800 rounded-xl px-5 py-4">
-              <div className="w-11 h-11 rounded-xl bg-purple-500 flex items-center justify-center shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  <path d="m9 12 2 2 4-4" />
-                </svg>
-              </div>
-              <div>
-                <p className="font-bold text-white text-sm">Para Gerentes</p>
-                <p className="text-slate-400 text-xs">Análisis estadístico y reportes detallados de jornadas laborales</p>
-              </div>
-            </div>
-
-            {/* Conductores */}
-            <div className="flex items-center gap-4 bg-slate-800 rounded-xl px-5 py-4">
-              <div className="w-11 h-11 rounded-xl bg-green-500 flex items-center justify-center shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  <path d="m9 12 2 2 4-4" />
-                </svg>
-              </div>
-              <div>
-                <p className="font-bold text-white text-sm">Para Conductores</p>
-                <p className="text-slate-400 text-xs">Registra jornadas de trabajo de forma rápida y sencilla</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

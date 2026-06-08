@@ -1,6 +1,7 @@
 import axios from 'axios'; // Importa axios para hacer peticiones HTTP.
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'; // Obtiene la URL base del entorno.
+console.log('[API Client] Base URL configurada:', BASE_URL);
 
 export const apiClient = axios.create({ // Crea una instancia de axios con la URL base y el header de contenido. Axios es una librería para hacer peticiones HTTP.
   baseURL: BASE_URL, // Define la URL base de la API.
