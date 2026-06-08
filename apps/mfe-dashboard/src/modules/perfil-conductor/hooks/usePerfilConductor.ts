@@ -14,7 +14,7 @@ export function usePerfilConductor(conductorId: string) {
   // Mensaje visible cuando alguna llamada al backend falla.
   const [error, setError] = useState<string | null>(null);
 
-const mockStats: Record<string, any> = {
+const mockStats: Record<string, Record<string, string | number>> = {
   '22222222-2222-2222-2222-222222222222': {
     conductor_id: '22222222-2222-2222-2222-222222222222',
     conductor_nombre: 'Carlos Mendoza',
@@ -47,7 +47,7 @@ const mockStats: Record<string, any> = {
   }
 };
 
-const mockJornadas: Record<string, any[]> = {
+const mockJornadas: Record<string, Array<Record<string, string | number | null>>> = {
   '22222222-2222-2222-2222-222222222222': [
     {
       id: 'cccc0001-0000-0000-0000-000000000001',

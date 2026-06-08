@@ -242,7 +242,9 @@ function RegistroJornada() {
                   else if (upperRole === "CHOFER") displayRole = "Conductor";
                   else displayRole = role;
                 }
-              } catch {}
+              } catch {
+                // ignore
+              }
               const initialLetter = displayName.charAt(0).toUpperCase() || "U";
 
               return (

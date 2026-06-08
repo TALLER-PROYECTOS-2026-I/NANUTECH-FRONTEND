@@ -309,7 +309,6 @@ function AlertasModal({
 }) {
   const tipo = detail?.tipo_alerta ?? jornada.tipoAlerta;
   const isPanic = tipo === 'PANICO';
-  const tone = isPanic ? 'red' : 'orange';
   const title = isPanic ? 'ALERTA DE PANICO' : 'AUXILIO MECANICO';
   const description = isPanic
     ? 'ALERTA DE PANICO - Prioridad Critica'
