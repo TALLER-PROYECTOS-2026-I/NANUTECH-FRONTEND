@@ -131,7 +131,7 @@ const mockDashboardData = {
         });
         if (mounted) setPanel(normalizePanelConductores(data));
       } catch (requestError) {
-        const isTest = import.meta.env.MODE === 'test' || (typeof process !== 'undefined' && process.env.NODE_ENV === 'test');
+        const isTest = import.meta.env.MODE === 'test' || (typeof (globalThis as any).process !== 'undefined' && (globalThis as any).process.env.NODE_ENV === 'test');
         if (isTest) {
           if (mounted) {
             setPanel(emptyPanelConductores);

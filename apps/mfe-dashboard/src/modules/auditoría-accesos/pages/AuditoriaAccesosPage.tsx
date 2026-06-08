@@ -194,7 +194,7 @@ export default function AuditoriaAccesosPage() {
       setResumen(resumenData);
       setLogs(registrosData);
     } catch (err) {
-      const isTest = import.meta.env.MODE === 'test' || (typeof process !== 'undefined' && process.env.NODE_ENV === 'test');
+      const isTest = import.meta.env.MODE === 'test' || (typeof (globalThis as any).process !== 'undefined' && (globalThis as any).process.env.NODE_ENV === 'test');
       if (isTest) {
         setResumen(EMPTY_RESUMEN);
         setLogs([]);

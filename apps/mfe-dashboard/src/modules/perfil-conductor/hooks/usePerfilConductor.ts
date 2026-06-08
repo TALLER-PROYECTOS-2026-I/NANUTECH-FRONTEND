@@ -1,7 +1,22 @@
 import { useEffect, useState } from 'react';
 import { getEstadisticasConductor, getJornadas } from '@nanutech/api-client';
+import type { EstadisticasConductorApi } from '@nanutech/api-client';
 import type { EstadisticasConductor, JornadaHistorial } from '../types';
 import { normalizeEstadisticas } from '../utils/normalize';
+
+interface MockJornada {
+  id: string;
+  conductor_id: string;
+  fecha: string;
+  conductor: string;
+  camion: string;
+  contrato: string;
+  horario: string;
+  duracion_total: string;
+  km: number;
+  estado: string;
+  observaciones: string | null;
+}
 
 // Hook de integracion de HU20: carga estadisticas y jornadas del conductor seleccionado.
 export function usePerfilConductor(conductorId: string) {
@@ -14,7 +29,7 @@ export function usePerfilConductor(conductorId: string) {
   // Mensaje visible cuando alguna llamada al backend falla.
   const [error, setError] = useState<string | null>(null);
 
-const mockStats: Record<string, Record<string, string | number>> = {
+const mockStats: Record<string, EstadisticasConductorApi> = {
   '22222222-2222-2222-2222-222222222222': {
     conductor_id: '22222222-2222-2222-2222-222222222222',
     conductor_nombre: 'Carlos Mendoza',
@@ -47,7 +62,7 @@ const mockStats: Record<string, Record<string, string | number>> = {
   }
 };
 
-const mockJornadas: Record<string, Array<Record<string, string | number | null>>> = {
+const mockJornadas: Record<string, MockJornada[]> = {
   '22222222-2222-2222-2222-222222222222': [
     {
       id: 'cccc0001-0000-0000-0000-000000000001',
