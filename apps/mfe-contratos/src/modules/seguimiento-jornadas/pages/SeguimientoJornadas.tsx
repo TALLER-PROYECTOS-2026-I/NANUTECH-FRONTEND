@@ -198,16 +198,6 @@ function Icon({ children, tone = 'slate' }: { children: string; tone?: 'blue' | 
   );
 }
 
-function DocumentIcon() {
-  return (
-    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M7 3h7l5 5v13H7V3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M14 3v6h5" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M10 13h6M10 17h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 function DownloadIcon() {
   return (
     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
