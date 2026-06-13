@@ -83,6 +83,9 @@ const formatDateTime = (value?: string | null) => {
   })}`;
 };
 
+const formatInteger = (value: number) =>
+  new Intl.NumberFormat('es-PE', { maximumFractionDigits: 0 }).format(Math.round(value));
+
 const formatTime = (value?: string | null) => {
   if (!value) return '-';
 
@@ -180,7 +183,7 @@ const buildBackendFilters = (
   observaciones: observationFilter === 'con-observaciones' ? 'true' : '',
 });
 
-function Icon({ children, tone = 'slate' }: { children: string; tone?: 'blue' | 'red' | 'orange' | 'green' | 'purple' | 'slate' }) {
+function Icon({ children, tone = 'slate' }: { children: ReactNode; tone?: 'blue' | 'red' | 'orange' | 'green' | 'purple' | 'slate' }) {
   const tones = {
     blue: 'bg-blue-50 text-blue-600',
     red: 'bg-red-50 text-red-600',
@@ -207,18 +210,60 @@ function DocumentIcon() {
   );
 }
 
+function ClockIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2" />
+      <path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function WarningIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 4 21 20H3L12 4Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+      <path d="M12 9v5M12 17h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function WrenchIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M15.5 5.5a4.5 4.5 0 0 0 3 5.4l-7.6 7.6a2.2 2.2 0 0 1-3.1-3.1l7.6-7.6a4.5 4.5 0 0 0 .1-2.3Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="m7.5 16.5 2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function TrendIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 16 9 11l4 4 7-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M15 7h5v5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function MetricCard({
   label,
   value,
   helper,
   tone,
-  symbol,
+  icon,
 }: {
   label: string;
   value: number | string;
   helper: string;
   tone: 'blue' | 'red' | 'orange' | 'green' | 'purple';
-  symbol: string;
+  icon: ReactNode;
 }) {
   const borders = {
     blue: 'border-l-blue-500',
@@ -227,16 +272,23 @@ function MetricCard({
     green: 'border-l-emerald-500',
     purple: 'border-l-purple-500',
   };
+  const valueColors = {
+    blue: 'text-slate-950',
+    red: 'text-red-600',
+    orange: 'text-orange-600',
+    green: 'text-emerald-600',
+    purple: 'text-purple-600',
+  };
 
   return (
     <article className={`rounded-lg border border-slate-200 border-l-4 bg-white p-5 shadow-sm ${borders[tone]}`}>
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-medium text-slate-500">{label}</p>
-          <p className="mt-4 text-3xl font-bold text-slate-950">{value}</p>
+          <p className={`mt-4 text-3xl font-bold ${valueColors[tone]}`}>{value}</p>
           <p className="mt-2 text-xs text-slate-500">{helper}</p>
         </div>
-        <Icon tone={tone}>{symbol}</Icon>
+        <Icon tone={tone}>{icon}</Icon>
       </div>
     </article>
   );
@@ -426,6 +478,7 @@ export default function HistorialJornadasPage() {
   const [rows, setRows] = useState<JornadaHistorial[]>([]);
   const [metrics, setMetrics] = useState<HistorialJornadasMetrics>(emptyMetrics);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
   const [search, setSearch] = useState('');
   const [conductor, setConductor] = useState('');
   const [alertFilter, setAlertFilter] = useState('');
@@ -447,6 +500,7 @@ export default function HistorialJornadasPage() {
 
     const load = async () => {
       setLoading(true);
+      setErrorMessage('');
       try {
         const [records, currentMetrics] = await Promise.all([
           getHistorialJornadas(backendFilters),
@@ -456,6 +510,12 @@ export default function HistorialJornadasPage() {
         if (active) {
           setRows(records.map(normalizeJornada));
           setMetrics(currentMetrics);
+        }
+      } catch {
+        if (active) {
+          setRows([]);
+          setMetrics(emptyMetrics);
+          setErrorMessage('No se pudo cargar el historial de jornadas desde el servidor.');
         }
       } finally {
         if (active) setLoading(false);
@@ -479,12 +539,18 @@ export default function HistorialJornadasPage() {
 
     return rows.filter((row) => {
       const matchesConductor = !conductorText || row.conductor.toLowerCase() === conductorText;
+      const matchesAlert = !alertFilter || row.tipoAlerta === alertFilter;
       const matchesObservations =
         observationFilter !== 'sin-observaciones' || !row.tieneObservaciones;
 
-      return matchesConductor && matchesObservations;
+      return matchesConductor && matchesAlert && matchesObservations;
     });
-  }, [conductor, observationFilter, rows]);
+  }, [alertFilter, conductor, observationFilter, rows]);
+  const jornadasCompletadas = rows.filter((row) => row.estado === 'COMPLETADA').length;
+  const observacionesPercent = metrics.total_jornadas
+    ? Math.round((metrics.jornadas_observaciones / metrics.total_jornadas) * 100)
+    : 0;
+  const kmTotalesEstimados = metrics.km_promedio * metrics.total_jornadas;
 
   const handleOpenAlert = async (row: JornadaHistorial) => {
     setSelectedAlert(row);
@@ -493,20 +559,27 @@ export default function HistorialJornadasPage() {
 
     try {
       setAlertDetail(await getHistorialAlertaDetalle(row.id));
+    } catch {
+      setAlertDetail(null);
     } finally {
       setLoadingAlert(false);
     }
   };
 
   const handleExport = async () => {
-    const blob = await exportHistorialJornadasCsv(backendFilters);
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    setErrorMessage('');
+    try {
+      const blob = await exportHistorialJornadasCsv(backendFilters);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
 
-    link.href = url;
-    link.download = 'historial-jornadas.csv';
-    link.click();
-    URL.revokeObjectURL(url);
+      link.href = url;
+      link.download = 'historial-jornadas.csv';
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setErrorMessage('No se pudo exportar el historial de jornadas.');
+    }
   };
 
   return (
@@ -532,12 +605,48 @@ export default function HistorialJornadasPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <MetricCard label="Total Jornadas" value={metrics.total_jornadas} helper="Registros del periodo" tone="blue" symbol="◎" />
-        <MetricCard label="Alertas Panico" value={metrics.alertas_panico} helper="Jornadas afectadas" tone="red" symbol="!" />
-        <MetricCard label="Auxilio Mecanico" value={metrics.auxilio_mecanico} helper="Jornadas afectadas" tone="orange" symbol="⌁" />
-        <MetricCard label="Con Observaciones" value={metrics.jornadas_observaciones} helper="Auditoria pendiente" tone="purple" symbol="▣" />
-        <MetricCard label="KM Promedio" value={Math.round(metrics.km_promedio)} helper="Kilometros por jornada" tone="green" symbol="↗" />
+        <MetricCard
+          label="Total Jornadas"
+          value={metrics.total_jornadas}
+          helper={`${jornadasCompletadas} completadas`}
+          tone="blue"
+          icon={<ClockIcon />}
+        />
+        <MetricCard
+          label="Alertas Pánico"
+          value={metrics.alertas_panico}
+          helper="Jornadas afectadas"
+          tone="red"
+          icon={<WarningIcon />}
+        />
+        <MetricCard
+          label="Auxilio Mecánico"
+          value={metrics.auxilio_mecanico}
+          helper="Jornadas afectadas"
+          tone="orange"
+          icon={<WrenchIcon />}
+        />
+        <MetricCard
+          label="Con Observaciones"
+          value={metrics.jornadas_observaciones}
+          helper={`${observacionesPercent}% del total`}
+          tone="purple"
+          icon={<DocumentIcon />}
+        />
+        <MetricCard
+          label="KM Promedio"
+          value={Math.round(metrics.km_promedio)}
+          helper={`${formatInteger(kmTotalesEstimados)} km totales`}
+          tone="green"
+          icon={<TrendIcon />}
+        />
       </div>
+
+      {errorMessage && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+          {errorMessage}
+        </div>
+      )}
 
       <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 p-5">

@@ -6,6 +6,7 @@ import LoginPage from './pages/Auth/LoginPage';
 import RecoverPage from './pages/Auth/RecoverPage';
 import ResetPasswordPage from './pages/Auth/ResetPasswordPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import MfeLoader from './components/MfeLoader';
   
 const RemoteDashboard = lazy(() => import('dashboardApp/Dashboard'));
 const RemoteFlota = lazy(() => import('flotaApp/Dashboard'));
@@ -14,13 +15,7 @@ const RemoteContratos = lazy(() => import('contratosApp/App'));
 /* v8 ignore start */
 const DashboardLayout = () => {
   return (
-    <Suspense
-      fallback={
-        <div className="text-blue-700 animate-pulse mt-4">
-          Cargando módulo de Dashboard...
-        </div>
-      }
-    >
+    <Suspense fallback={<MfeLoader modulo="Dashboard" />}>
       <RemoteDashboard />
     </Suspense>
   );
@@ -28,13 +23,7 @@ const DashboardLayout = () => {
 
 const ChoferLayout = () => {
   return (
-    <Suspense
-      fallback={
-        <div className="text-blue-700 animate-pulse mt-4">
-          Cargando módulo de Flota...
-        </div>
-      }
-    >
+    <Suspense fallback={<MfeLoader modulo="Flota" />}>
       <RemoteFlota />
     </Suspense>
   );
@@ -42,13 +31,7 @@ const ChoferLayout = () => {
 
 const ContratosLayout = () => {
   return (
-    <Suspense
-      fallback={
-        <div className="text-blue-700 animate-pulse mt-4">
-          Cargando modulo de Contratos...
-        </div>
-      }
-    >
+    <Suspense fallback={<MfeLoader modulo="Contratos" />}>
       <RemoteContratos />
     </Suspense>
   );

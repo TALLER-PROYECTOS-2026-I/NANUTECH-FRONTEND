@@ -17,6 +17,10 @@ export type CamionDisponible = {
   id: string;
   placa: string;
   modelo: string;
+  anio?: number;
+  capacidadKg?: number;
+  capacidadTon?: number;
+  estado?: string;
 };
 
 // Registro auditable que se agrega cada vez que el usuario guarda cambios.
@@ -44,6 +48,12 @@ export type DetalleContrato = {
   descripcion: string;
   origen: string;
   destino: string;
+  distanciaEstimadaKm: number;
+  tarifaPorKm: number;
+  tarifaPorHora: number;
+  tarifaEspera: number;
+  camionesAsignados: number;
+  camionesAsignadosDetalle: CamionDisponible[];
   fechaCreacion: string;
   ultimaActualizacion: string;
   unidadIds: string[];

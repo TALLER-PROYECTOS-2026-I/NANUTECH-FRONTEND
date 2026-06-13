@@ -248,15 +248,16 @@ describe('GestionContratosPage - HU06', () => {
     expect(onNuevoContrato).toHaveBeenCalledTimes(1);
   });
 
-  it('usa datos mock si falla la consulta principal y el respaldo', async () => {
+  it('muestra estado de error si falla la consulta principal y el respaldo', async () => {
     getContratosMock.mockRejectedValue(new Error('Error listado'));
     getContratosVigentesMock.mockRejectedValue(new Error('Error respaldo'));
 
     render(<GestionContratosPage onNuevoContrato={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText('CONT-2024-001')).toBeTruthy();
+      expect(screen.getByText(/No se pudieron cargar los contratos desde el servidor/i)).toBeTruthy();
     });
-    expect(screen.getByText(/Mostrando 10 de 11 contratos/i)).toBeTruthy();
+    expect(screen.getByText(/No hay contratos registrados/i)).toBeTruthy();
+    expect(screen.queryByText('CONT-2024-001')).toBeNull();
   });
 });

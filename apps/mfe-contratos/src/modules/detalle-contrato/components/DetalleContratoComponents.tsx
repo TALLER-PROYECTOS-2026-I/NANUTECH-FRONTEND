@@ -96,7 +96,7 @@ export function DetailTabs({ activeTab, onChange }: TabsProps) {
 }
 
 // Tarjeta reutilizable con titulo y borde discreto.
-export function DetailCard({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
+export function DetailCard({ title, subtitle, children }: { title: ReactNode; subtitle?: ReactNode; children: ReactNode }) {
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
       <div className="mb-4">
@@ -124,7 +124,6 @@ export function GeneralInfoCard({ contrato }: { contrato: DetalleContrato }) {
         <InfoItem label="Tipo de Servicio" value={formatTipoServicio(contrato.tipoServicio)} />
         <InfoItem label="Fecha de Fin" value={formatDate(contrato.fechaFin)} />
         <InfoItem label="Fecha de Inicio" value={formatDate(contrato.fechaInicio)} />
-        <InfoItem label="Ruta" value={`${contrato.origen} -> ${contrato.destino}`} />
       </div>
       <div className="mt-5 rounded-md bg-slate-50 p-4">
         <p className="text-xs font-semibold text-slate-500">Descripcion</p>
@@ -152,7 +151,7 @@ export function StatsCards({ contrato }: { contrato: DetalleContrato }) {
     <div className="space-y-4">
       <DetailCard title="Estadisticas">
         <div className="space-y-3">
-          <StatRow label="Camiones" value={contrato.unidadIds.length} tone="blue" />
+          <StatRow label="Camiones" value={contrato.camionesAsignados} tone="blue" />
           <StatRow label="Duracion" value={`${getDurationDays(contrato.fechaInicio, contrato.fechaFin)} dias`} tone="green" />
           <StatRow label="Dias restantes" value={remainingDays > 0 ? remainingDays : 0} tone="purple" />
         </div>
@@ -189,20 +188,108 @@ function StatRow({ label, value, tone }: { label: string; value: string | number
   );
 }
 
+const getCapacityKg = (truck: CamionDisponible) => {
+  if (truck.capacidadKg) return truck.capacidadKg;
+  if (truck.capacidadTon) return truck.capacidadTon * 1000;
+  return 0;
+};
+
+const getTruckStatusLabel = (estado?: string) => {
+  const normalized = estado?.toUpperCase();
+  if (normalized === 'EN_JORNADA' || normalized === 'EN_USO') return 'En Uso';
+  if (normalized === 'DISPONIBLE') return 'Disponible';
+  if (normalized === 'MANTENIMIENTO') return 'Mantenimiento';
+  if (normalized === 'INACTIVA') return 'Inactivo';
+  return '';
+};
+
+const getTruckStatusClassName = (estado?: string) => {
+  const normalized = estado?.toUpperCase();
+  if (normalized === 'EN_JORNADA' || normalized === 'EN_USO') return 'bg-green-100 text-green-700';
+  if (normalized === 'DISPONIBLE') return 'bg-blue-100 text-blue-700';
+  if (normalized === 'MANTENIMIENTO') return 'bg-amber-100 text-amber-700';
+  if (normalized === 'INACTIVA') return 'bg-slate-100 text-slate-600';
+  return 'bg-slate-100 text-slate-600';
+};
+
+function TruckIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M3 7.5A1.5 1.5 0 0 1 4.5 6h8A1.5 1.5 0 0 1 14 7.5V16H3V7.5Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M14 10h3.2l3.3 3.3V16H14v-6Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M6.5 18.5a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6ZM17.5 18.5a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6Z" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
 // Vista de camiones asignados; cumple el contador visible de unidades vinculadas.
 export function AssignedTrucksCard({ contrato, trucks }: { contrato: DetalleContrato; trucks: CamionDisponible[] }) {
-  const assigned = trucks.filter((truck) => contrato.unidadIds.includes(truck.id));
+  const assigned = contrato.camionesAsignadosDetalle.length
+    ? contrato.camionesAsignadosDetalle
+    : trucks.filter((truck) => contrato.unidadIds.includes(truck.id));
+  const assignedCount = assigned.length || contrato.camionesAsignados;
 
   return (
-    <DetailCard title={`Camiones Asignados (${assigned.length})`} subtitle="Unidades vinculadas a este contrato">
+    <DetailCard
+      title={(
+        <span className="inline-flex items-center gap-2">
+          <TruckIcon className="h-5 w-5 text-purple-600" />
+          Gestión de Camiones Asignados
+        </span>
+      )}
+      subtitle={(
+        <span>
+          Unidades vinculadas a este contrato: Total de unidades: {' '}
+          <span className="font-bold text-purple-600">{assignedCount}</span>
+        </span>
+      )}
+    >
       {assigned.length ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {assigned.map((truck) => (
-            <div key={truck.id} className="rounded-lg border border-blue-100 bg-blue-50 p-4">
-              <p className="font-bold text-slate-950">{truck.placa}</p>
-              <p className="text-sm text-slate-600">{truck.modelo}</p>
-            </div>
-          ))}
+        <div className="grid gap-4 md:grid-cols-2">
+          {assigned.map((truck) => {
+            const capacityKg = getCapacityKg(truck);
+            const statusLabel = getTruckStatusLabel(truck.estado);
+
+            return (
+              <div key={truck.id} className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-purple-100 text-purple-600">
+                  <TruckIcon className="h-6 w-6" />
+                </span>
+                <div className="min-w-0">
+                  <p className="font-bold text-slate-950">{truck.placa}</p>
+                  <p className="text-sm text-slate-600">{truck.modelo}</p>
+                  {(truck.anio || capacityKg > 0) && (
+                    <p className="mt-1 text-xs text-slate-500">
+                      {truck.anio ? `Año: ${truck.anio}` : ''}
+                      {truck.anio && capacityKg > 0 ? ' | ' : ''}
+                      {capacityKg > 0 ? `Cap: ${capacityKg.toLocaleString('en-US')} kg` : ''}
+                    </p>
+                  )}
+                  {statusLabel && (
+                    <span className={`mt-2 inline-flex rounded-md px-2 py-1 text-xs font-bold ${getTruckStatusClassName(truck.estado)}`}>
+                      {statusLabel}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : assignedCount > 0 ? (
+        <div className="grid min-h-36 place-items-center rounded-lg border border-dashed border-blue-200 bg-blue-50 text-center text-sm text-blue-700">
+          El backend reporta {assignedCount} camion{assignedCount === 1 ? '' : 'es'} asignado{assignedCount === 1 ? '' : 's'}, pero no envio el detalle de las unidades.
         </div>
       ) : (
         <div className="grid min-h-36 place-items-center rounded-lg border border-dashed border-slate-200 text-center text-sm text-slate-500">
@@ -278,21 +365,25 @@ export function EditContractPanel({
   trucks,
   error,
   onChange,
-  onToggleTruck,
   onSave,
   onCancel,
+  saving = false,
 }: {
   contrato: DetalleContrato;
   form: DetalleContratoForm;
   trucks: CamionDisponible[];
   error?: string;
   onChange: (patch: Partial<DetalleContratoForm>) => void;
-  onToggleTruck: (truckId: string) => void;
   onSave: () => void;
   onCancel: () => void;
+  saving?: boolean;
 }) {
   const handleInput = (key: keyof DetalleContratoForm) => (event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     onChange({ [key]: event.target.value } as Partial<DetalleContratoForm>);
+  const assignedTrucks = contrato.camionesAsignadosDetalle.length
+    ? contrato.camionesAsignadosDetalle
+    : trucks.filter((truck) => contrato.unidadIds.includes(truck.id));
+  const selectedCount = assignedTrucks.length || contrato.camionesAsignados;
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -341,29 +432,42 @@ export function EditContractPanel({
       </DetailCard>
 
       <div className="space-y-4">
-        <DetailCard title="Camiones Asignados *" subtitle="Seleccione los camiones para este contrato">
+        <DetailCard title="Camiones Asignados" subtitle="Unidades vinculadas a este contrato">
+          <p className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+            La asignacion de camiones requiere un endpoint especifico del backend. Esta vista solo guarda los datos generales del contrato.
+          </p>
           <div className="space-y-2">
-            {trucks.map((truck) => (
-              <label key={truck.id} className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-3 hover:bg-slate-50">
-                <input
-                  type="checkbox"
-                  checked={form.unidadIds.includes(truck.id)}
-                  onChange={() => onToggleTruck(truck.id)}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600"
-                />
-                <span>
-                  <span className="block text-sm font-bold text-slate-950">{truck.placa}</span>
-                  <span className="block text-xs text-slate-500">{truck.modelo}</span>
-                </span>
-              </label>
-            ))}
+            {assignedTrucks.length ? (
+              assignedTrucks.map((truck) => (
+                <div key={truck.id} className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <span className="h-2 w-2 rounded-full bg-blue-500" />
+                  <span>
+                    <span className="block text-sm font-bold text-slate-950">{truck.placa}</span>
+                    <span className="block text-xs text-slate-500">{truck.modelo}</span>
+                  </span>
+                </div>
+              ))
+            ) : contrato.camionesAsignados > 0 ? (
+              <p className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+                El backend reporta {contrato.camionesAsignados} camion{contrato.camionesAsignados === 1 ? '' : 'es'} asignado{contrato.camionesAsignados === 1 ? '' : 's'}, pero no envio el detalle de las unidades.
+              </p>
+            ) : (
+              <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                No hay camiones asignados a este contrato.
+              </p>
+            )}
           </div>
-          <p className="mt-4 text-sm text-slate-500">Camiones seleccionados: {form.unidadIds.length}</p>
+          <p className="mt-4 text-sm text-slate-500">Camiones seleccionados: {selectedCount}</p>
         </DetailCard>
 
         {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm font-semibold text-red-600">{error}</p>}
-        <button type="button" onClick={onSave} className="w-full rounded-md bg-blue-600 px-5 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700">
-          Guardar Cambios
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={saving}
+          className="w-full rounded-md bg-blue-600 px-5 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+        >
+          {saving ? 'Guardando...' : 'Guardar Cambios'}
         </button>
         <button type="button" onClick={onCancel} className="w-full rounded-md border border-slate-200 bg-white px-5 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">
           Cancelar

@@ -72,46 +72,112 @@ type ApiResponse<T> = {
   data: T;
 };
 
+type HistorialGerencialPayload =
+  | HistorialJornadaRaw[]
+  | {
+      registros?: HistorialJornadaRaw[];
+      resumen?: Partial<
+        HistorialJornadasMetrics & {
+          auxilios_mecanicos: number | string;
+          jornadas_con_observaciones: number | string;
+        }
+      >;
+    };
+
 // Elimina parametros vacios para no enviar filtros innecesarios al backend.
 const cleanParams = (filters: HistorialJornadasFilters) =>
   Object.fromEntries(
     Object.entries(filters).filter(([, value]) => value !== undefined && value !== null && value !== '')
   );
 
+const extractRecords = (payload: HistorialGerencialPayload | unknown): HistorialJornadaRaw[] => {
+  if (Array.isArray(payload)) return payload;
+
+  if (payload && typeof payload === 'object' && Array.isArray((payload as { registros?: unknown }).registros)) {
+    return (payload as { registros: HistorialJornadaRaw[] }).registros;
+  }
+
+  return [];
+};
+
+const getJornadasFallback = async (filters: HistorialJornadasFilters): Promise<HistorialJornadaRaw[]> => {
+  const response = await apiClient.get<ApiResponse<HistorialJornadaRaw[]> | HistorialJornadaRaw[]>('/jornadas', {
+    params: cleanParams(filters),
+  });
+
+  const payload = response.data;
+
+  if (Array.isArray(payload)) return payload;
+  return Array.isArray(payload?.data) ? payload.data : [];
+};
+
+const computeMetricsFromRecords = (records: HistorialJornadaRaw[]): HistorialJornadasMetrics => {
+  const totalKm = records.reduce((sum, row) => sum + Number(row.km_recorridos ?? 0), 0);
+
+  return {
+    total_jornadas: records.length,
+    alertas_panico: records.filter((row) => row.es_panico || row.tipo_alerta === 'PANICO').length,
+    auxilio_mecanico: records.filter(
+      (row) => row.es_auxilio || row.tipo_alerta === 'AUXILIO_MECANICO'
+    ).length,
+    jornadas_observaciones: records.filter(
+      (row) => Boolean(row.tiene_observaciones) || Boolean(String(row.observaciones ?? '').trim())
+    ).length,
+    km_promedio: records.length ? totalKm / records.length : 0,
+  };
+};
+
 // Consulta el registro detallado de jornadas con alertas y observaciones.
 export const getHistorialJornadas = async (
   filters: HistorialJornadasFilters = {}
 ): Promise<HistorialJornadaRaw[]> => {
-  const response = await apiClient.get<ApiResponse<HistorialJornadaRaw[]>>(
-    '/jornadas/historial-gerencial',
-    {
-      params: cleanParams(filters),
-    }
-  );
+  try {
+    const response = await apiClient.get<ApiResponse<HistorialGerencialPayload>>(
+      '/jornadas/historial-gerencial',
+      {
+        params: cleanParams(filters),
+      }
+    );
 
-  return response.data?.data ?? [];
+    return extractRecords(response.data?.data);
+  } catch {
+    return getJornadasFallback(filters);
+  }
 };
 
 // Consulta las metricas agregadas para las tarjetas superiores de HU17.
 export const getHistorialJornadasMetrics = async (
   filters: HistorialJornadasFilters = {}
 ): Promise<HistorialJornadasMetrics> => {
-  const response = await apiClient.get<ApiResponse<Partial<HistorialJornadasMetrics>>>(
-    '/jornadas/historial-gerencial/metrics',
-    {
+  try {
+    const response = await apiClient.get<
+      ApiResponse<
+        Partial<
+          HistorialJornadasMetrics & {
+            auxilios_mecanicos: number | string;
+            jornadas_con_observaciones: number | string;
+          }
+        >
+      >
+    >('/jornadas/historial-gerencial/metrics', {
       params: cleanParams(filters),
-    }
-  );
+    });
 
-  const data = response.data?.data ?? {};
+    const data = response.data?.data ?? {};
 
-  return {
-    total_jornadas: Number(data.total_jornadas ?? 0),
-    alertas_panico: Number(data.alertas_panico ?? 0),
-    auxilio_mecanico: Number(data.auxilio_mecanico ?? 0),
-    jornadas_observaciones: Number(data.jornadas_observaciones ?? 0),
-    km_promedio: Number(data.km_promedio ?? 0),
-  };
+    return {
+      total_jornadas: Number(data.total_jornadas ?? 0),
+      alertas_panico: Number(data.alertas_panico ?? 0),
+      auxilio_mecanico: Number(data.auxilio_mecanico ?? data.auxilios_mecanicos ?? 0),
+      jornadas_observaciones: Number(
+        data.jornadas_observaciones ?? data.jornadas_con_observaciones ?? 0
+      ),
+      km_promedio: Number(data.km_promedio ?? 0),
+    };
+  } catch {
+    const records = await getJornadasFallback(filters);
+    return computeMetricsFromRecords(records);
+  }
 };
 
 // Obtiene el detalle completo de una alerta para abrir el modal de emergencia.

@@ -119,6 +119,25 @@ describe('HU20 - Perfil tecnico del conductor', () => {
     });
   });
 
+  it('muestra Estado Actual usando el estado operacional enviado desde HU10', async () => {
+    vi.mocked(getEstadisticasConductor).mockResolvedValueOnce({
+      ...estadisticasBackend,
+      jornadas_activas: 0,
+      estado_actual: 'INACTIVO',
+    });
+    vi.mocked(getJornadas).mockResolvedValueOnce([]);
+
+    renderPerfil();
+
+    const estadoActualLabel = await screen.findByText('Estado Actual');
+    const estadoActualCard = estadoActualLabel.closest('div')?.parentElement;
+
+    expect(estadoActualCard).not.toBeNull();
+    expect(estadoActualCard).toHaveTextContent('En Ruta');
+    expect(estadoActualCard).toHaveTextContent('Conductor actualmente en jornada');
+    expect(screen.queryByText('Sin jornada activa')).not.toBeInTheDocument();
+  });
+
   it('permite filtrar el historial por estado y busqueda', async () => {
     renderPerfil();
 
