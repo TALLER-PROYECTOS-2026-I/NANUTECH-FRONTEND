@@ -1,6 +1,3 @@
-// IP mock mientras el backend aun no entrega la direccion real del usuario.
-export const MOCK_AUDIT_IP = '127.0.0.1';
-
 // Opciones del esquema de cobro editable en el detalle.
 export const TIPO_SERVICIO_OPTIONS = [
   { value: 'POR_VIAJE', label: 'Por Viaje' },

@@ -187,7 +187,7 @@ function FormField({
 // ────────────────────────────────────────────────────────────────────────────────
 // Página principal HU22 — conectada al backend real
 // ────────────────────────────────────────────────────────────────────────────────
-export default function DarDeAltaConductorPage() {
+export default function RegistrarNuevoConductorPage() {
   const navigate = useNavigate();
 
   const [values, setValues] = useState<FormValues>({
@@ -303,7 +303,7 @@ export default function DarDeAltaConductorPage() {
           </div>
         </header>
 
-        <main className="flex-1 px-8 py-6 max-w-3xl">
+        <main className="mx-auto w-full max-w-4xl flex-1 px-8 py-6">
           {/* Breadcrumb */}
           <button
             type="button"
@@ -318,7 +318,7 @@ export default function DarDeAltaConductorPage() {
           </button>
 
           <p className="text-xs font-semibold text-blue-500 mb-1 tracking-wide">NANU TECH · HU22</p>
-          <h2 className="text-3xl font-bold text-gray-900 mb-1">Dar de Alta Nuevo Conductor</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-1">Registrar Nuevo Conductor</h2>
           <p className="text-sm text-gray-500 mb-6">
             Los campos marcados con <span className="text-red-500 font-bold">*</span> son obligatorios.
           </p>

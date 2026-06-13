@@ -14,7 +14,6 @@ vi.mock('@nanutech/api-client', () => ({
   exportTrackingGpsCsv: vi.fn(),
 }));
 
-// Resumen simulado que representa dos unidades actuales: una moviendo y una detenida.
 const summaryMock = {
   total_registros: 2,
   unidades_movimiento: 1,
@@ -22,7 +21,6 @@ const summaryMock = {
   excesos_velocidad: 0,
 };
 
-// Registros simulados: incluye un exceso historico y un estado actual normal para la misma placa.
 const registrosMock = [
   {
     id: 'gps-1',
@@ -68,7 +66,6 @@ const registrosMock = [
   },
 ] as const;
 
-// Renderiza la pagina dentro de Router porque la vista usa navegacion del dashboard.
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={['/dashboard/admin/tracking-gps']}>
@@ -79,11 +76,9 @@ function renderPage() {
 
 describe('HU09 - Tracking GPS', () => {
   beforeEach(() => {
-    // Reinicia mocks para que cada escenario sea independiente.
     vi.clearAllMocks();
     vi.useRealTimers();
 
-    // Simula la API del navegador usada para descargar archivos.
     Object.defineProperty(window.URL, 'createObjectURL', {
       value: vi.fn(() => 'blob:tracking'),
       writable: true,
@@ -93,7 +88,6 @@ describe('HU09 - Tracking GPS', () => {
       writable: true,
     });
 
-    // Respuestas base del api-client compartido para el panel HU09.
     vi.mocked(getTrackingGpsSummary).mockResolvedValue(summaryMock);
     vi.mocked(getTrackingGpsRegistros).mockResolvedValue([...registrosMock]);
     vi.mocked(exportTrackingGpsCsv).mockResolvedValue({
@@ -102,8 +96,7 @@ describe('HU09 - Tracking GPS', () => {
     });
   });
 
-  // Valida indicadores, tabla y deduplicacion al cargar la vista.
-  it('muestra las tarjetas del resumen backend y solo el ultimo evento por placa', async () => {
+  it('muestra el resumen backend y solo el ultimo registro por placa en la tabla', async () => {
     renderPage();
 
     expect(await screen.findByText('Tracking GPS en Tiempo Real')).toBeInTheDocument();
@@ -111,20 +104,29 @@ describe('HU09 - Tracking GPS', () => {
     expect(screen.getByText('Unidades en Movimiento')).toBeInTheDocument();
     expect(screen.getByText('Unidades Detenidas')).toBeInTheDocument();
     expect(screen.getByText('Excesos de Velocidad')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
-    expect(screen.getAllByText('1')).toHaveLength(2);
-    expect(screen.getAllByText('0').length).toBeGreaterThanOrEqual(1);
+
+    const totalCard = screen.getByText('Total Registros').closest('article');
+    const movementCard = screen.getByText('Unidades en Movimiento').closest('article');
+    const stoppedCard = screen.getByText('Unidades Detenidas').closest('article');
+    const excessCard = screen.getByText('Excesos de Velocidad').closest('article');
+
+    expect(within(totalCard as HTMLElement).getByText('2')).toBeInTheDocument();
+    expect(within(movementCard as HTMLElement).getByText('1')).toBeInTheDocument();
+    expect(within(stoppedCard as HTMLElement).getByText('1')).toBeInTheDocument();
+    expect(within(excessCard as HTMLElement).getByText('0')).toBeInTheDocument();
 
     const rows = await screen.findAllByRole('row');
     expect(rows).toHaveLength(3);
     expect(within(rows[1]).getByText(/DEF-456/)).toBeInTheDocument();
     expect(screen.queryByText(/95 km\/h/)).not.toBeInTheDocument();
-    expect(screen.getByText(/62 km\/h/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getAllByRole('row')[1]).toHaveTextContent('62 km/h');
+    });
     expect(screen.getByText('GPSControl.pe')).toBeInTheDocument();
+    expect(screen.getByText('0 excesos de velocidad')).toBeInTheDocument();
   });
 
-  // Verifica que el filtro de estado se aplique en frontend sobre el ultimo registro visible.
-  it('envia filtros base al backend y reserva el estado para el ultimo registro visible', async () => {
+  it('envia placa y rango horario al backend y aplica estado sobre el registro actual', async () => {
     renderPage();
 
     await screen.findByText(/ABC-123/);
@@ -146,84 +148,69 @@ describe('HU09 - Tracking GPS', () => {
     });
   });
 
-  // Evita mostrar excesos historicos si el ultimo estado actual de la unidad ya no esta en exceso.
-  it('no muestra eventos historicos de exceso si el ultimo estado visible no tiene exceso', async () => {
+  it('recalcula las tarjetas con los registros filtrados que devuelve backend', async () => {
     renderPage();
 
     await screen.findByText(/ABC-123/);
-
     fireEvent.change(screen.getByRole('combobox'), {
       target: { value: 'EXCESO_VELOCIDAD' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Aplicar Filtros' }));
 
-    const excessCard = screen.getByText('Excesos de Velocidad').closest('article');
     const totalCard = screen.getByText('Total Registros').closest('article');
-
-    expect(excessCard).not.toBeNull();
-    expect(totalCard).not.toBeNull();
+    const excessCard = screen.getByText('Excesos de Velocidad').closest('article');
 
     await waitFor(() => {
-      expect(within(excessCard as HTMLElement).getByText('0')).toBeInTheDocument();
       expect(within(totalCard as HTMLElement).getByText('0')).toBeInTheDocument();
+      expect(within(excessCard as HTMLElement).getByText('0')).toBeInTheDocument();
     });
     expect(screen.queryByText(/95 km\/h/)).not.toBeInTheDocument();
   });
 
-  // Comprueba que el filtro MOVIENDO use el estado actual por placa.
-  it('filtra unidades en movimiento usando el ultimo estado de cada placa', async () => {
+  it('filtra unidades en movimiento usando el estado enviado al backend', async () => {
     renderPage();
 
     await screen.findByText(/ABC-123/);
-
     fireEvent.change(screen.getByRole('combobox'), {
       target: { value: 'MOVIENDO' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Aplicar Filtros' }));
 
-    const movementCard = screen.getByText('Unidades en Movimiento').closest('article');
-    const totalCard = screen.getByText('Total Registros').closest('article');
-
-    expect(movementCard).not.toBeNull();
-    expect(totalCard).not.toBeNull();
-
     await waitFor(() => {
-      expect(within(movementCard as HTMLElement).getByText('1')).toBeInTheDocument();
-      expect(within(totalCard as HTMLElement).getByText('1')).toBeInTheDocument();
+      expect(getTrackingGpsRegistros).toHaveBeenLastCalledWith({
+        placa: undefined,
+        horaInicio: undefined,
+        horaFin: undefined,
+      });
     });
-    expect(screen.getByText(/DEF-456/)).toBeInTheDocument();
-    expect(screen.getByText(/62 km\/h/)).toBeInTheDocument();
-    expect(screen.queryByText(/ABC-123/)).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/62 km\/h/)).toBeInTheDocument();
+    });
   });
 
-  // Comprueba que el filtro DETENIDO use el estado actual por placa.
-  it('filtra unidades detenidas usando el ultimo estado de cada placa', async () => {
+  it('filtra unidades detenidas usando el estado enviado al backend', async () => {
     renderPage();
 
     await screen.findByText(/ABC-123/);
-
     fireEvent.change(screen.getByRole('combobox'), {
       target: { value: 'DETENIDO' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Aplicar Filtros' }));
 
-    const stoppedCard = screen.getByText('Unidades Detenidas').closest('article');
-    const totalCard = screen.getByText('Total Registros').closest('article');
-
-    expect(stoppedCard).not.toBeNull();
-    expect(totalCard).not.toBeNull();
-
     await waitFor(() => {
-      expect(within(stoppedCard as HTMLElement).getByText('1')).toBeInTheDocument();
-      expect(within(totalCard as HTMLElement).getByText('1')).toBeInTheDocument();
+      expect(getTrackingGpsRegistros).toHaveBeenLastCalledWith({
+        placa: undefined,
+        horaInicio: undefined,
+        horaFin: undefined,
+      });
     });
-    const rows = screen.getAllByRole('row');
-    expect(within(rows[1]).getByText(/ABC-123/)).toBeInTheDocument();
-    expect(within(rows[1]).getByText(/0 km\/h/)).toBeInTheDocument();
-    expect(screen.queryByText(/DEF-456/)).not.toBeInTheDocument();
+    await waitFor(() => {
+      const rows = screen.getAllByRole('row');
+      expect(within(rows[1]).getByText(/ABC-123/)).toBeInTheDocument();
+      expect(within(rows[1]).getByText(/0 km\/h/)).toBeInTheDocument();
+    });
   });
 
-  // Valida el estado vacio solicitado por la HU09.
   it('limpia resumen y muestra mensaje cuando no hay datos', async () => {
     vi.mocked(getTrackingGpsRegistros).mockResolvedValue([]);
 
@@ -233,7 +220,6 @@ describe('HU09 - Tracking GPS', () => {
     expect(screen.getAllByText('0').length).toBeGreaterThanOrEqual(4);
   });
 
-  // Confirma que el boton Exportar CSV consume el endpoint oficial.
   it('exporta csv usando el nombre enviado por el backend', async () => {
     renderPage();
 

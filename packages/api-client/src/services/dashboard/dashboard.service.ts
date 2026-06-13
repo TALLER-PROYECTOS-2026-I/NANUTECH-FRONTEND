@@ -113,6 +113,7 @@ export const getDashboard = async (): Promise<DashboardPayload> => {
 
 export type DashboardGerencialParams = {
   tiempo: string;
+  search?: string;
 };
 
 export type ResumenGeneral = {

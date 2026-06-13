@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   exportTrackingGpsCsv,
   getTrackingGpsRegistros,
@@ -12,7 +12,6 @@ import type {
 } from '@nanutech/api-client';
 import { MonitoreoSidebar } from '../../monitoreo-camiones/components/MonitoreoSidebar';
 
-// Modelo interno normalizado para renderizar la tabla de tracking GPS.
 type RegistroTracking = {
   id: string;
   placa: string;
@@ -24,7 +23,8 @@ type RegistroTracking = {
   excesoVelocidad: boolean;
 };
 
-// Resumen en cero para estados sin datos o error de conexion.
+type TrackingIconName = 'pin' | 'trend' | 'navigation' | 'bolt' | 'file' | 'gauge' | 'pulse';
+
 const EMPTY_SUMMARY: TrackingGpsSummaryApi = {
   total_registros: 0,
   unidades_movimiento: 0,
@@ -33,32 +33,29 @@ const EMPTY_SUMMARY: TrackingGpsSummaryApi = {
 };
 
 const ERROR_MESSAGE =
-  'No se encontraron eventos de rastreo disponibles o error de conexión con el proveedor';
+  'No se encontraron eventos de rastreo disponibles o error de conexion con el proveedor';
 
-// Etiquetas visibles para los estados enviados por el backend.
 const ESTADO_LABEL: Record<EstadoTrackingGpsApi, string> = {
   MOVIENDO: 'En Movimiento',
   DETENIDO: 'Detenido',
   EXCESO_VELOCIDAD: 'Exceso Velocidad',
 };
 
-// Nombres comerciales de los proveedores GPS.
 const PROVIDER_LABEL: Record<string, string> = {
   GPSCONTROL: 'GPSControl.pe',
   GLOBALGPS: 'GlobalGPSPeru.com',
 };
 
-// Convierte numeros recibidos como string/null a number seguro.
 const toNumber = (value: number | string | null | undefined): number => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-// Regla de exceso de velocidad: booleano backend, estado tecnico o velocidad mayor a 90.
-const isSpeedingRegistro = (registro: Pick<RegistroTracking, 'estado' | 'velocidadKmh' | 'excesoVelocidad'>): boolean =>
+const isSpeedingRegistro = (
+  registro: Pick<RegistroTracking, 'estado' | 'velocidadKmh' | 'excesoVelocidad'>,
+): boolean =>
   registro.excesoVelocidad || registro.estado === 'EXCESO_VELOCIDAD' || registro.velocidadKmh > 90;
 
-// Normaliza la respuesta del API al modelo que usa la pagina.
 const normalizeRegistro = (registro: TrackingGpsRegistroApi): RegistroTracking => ({
   id: registro.id,
   placa: registro.placa,
@@ -67,10 +64,12 @@ const normalizeRegistro = (registro: TrackingGpsRegistroApi): RegistroTracking =
   distanciaTotal: toNumber(registro.distancia_total),
   velocidadKmh: toNumber(registro.velocidad_kmh),
   estado: registro.estado,
-  excesoVelocidad: Boolean(registro.exceso_velocidad) || registro.estado === 'EXCESO_VELOCIDAD' || toNumber(registro.velocidad_kmh) > 90,
+  excesoVelocidad:
+    Boolean(registro.exceso_velocidad) ||
+    registro.estado === 'EXCESO_VELOCIDAD' ||
+    toNumber(registro.velocidad_kmh) > 90,
 });
 
-// Obtiene el registro mas reciente por placa para representar el estado actual.
 const getLatestRegistrosByPlate = (registros: RegistroTracking[]): RegistroTracking[] => {
   const latestByPlate = new Map<string, RegistroTracking>();
 
@@ -87,18 +86,15 @@ const getLatestRegistrosByPlate = (registros: RegistroTracking[]): RegistroTrack
   return [...latestByPlate.values()];
 };
 
-// Indica si el usuario ya aplico al menos un filtro.
 const hasActiveFilters = (filters: TrackingGpsFilters): boolean =>
   Object.values(filters).some((value) => Boolean(value));
 
-// Envia al backend filtros base; el estado se aplica luego sobre registros actuales.
 const buildRegistrosRequestFilters = (filters: TrackingGpsFilters): TrackingGpsFilters => ({
   placa: filters.placa,
   horaInicio: filters.horaInicio,
   horaFin: filters.horaFin,
 });
 
-// Filtra por estado operativo actual despues de quedarnos con el ultimo evento por placa.
 const filterRegistrosByCurrentState = (
   registros: RegistroTracking[],
   filters: TrackingGpsFilters,
@@ -111,18 +107,71 @@ const filterRegistrosByCurrentState = (
   });
 };
 
-// Recalcula los KPIs con los registros visibles cuando hay filtros activos.
 const buildSummaryFromVisibleRegistros = (registros: RegistroTracking[]): TrackingGpsSummaryApi => ({
   total_registros: registros.length,
-  unidades_movimiento: registros.filter((registro) =>
-    registro.estado === 'MOVIENDO' || registro.estado === 'EXCESO_VELOCIDAD',
+  unidades_movimiento: registros.filter(
+    (registro) => registro.estado === 'MOVIENDO' || registro.estado === 'EXCESO_VELOCIDAD',
   ).length,
   unidades_detenidas: registros.filter((registro) => registro.estado === 'DETENIDO').length,
   excesos_velocidad: registros.filter(isSpeedingRegistro).length,
 });
 
+function TrackingIcon({
+  name,
+  className = 'h-5 w-5',
+}: {
+  name: TrackingIconName;
+  className?: string;
+}) {
+  const paths: Record<TrackingIconName, ReactNode> = {
+    pin: (
+      <>
+        <path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11Z" />
+        <circle cx="12" cy="10" r="2.5" />
+      </>
+    ),
+    trend: (
+      <>
+        <path d="m4 16 5-5 4 4 7-8" />
+        <path d="M15 7h5v5" />
+      </>
+    ),
+    navigation: <path d="M12 3 5 21l7-4 7 4-7-18Z" />,
+    bolt: <path d="M13 2 4 14h7l-1 8 10-13h-7l1-7Z" />,
+    file: (
+      <>
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+        <path d="M14 2v6h6" />
+        <path d="M12 12v6" />
+        <path d="m9 15 3 3 3-3" />
+      </>
+    ),
+    gauge: (
+      <>
+        <path d="M4 14a8 8 0 0 1 16 0" />
+        <path d="M12 14l4-5" />
+        <path d="M12 14h.01" />
+      </>
+    ),
+    pulse: <path d="M3 12h4l2-6 4 12 2-6h6" />,
+  };
 
-// Formatea la fecha que se muestra en la cabecera de la pantalla.
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      {paths[name]}
+    </svg>
+  );
+}
+
 const formatFechaActual = (date: Date) =>
   date.toLocaleDateString('es-PE', {
     weekday: 'long',
@@ -131,7 +180,6 @@ const formatFechaActual = (date: Date) =>
     day: 'numeric',
   });
 
-// Formatea la hora de actualizacion visible en la cabecera.
 const formatHoraActual = (date: Date) =>
   date.toLocaleTimeString('es-PE', {
     hour: '2-digit',
@@ -139,7 +187,6 @@ const formatHoraActual = (date: Date) =>
     hour12: true,
   });
 
-// Convierte timestamps del backend a DD/MM/YYYY HH:MM:SS.
 const formatFechaHora = (value: string) => {
   const date = new Date(value);
 
@@ -160,26 +207,23 @@ const formatFechaHora = (value: string) => {
   return `${fecha} ${hora}`;
 };
 
-// Formatea la distancia recorrida en kilometros.
 const formatKm = (value: number) =>
   `${value.toLocaleString('es-PE', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 3,
   })} km`;
 
-// Convierte el datetime-local al formato que espera la API.
 const normalizeDateTimeForApi = (value: string) => {
   if (!value) return undefined;
   return value.length === 16 ? `${value}:00` : value;
 };
 
-// Define estilos visuales por umbral de velocidad.
 const getSpeedTone = (speed: number) => {
   if (speed > 90) {
     return {
       row: 'bg-red-50',
       text: 'font-bold text-red-600',
-      icon: '↯',
+      iconClass: 'text-red-400',
     };
   }
 
@@ -187,18 +231,17 @@ const getSpeedTone = (speed: number) => {
     return {
       row: 'bg-yellow-50',
       text: 'text-orange-600',
-      icon: '△',
+      iconClass: 'text-orange-500',
     };
   }
 
   return {
     row: 'bg-white',
     text: 'text-emerald-600',
-    icon: '↗',
+    iconClass: 'text-emerald-500',
   };
 };
 
-// Descarga el contenido CSV que devuelve el endpoint de exportacion.
 const downloadBlob = (content: string, filename: string) => {
   const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
   const url = window.URL.createObjectURL(blob);
@@ -212,7 +255,6 @@ const downloadBlob = (content: string, filename: string) => {
   window.URL.revokeObjectURL(url);
 };
 
-// Tarjeta de KPI reutilizable para los cuatro indicadores superiores.
 function SummaryCard({
   title,
   value,
@@ -224,13 +266,13 @@ function SummaryCard({
   value: number;
   helper: string;
   tone: 'blue' | 'green' | 'slate' | 'red';
-  icon: string;
+  icon: TrackingIconName;
 }) {
-  const toneClass = {
-    blue: 'border-blue-100 bg-blue-50 text-blue-600',
-    green: 'border-emerald-100 bg-emerald-50 text-emerald-600',
-    slate: 'border-slate-100 bg-slate-50 text-slate-500',
-    red: 'border-red-200 bg-red-50 text-red-600',
+  const iconClass = {
+    blue: 'bg-blue-100 text-blue-600',
+    green: 'bg-emerald-100 text-emerald-600',
+    slate: 'bg-slate-100 text-slate-500',
+    red: 'bg-red-100 text-red-600',
   }[tone];
 
   return (
@@ -238,43 +280,48 @@ function SummaryCard({
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase text-slate-500">{title}</p>
-          <p className={`mt-3 text-3xl font-black ${tone === 'red' ? 'text-red-600' : 'text-slate-950'}`}>{value}</p>
+          <p className={`mt-3 text-3xl font-black ${tone === 'red' ? 'text-red-600' : 'text-slate-950'}`}>
+            {value}
+          </p>
           <p className="mt-2 text-xs text-slate-500">{helper}</p>
         </div>
-        <span className={`grid h-12 w-12 place-items-center rounded-lg border text-xl font-black ${toneClass}`}>{icon}</span>
+        <span className={`grid h-14 w-14 place-items-center rounded-2xl ${iconClass}`}>
+          <TrackingIcon name={icon} className="h-7 w-7" />
+        </span>
       </div>
     </article>
   );
 }
 
-// Badge de estado para la columna Estado de la tabla.
 function StatusBadge({ estado }: { estado: EstadoTrackingGpsApi }) {
   const classes = {
     MOVIENDO: 'bg-emerald-100 text-emerald-700',
     DETENIDO: 'bg-slate-100 text-slate-600',
     EXCESO_VELOCIDAD: 'bg-red-100 text-red-700',
   }[estado];
+  const icon: TrackingIconName =
+    estado === 'EXCESO_VELOCIDAD' ? 'bolt' : estado === 'DETENIDO' ? 'navigation' : 'trend';
 
   return (
     <span className={`inline-flex min-w-28 items-center justify-center rounded-full px-3 py-1 text-xs font-bold ${classes}`}>
-      {estado === 'EXCESO_VELOCIDAD' ? '↯ ' : estado === 'DETENIDO' ? '△ ' : '↗ '}
+      <TrackingIcon name={icon} className="mr-1 h-3.5 w-3.5" />
       {ESTADO_LABEL[estado]}
     </span>
   );
 }
 
-// Pagina de HU09 con resumen, filtros, tabla y exportacion CSV.
 export default function TrackingGpsPage() {
   const [summary, setSummary] = useState<TrackingGpsSummaryApi>(EMPTY_SUMMARY);
   const [registros, setRegistros] = useState<RegistroTracking[]>([]);
   const [filters, setFilters] = useState({ placa: '', estado: '', horaInicio: '', horaFin: '' });
   const [appliedFilters, setAppliedFilters] = useState<TrackingGpsFilters>({});
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState('');
+  const [exportMessage, setExportMessage] = useState('');
   const [fechaActual, setFechaActual] = useState('');
   const [horaActual, setHoraActual] = useState('');
 
-  // Mantiene la fecha y hora de la cabecera actualizadas en vivo.
   useEffect(() => {
     const tick = () => {
       const now = new Date();
@@ -287,7 +334,6 @@ export default function TrackingGpsPage() {
     return () => window.clearInterval(interval);
   }, []);
 
-  // Carga resumen y registros; refresca cada 10s y reintenta cada 30s si no hay datos.
   useEffect(() => {
     let mounted = true;
     let timeoutId: number | undefined;
@@ -337,14 +383,22 @@ export default function TrackingGpsPage() {
     };
   }, [appliedFilters]);
 
-  // Ordena los excesos de velocidad al inicio de la tabla.
   const sortedRegistros = useMemo(
-    () => [...registros].sort((a, b) => Number(b.excesoVelocidad) - Number(a.excesoVelocidad)),
+    () =>
+      [...registros].sort(
+        (a, b) =>
+          Number(b.excesoVelocidad) - Number(a.excesoVelocidad) ||
+          new Date(b.fechaHora).getTime() - new Date(a.fechaHora).getTime(),
+      ),
+    [registros],
+  );
+  const visibleExcessCount = useMemo(
+    () => registros.filter(isSpeedingRegistro).length,
     [registros],
   );
 
-  // Aplica los filtros seleccionados por el administrador.
   const applyFilters = () => {
+    setExportMessage('');
     setAppliedFilters({
       placa: filters.placa.trim() || undefined,
       estado: filters.estado ? (filters.estado as EstadoTrackingGpsApi) : undefined,
@@ -353,16 +407,27 @@ export default function TrackingGpsPage() {
     });
   };
 
-  // Restablece el formulario y vuelve al listado general.
   const clearFilters = () => {
     setFilters({ placa: '', estado: '', horaInicio: '', horaFin: '' });
     setAppliedFilters({});
+    setExportMessage('');
   };
 
-  // Exporta el CSV desde el endpoint oficial de HU09.
   const handleExportCsv = async () => {
-    const result = await exportTrackingGpsCsv(appliedFilters);
-    downloadBlob(result.csv, result.filename);
+    setExporting(true);
+    setExportMessage('');
+
+    try {
+      const result = await exportTrackingGpsCsv(appliedFilters);
+      downloadBlob(result.csv, result.filename);
+    } catch (error) {
+      console.error('Error al exportar tracking GPS:', error);
+      setExportMessage(
+        'No se pudo exportar el reporte GPS. Verifique la conexion o la configuracion CORS del backend.',
+      );
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -376,7 +441,7 @@ export default function TrackingGpsPage() {
             <p className="text-sm text-gray-500">{fechaActual}</p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-400">Última actualización</p>
+            <p className="text-xs text-gray-400">Ultima actualizacion</p>
             <p className="text-sm font-semibold text-gray-900">{horaActual}</p>
           </div>
         </header>
@@ -384,14 +449,16 @@ export default function TrackingGpsPage() {
         <main className="flex-1 px-8 py-6">
           <section className="mb-5">
             <h2 className="text-2xl font-bold text-gray-950">Tracking GPS en Tiempo Real</h2>
-            <p className="text-sm text-gray-500">Monitoreo global de telemetría y registros cargados</p>
+            <p className="text-sm text-gray-500">
+              Monitoreo global de telemetria - {summary.total_registros} registros cargados
+            </p>
           </section>
 
           <section className="grid gap-4 lg:grid-cols-4">
-            <SummaryCard title="Total Registros" value={summary.total_registros} helper="Eventos recibidos" tone="blue" icon="◎" />
-            <SummaryCard title="Unidades en Movimiento" value={summary.unidades_movimiento} helper="Último estado activo" tone="green" icon="↗" />
-            <SummaryCard title="Unidades Detenidas" value={summary.unidades_detenidas} helper="Sin desplazamiento" tone="slate" icon="△" />
-            <SummaryCard title="Excesos de Velocidad" value={summary.excesos_velocidad} helper="Sobre 90 km/h" tone="red" icon="↯" />
+            <SummaryCard title="Total Registros" value={summary.total_registros} helper="Eventos recibidos" tone="blue" icon="pin" />
+            <SummaryCard title="Unidades en Movimiento" value={summary.unidades_movimiento} helper="Ultimo estado activo" tone="green" icon="trend" />
+            <SummaryCard title="Unidades Detenidas" value={summary.unidades_detenidas} helper="Sin desplazamiento" tone="slate" icon="navigation" />
+            <SummaryCard title="Excesos de Velocidad" value={summary.excesos_velocidad} helper="Sobre 90 km/h" tone="red" icon="bolt" />
           </section>
 
           <section className="mt-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
@@ -427,7 +494,7 @@ export default function TrackingGpsPage() {
               </label>
 
               <label className="text-xs font-bold uppercase text-slate-500">
-                Estado del vehículo
+                Estado del vehiculo
                 <select
                   value={filters.estado}
                   onChange={(event) => setFilters((current) => ({ ...current, estado: event.target.value }))}
@@ -460,26 +527,50 @@ export default function TrackingGpsPage() {
 
           <section className="mt-5 rounded-lg border border-gray-200 bg-white shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-gray-100 p-5">
-              <div>
-                <h3 className="text-sm font-bold text-gray-950">Registros de Telemetría GPS</h3>
-                <p className="text-xs text-gray-500">
-                  {registros.length} registros · {summary.excesos_velocidad} excesos de velocidad priorizados al inicio
-                </p>
+              <div className="flex items-center gap-3">
+                <span className="grid h-11 w-11 place-items-center rounded-xl bg-blue-100 text-blue-600">
+                  <TrackingIcon name="pin" className="h-6 w-6" />
+                </span>
+                <div>
+                  <h3 className="text-base font-bold text-gray-950">Registros de Telemetria GPS</h3>
+                  <p className="text-sm text-gray-500">
+                    {registros.length} registros -{' '}
+                    <span className="font-bold text-red-600">{visibleExcessCount} excesos de velocidad</span>{' '}
+                    priorizados al inicio
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={handleExportCsv}
-                className="rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50"
+                disabled={exporting}
+                className="inline-flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Exportar CSV
+                <TrackingIcon name="file" className="h-4 w-4" />
+                {exporting ? 'Exportando...' : 'Exportar CSV'}
               </button>
             </div>
 
+            {exportMessage && (
+              <div className="mx-5 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                {exportMessage}
+              </div>
+            )}
+
             <div className="border-b border-gray-100 px-5 py-3 text-xs text-gray-500">
               <span className="font-bold text-gray-700">LEYENDA:</span>
-              <span className="ml-3 text-emerald-600">● Normal · 0-80 km/h</span>
-              <span className="ml-3 text-orange-600">● Precaución · 81-90 km/h</span>
-              <span className="ml-3 font-bold text-red-600">● Exceso · &gt;90 km/h</span>
+              <span className="ml-3 inline-flex items-center gap-2 text-emerald-600">
+                <span className="h-3 w-3 rounded-full border border-slate-300 bg-white" />
+                Normal 0-80 km/h
+              </span>
+              <span className="ml-3 inline-flex items-center gap-2 text-orange-600">
+                <span className="h-3 w-3 rounded-full border border-yellow-300 bg-yellow-50" />
+                Precaucion 81-90 km/h
+              </span>
+              <span className="ml-3 inline-flex items-center gap-2 font-bold text-red-600">
+                <span className="h-3 w-3 rounded-full border border-red-300 bg-red-50" />
+                Exceso &gt;90 km/h
+              </span>
             </div>
 
             {loading ? (
@@ -505,16 +596,29 @@ export default function TrackingGpsPage() {
 
                       return (
                         <tr key={registro.id} className={`border-b border-gray-100 ${speedTone.row}`}>
-                          <td className="px-5 py-3 font-black text-slate-800">⌁ {registro.placa}</td>
+                          <td className="px-5 py-3 font-black text-slate-800">
+                            <span className="inline-flex items-center gap-2">
+                              <TrackingIcon name="gauge" className="h-4 w-4 text-blue-500" />
+                              {registro.placa}
+                            </span>
+                          </td>
                           <td className="px-5 py-3 font-mono text-xs text-slate-700">{formatFechaHora(registro.fechaHora)}</td>
                           <td className="px-5 py-3">
                             <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
                               {registro.proveedor}
                             </span>
                           </td>
-                          <td className="px-5 py-3 font-bold text-slate-700">△ {formatKm(registro.distanciaTotal)}</td>
+                          <td className="px-5 py-3 font-bold text-slate-700">
+                            <span className="inline-flex items-center gap-2">
+                              <TrackingIcon name="navigation" className="h-4 w-4 text-slate-400" />
+                              {formatKm(registro.distanciaTotal)}
+                            </span>
+                          </td>
                           <td className={`px-5 py-3 ${speedTone.text}`}>
-                            {speedTone.icon} {registro.velocidadKmh} km/h
+                            <span className="inline-flex items-center gap-2">
+                              <TrackingIcon name="pulse" className={`h-4 w-4 ${speedTone.iconClass}`} />
+                              {registro.velocidadKmh} km/h
+                            </span>
                           </td>
                           <td className="px-5 py-3">
                             <StatusBadge estado={registro.estado} />

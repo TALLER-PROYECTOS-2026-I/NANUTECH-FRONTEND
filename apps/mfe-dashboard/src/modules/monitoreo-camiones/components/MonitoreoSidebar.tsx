@@ -15,7 +15,7 @@ export function MonitoreoSidebar() {
   const [conductoresOpen, setConductoresOpen] = useState(isConductoresActive);
 
   const baseNav = "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors";
-  const activeSubCls = "bg-green-600 text-white font-semibold";
+  const activeSubCls = "text-white font-semibold";
   const inactiveSubCls = "text-slate-300 hover:bg-slate-800 hover:text-white";
 
   return (
@@ -81,7 +81,7 @@ export function MonitoreoSidebar() {
                       Ver todos
                     </NavLink>
 
-                    {/* Dar de Alta */}
+                    {/* Registrar conductor */}
                     <NavLink
                       to={`${ADMIN_ROUTE_PREFIX}/conductores/dar-de-alta`}
                       className={({ isActive }) =>
@@ -94,7 +94,7 @@ export function MonitoreoSidebar() {
                         <line x1="19" y1="8" x2="19" y2="14" />
                         <line x1="22" y1="11" x2="16" y2="11" />
                       </svg>
-                      Dar de Alta
+                      Registrar Conductor
                     </NavLink>
                   </div>
                 )}

@@ -53,6 +53,7 @@ const conductoresBackend = [
   {
     id: "conductor-1",
     nombre: "Carlos Ramirez",
+    dni: "70000002",
     licencia: "A-IIIB-12345678",
     estadoOperacional: "DISPONIBLE",
     camionAsignado: "Sin asignar",
@@ -61,6 +62,7 @@ const conductoresBackend = [
   {
     id: "conductor-2",
     nombre: "Lucia Torres",
+    dni: "70000003",
     licencia: "A-IIIA-87654321",
     estadoOperacional: "EN_RUTA",
     camionAsignado: "ABC-123",
@@ -69,6 +71,7 @@ const conductoresBackend = [
   {
     id: "conductor-3",
     nombre: "Mario Salas",
+    dni: "70000004",
     licencia: "A-IIC-45678901",
     estadoOperacional: "DESCANSANDO",
     camionAsignado: "Sin asignar",
@@ -77,6 +80,7 @@ const conductoresBackend = [
   {
     id: "conductor-4",
     nombre: "Rosa Vega",
+    dni: "70000005",
     licencia: "A-IIIB-56781234",
     estadoOperacional: "SIN_ASIGNAR",
     camionAsignado: "Sin asignar",
@@ -135,6 +139,7 @@ describe("HU10 - Gestion de conductores", () => {
         conductores = conductores.filter(
           (conductor) =>
             conductor.nombre.toLowerCase().includes(search) ||
+            conductor.dni.includes(search) ||
             conductor.licencia.toLowerCase().includes(search),
         );
       }
@@ -174,6 +179,26 @@ describe("HU10 - Gestion de conductores", () => {
     expect(screen.getByText("ABC-123")).toBeInTheDocument();
   });
 
+  it("mantiene el KPI de disponibles alineado con el listado cuando el resumen llega desfasado", async () => {
+    vi.mocked(getDashboardConductores).mockResolvedValueOnce({
+      ...backendPayload,
+      indicadores: {
+        ...backendPayload.indicadores,
+        disponibles: 0,
+      },
+      conductores: [...conductoresBackend],
+    });
+
+    renderPage();
+
+    const disponiblesTitle = await screen.findByText("Disponibles");
+    const disponiblesCard = disponiblesTitle.closest("article");
+
+    expect(disponiblesCard).not.toBeNull();
+    expect(within(disponiblesCard as HTMLElement).getByText("1")).toBeInTheDocument();
+    expect(screen.getByText("Carlos Ramirez")).toBeInTheDocument();
+  });
+
   it("filtra por busqueda, estado y disponibilidad", async () => {
     renderPage();
 
@@ -203,6 +228,21 @@ describe("HU10 - Gestion de conductores", () => {
     expect(await screen.findByText("Mario Salas")).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.queryByText("Rosa Vega")).not.toBeInTheDocument();
+    });
+  });
+
+  it("filtra por DNI desde el buscador", async () => {
+    renderPage();
+
+    expect(await screen.findByText("Carlos Ramirez")).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText("Buscar por nombre, DNI o licencia..."), {
+      target: { value: "70000003" },
+    });
+
+    expect(await screen.findByText("Lucia Torres")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText("Carlos Ramirez")).not.toBeInTheDocument();
+      expect(screen.queryByText("Mario Salas")).not.toBeInTheDocument();
     });
   });
 
