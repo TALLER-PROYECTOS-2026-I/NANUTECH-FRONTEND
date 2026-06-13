@@ -69,29 +69,35 @@ const overrideResumen = (
   // Si el backend no mando resumen, se conservan los valores calculados por lista.
   if (!resumen) return panel;
 
+  const totalConductores = toNumber(
+    read(resumen, ['totalConductores', 'total_conductores', 'total']),
+    panel.resumen.totalConductores,
+  );
+  const conductoresActivos = toNumber(
+    read(resumen, ['conductoresActivos', 'conductores_activos', 'activos']),
+    panel.resumen.conductoresActivos,
+  );
+  const disponibles = toNumber(
+    read(resumen, ['disponibles', 'conductores_disponibles']),
+    panel.resumen.disponibles,
+  );
+  const enRuta = toNumber(
+    read(resumen, ['enRuta', 'en_ruta', 'personal_en_ruta']),
+    panel.resumen.enRuta,
+  );
+
   return {
     ...panel,
     resumen: {
       // Total de conductores registrados.
-      totalConductores: toNumber(
-        read(resumen, ['totalConductores', 'total_conductores', 'total']),
-        panel.resumen.totalConductores,
-      ),
+      totalConductores: Math.max(totalConductores, panel.resumen.totalConductores),
       // Conductores con contrato vigente/activo.
-      conductoresActivos: toNumber(
-        read(resumen, ['conductoresActivos', 'conductores_activos', 'activos']),
-        panel.resumen.conductoresActivos,
-      ),
-      // Conductores disponibles para asignacion.
-      disponibles: toNumber(
-        read(resumen, ['disponibles', 'conductores_disponibles']),
-        panel.resumen.disponibles,
-      ),
+      conductoresActivos: Math.max(conductoresActivos, panel.resumen.conductoresActivos),
+      // Conductores disponibles para asignacion. La lista normalizada evita inconsistencias
+      // cuando /resumen queda desfasado con /listado.
+      disponibles: Math.max(disponibles, panel.resumen.disponibles),
       // Personal actualmente en ruta.
-      enRuta: toNumber(
-        read(resumen, ['enRuta', 'en_ruta', 'personal_en_ruta']),
-        panel.resumen.enRuta,
-      ),
+      enRuta: Math.max(enRuta, panel.resumen.enRuta),
     },
   };
 };

@@ -186,6 +186,9 @@ export function PerfilConductorPage() {
     );
   }
 
+  const estadoActual = conductor.estadoOperacional;
+  const estaEnJornada = estadoActual === 'EN_RUTA';
+
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans">
       <MonitoreoSidebar />
@@ -313,15 +316,15 @@ export function PerfilConductorPage() {
               />
               <StatCard
                 label="Estado Actual"
-                value={formatEstado(estadisticas.estadoActual)}
+                value={formatEstado(estadoActual)}
                 sublabel={
-                  estadisticas.jornadasActivas > 0
+                  estaEnJornada
                     ? 'Conductor actualmente en jornada'
                     : 'Sin jornada activa'
                 }
                 icon={<StatusIcon />}
-                iconBg={estadisticas.jornadasActivas > 0 ? 'bg-green-100' : 'bg-gray-100'}
-                iconColor={estadisticas.jornadasActivas > 0 ? 'text-green-600' : 'text-gray-500'}
+                iconBg={estaEnJornada ? 'bg-green-100' : 'bg-gray-100'}
+                iconColor={estaEnJornada ? 'text-green-600' : 'text-gray-500'}
               />
             </div>
           ) : null}

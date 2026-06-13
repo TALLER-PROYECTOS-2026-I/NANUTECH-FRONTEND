@@ -208,8 +208,8 @@ describe('HU17 - Historial de Jornadas Gerencial', () => {
     fireEvent.click(screen.getByRole('button', { name: /Ver alerta auxilio/i }));
 
     expect(await screen.findByText('AUXILIO MECANICO')).toBeTruthy();
-    expect(screen.getByText('Cambio de neumatico')).toBeTruthy();
-    expect(screen.getByText('Resuelta')).toBeTruthy();
+    expect(await screen.findByText('Cambio de neumatico')).toBeTruthy();
+    expect(await screen.findByText('Resuelta')).toBeTruthy();
   });
 
   it('exporta CSV con los filtros activos', async () => {

@@ -28,6 +28,10 @@ export type Contrato = {
   descripcion?: string;
   dias_para_vencer?: number;
   camiones_asignados?: number;
+  unidad_ids?: string[];
+  camiones?: unknown[];
+  unidades?: unknown[];
+  unidades_asignadas_detalle?: unknown[];
   proximo_a_vencer?: boolean;
   total_referencial?: number;
 };
@@ -46,6 +50,15 @@ export type CrearContratoPayload = {
   tarifa_por_hora: number;
   tarifa_espera: number;
   moneda: 'PEN';
+};
+
+export type ActualizarContratoPayload = Partial<Omit<CrearContratoPayload, 'moneda'>> & {
+  estado?: string;
+  activo?: boolean;
+  tarifa?: number;
+  moneda?: 'PEN' | 'USD';
+  unidad_ids?: string[];
+  camiones_asignados?: number;
 };
 
 type ApiResponse<T> = {
@@ -108,5 +121,13 @@ export const crearContrato = async (
   payload: CrearContratoPayload
 ): Promise<Contrato> => {
   const res = await apiClient.post<ApiResponse<Contrato>>('/contratos', payload);
+  return res.data.data;
+};
+
+export const actualizarContrato = async (
+  id: string,
+  payload: ActualizarContratoPayload
+): Promise<Contrato> => {
+  const res = await apiClient.put<ApiResponse<Contrato>>(`/contratos/${id}`, payload);
   return res.data.data;
 };
