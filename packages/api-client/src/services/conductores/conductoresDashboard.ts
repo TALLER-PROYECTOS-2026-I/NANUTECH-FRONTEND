@@ -56,6 +56,37 @@ type ApiResponse<T> = {
   data?: T;
 } & T;
 
+const normalizeSearch = (value: unknown) =>
+  String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+const conductorMatchesSearch = (
+  conductor: ConductorDashboardApi,
+  search?: string,
+) => {
+  const term = normalizeSearch(search);
+  if (!term) return true;
+
+  return [
+    conductor.nombre,
+    conductor.nombre_completo,
+    conductor.name,
+    conductor.email,
+    conductor.correo,
+    conductor.dni,
+    conductor.documento,
+    conductor.numero_documento,
+    conductor.licencia,
+    conductor.numero_licencia,
+    conductor.contacto,
+    conductor.telefono,
+    conductor.celular,
+  ].some((value) => normalizeSearch(value).includes(term));
+};
+
 // Traduce el nombre visual de la UI al valor crudo que filtra el repository.
 const mapDisponibilidadToBackend = (
   disponibilidad?: DisponibilidadFiltroConductores,
@@ -100,11 +131,21 @@ export const getListadoDashboardConductores = async (
 export const getDashboardConductores = async (
   filters: FiltrosDashboardConductores = {},
 ): Promise<DashboardConductoresApi> => {
+  const listadoFilters = {
+    ...filters,
+    busqueda: undefined,
+    limit: filters.busqueda?.trim() ? 1000 : filters.limit,
+  };
+
   // Ejecuta ambas llamadas en paralelo porque resumen y listado son independientes.
   const [resumen, listado] = await Promise.all([
     getResumenDashboardConductores(),
-    getListadoDashboardConductores(filters),
+    getListadoDashboardConductores(listadoFilters),
   ]);
+
+  const conductores = (listado.conductores ?? []).filter((conductor) =>
+    conductorMatchesSearch(conductor, filters.busqueda),
+  );
 
   // Devuelve aliases camel-ish y legacy para que el normalizador soporte ambos contratos.
   return {
@@ -112,8 +153,8 @@ export const getDashboardConductores = async (
     indicadores: resumen.indicadores,
     graficas: resumen.graficos,
     graficos: resumen.graficos,
-    conductores: listado.conductores ?? [],
+    conductores,
     paginacion: listado.paginacion,
-    mensajeSinResultados: listado.mensajeSinResultados ?? null,
+    mensajeSinResultados: conductores.length === 0 ? 'No se encontraron conductores' : null,
   };
 };

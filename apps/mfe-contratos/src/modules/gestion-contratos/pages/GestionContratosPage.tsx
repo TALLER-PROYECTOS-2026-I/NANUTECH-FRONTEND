@@ -17,7 +17,6 @@ import {
   TipoServicioBarChart,
 } from '../components/GestionContratosComponents';
 import { emptyIndicadores, PAGE_SIZE } from '../constants';
-import { mockContratos } from '../mocks/gestionContratosMocks';
 import type { ContratoConUnidades, EstadoFiltro, GestionContratosPageProps, SortDirection } from '../types';
 import { buildIndicadoresFromContratos, getNormalizedEstado } from '../utils/indicadores';
 
@@ -25,7 +24,7 @@ import { buildIndicadoresFromContratos, getNormalizedEstado } from '../utils/ind
  * HU06 - Panel de Gestion de Contratos Comerciales.
  *
  * Esta pagina concentra la experiencia principal:
- * - carga contratos desde API o fallback mock,
+ * - carga contratos desde API,
  * - muestra indicadores y graficas,
  * - permite busqueda, filtro, ordenamiento y paginacion,
  * - abre una vista expandida cuando el usuario presiona Ver.
@@ -44,6 +43,7 @@ export default function GestionContratosPage({ onNuevoContrato, onVerContrato }:
   const [statusFilter, setStatusFilter] = useState<EstadoFiltro>('TODOS');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [page, setPage] = useState(1);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Contrato seleccionado para mostrar la vista expandida solicitada en el CA5.
   const [selectedContrato, setSelectedContrato] = useState<ContratoConUnidades | null>(null);
@@ -72,6 +72,7 @@ export default function GestionContratosPage({ onNuevoContrato, onVerContrato }:
 
     const load = async () => {
       setLoading(true);
+      setErrorMessage('');
       try {
         // La consulta principal ya pide paginacion 10/10 y orden por vencimiento.
         const [listResult, indicadoresResult] = await Promise.allSettled([
@@ -93,10 +94,12 @@ export default function GestionContratosPage({ onNuevoContrato, onVerContrato }:
             : buildIndicadoresFromContratos(nextContratos)
         );
       } catch {
-        // Fallback final mock-first para que la HU siga operativa sin backend.
         if (!active) return;
-        setContratos(mockContratos);
-        setIndicadores(buildIndicadoresFromContratos(mockContratos));
+        setContratos([]);
+        setIndicadores(emptyIndicadores);
+        setErrorMessage(
+          'No se pudieron cargar los contratos desde el servidor. Verifique la conexion o intente nuevamente.'
+        );
       } finally {
         if (active) setLoading(false);
       }
@@ -189,6 +192,12 @@ export default function GestionContratosPage({ onNuevoContrato, onVerContrato }:
         </div>
       ) : (
         <>
+          {errorMessage && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
+              {errorMessage}
+            </div>
+          )}
+
           <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <KpiCard label="Total Contratos" value={dashboardIndicadores.total_contratos} hint="Registrados en el sistema" tone="blue" icon="file" />
             <KpiCard label="Contratos Activos" value={dashboardIndicadores.contratos_activos} hint={`${dashboardIndicadores.contratos_activos} vigentes sin expirar`} tone="green" icon="check" />

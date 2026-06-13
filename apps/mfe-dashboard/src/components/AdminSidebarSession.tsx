@@ -34,7 +34,7 @@ export function AdminSidebarSession({
           <div className="absolute bottom-full left-0 right-0 z-50 mb-2 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-xl">
             <div className="border-b border-gray-100 px-4 py-3">
               <p className="mb-0.5 text-xs text-gray-500">Sesión iniciada como</p>
-              <p className="text-sm font-bold text-gray-900">admin1@nanutech.com</p>
+              <p className="text-sm font-bold text-gray-900">admin@nanutech.com</p>
             </div>
             <button
               type="button"

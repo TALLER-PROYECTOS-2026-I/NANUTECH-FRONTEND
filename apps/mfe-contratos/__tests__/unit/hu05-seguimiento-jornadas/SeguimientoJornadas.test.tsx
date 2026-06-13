@@ -193,6 +193,11 @@ describe('HU05 - Seguimiento Jornadas', () => {
     fireEvent.click(screen.getByText(/\+ Nueva Jornada/i));
 
     await screen.findByText(/Registrar Nueva Jornada/i);
+    await waitFor(() => {
+      expect(screen.getAllByRole('option', { name: /Juan Perez/i })).toHaveLength(2);
+    });
+    await screen.findByRole('option', { name: /ABC-123/i });
+    await screen.findByRole('option', { name: /CTR-001/i });
 
     const combos = screen.getAllByRole('combobox');
     fireEvent.change(combos[1], { target: { value: 'conductor-1' } });
